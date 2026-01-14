@@ -57,6 +57,39 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
+        },
+        info: {
+          DEFAULT: "hsl(var(--info))",
+          foreground: "hsl(var(--info-foreground))",
+        },
+        ea: {
+          business: "hsl(var(--ea-business))",
+          data: "hsl(var(--ea-data))",
+          application: "hsl(var(--ea-application))",
+          technology: "hsl(var(--ea-technology))",
+          security: "hsl(var(--ea-security))",
+          integration: "hsl(var(--ea-integration))",
+        },
+        risk: {
+          high: "hsl(var(--risk-high))",
+          medium: "hsl(var(--risk-medium))",
+          low: "hsl(var(--risk-low))",
+        },
+      },
+      fontFamily: {
+        sans: ['Inter', 'IBM Plex Sans Thai', 'system-ui', 'sans-serif'],
+      },
+      boxShadow: {
+        'glow': 'var(--shadow-glow)',
+        'card': 'var(--shadow-md)',
+        'card-hover': 'var(--shadow-lg)',
       },
       borderRadius: {
         lg: "var(--radius)",
