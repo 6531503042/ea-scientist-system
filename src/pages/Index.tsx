@@ -15,6 +15,8 @@ import { AuditLogPage } from '@/components/admin/AuditLogPage';
 import { SettingsPage } from '@/components/admin/SettingsPage';
 import { dashboardMetrics, riskHotspots, recentChanges } from '@/data/mockData';
 
+type View = 'dashboard' | 'graph' | 'artefacts' | 'reports' | 'users' | 'audit' | 'settings';
+
 const viewMap: Record<string, View> = {
   '/': 'dashboard',
   '/graph': 'graph',
