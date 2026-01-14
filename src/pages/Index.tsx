@@ -8,9 +8,12 @@ import { RecentChangesCard } from '@/components/dashboard/RecentChangesCard';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { CoverageChart } from '@/components/dashboard/CoverageChart';
 import { EAGraph } from '@/components/graph/EAGraph';
+import { ArtefactList } from '@/components/artefacts/ArtefactList';
+import { ReportsPage } from '@/components/reports/ReportsPage';
+import { UsersPage } from '@/components/admin/UsersPage';
+import { AuditLogPage } from '@/components/admin/AuditLogPage';
+import { SettingsPage } from '@/components/admin/SettingsPage';
 import { dashboardMetrics, riskHotspots, recentChanges } from '@/data/mockData';
-
-type View = 'dashboard' | 'graph' | 'artefacts' | 'reports' | 'users' | 'audit' | 'settings';
 
 const viewMap: Record<string, View> = {
   '/': 'dashboard',
@@ -94,26 +97,47 @@ const Index = () => {
           </>
         )}
 
-        {currentView !== 'dashboard' && currentView !== 'graph' && (
+        {currentView === 'artefacts' && (
           <>
-            <AppHeader 
-              title={currentPath.substring(1).charAt(0).toUpperCase() + currentPath.substring(2)} 
-              subtitle="Coming soon..."
-            />
-            <div className="flex-1 flex items-center justify-center">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="text-center"
-              >
-                <div className="w-24 h-24 mx-auto mb-4 rounded-2xl bg-muted flex items-center justify-center">
-                  <span className="text-4xl">🚧</span>
-                </div>
-                <h3 className="text-xl font-semibold text-foreground mb-2">Coming Soon</h3>
-                <p className="text-muted-foreground">
-                  หน้านี้อยู่ระหว่างการพัฒนา
-                </p>
-              </motion.div>
+            <AppHeader title="Artefacts" subtitle="จัดการ Artefacts ทั้งหมดในระบบ" />
+            <div className="flex-1 overflow-y-auto">
+              <ArtefactList />
+            </div>
+          </>
+        )}
+
+        {currentView === 'reports' && (
+          <>
+            <AppHeader title="รายงาน" subtitle="สร้างและดาวน์โหลดรายงาน" />
+            <div className="flex-1 overflow-y-auto">
+              <ReportsPage />
+            </div>
+          </>
+        )}
+
+        {currentView === 'users' && (
+          <>
+            <AppHeader title="จัดการผู้ใช้งาน" subtitle="บัญชีผู้ใช้และสิทธิ์การเข้าถึง" />
+            <div className="flex-1 overflow-y-auto">
+              <UsersPage />
+            </div>
+          </>
+        )}
+
+        {currentView === 'audit' && (
+          <>
+            <AppHeader title="Audit Log" subtitle="บันทึกการใช้งานระบบ" />
+            <div className="flex-1 overflow-y-auto">
+              <AuditLogPage />
+            </div>
+          </>
+        )}
+
+        {currentView === 'settings' && (
+          <>
+            <AppHeader title="ตั้งค่าระบบ" subtitle="กำหนดค่าระบบ EA Management" />
+            <div className="flex-1 overflow-y-auto">
+              <SettingsPage />
             </div>
           </>
         )}
