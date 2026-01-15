@@ -1,12 +1,14 @@
 import { motion } from 'framer-motion';
-import { 
-  Layers, 
-  Activity, 
-  AlertTriangle, 
-  Shield, 
-  TrendingUp, 
+import {
+  Layers,
+  Activity,
+  AlertTriangle,
+  Shield,
+  TrendingUp,
   TrendingDown,
-  Minus
+  Minus,
+  Clock,
+  Users
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -15,6 +17,8 @@ const iconMap: Record<string, React.ElementType> = {
   Activity,
   AlertTriangle,
   Shield,
+  Clock,
+  Users,
 };
 
 interface MetricCardProps {
@@ -27,22 +31,22 @@ interface MetricCardProps {
   isPercentage?: boolean;
 }
 
-export function MetricCard({ 
-  label, 
-  value, 
-  change, 
-  trend, 
-  icon, 
+export function MetricCard({
+  label,
+  value,
+  change,
+  trend,
+  icon,
   index,
-  isPercentage = false 
+  isPercentage = false
 }: MetricCardProps) {
   const Icon = iconMap[icon] || Layers;
-  
+
   const TrendIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus;
-  
-  const trendColor = 
-    trend === 'up' && !label.includes('Risk') 
-      ? 'text-success' 
+
+  const trendColor =
+    trend === 'up' && !label.includes('Risk')
+      ? 'text-success'
       : trend === 'down' && label.includes('Risk')
         ? 'text-success'
         : trend === 'up' && label.includes('Risk')
@@ -59,12 +63,12 @@ export function MetricCard({
     >
       {/* Background decoration */}
       <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-gradient-to-br from-accent/5 to-transparent" />
-      
+
       <div className="flex items-start justify-between">
         <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10">
           <Icon className="w-6 h-6 text-primary" />
         </div>
-        
+
         <div className={cn("flex items-center gap-1 text-sm font-medium", trendColor)}>
           <TrendIcon className="w-4 h-4" />
           <span>{Math.abs(change)}{isPercentage ? '%' : ''}</span>
@@ -72,7 +76,7 @@ export function MetricCard({
       </div>
 
       <div className="mt-4">
-        <motion.p 
+        <motion.p
           className="text-3xl font-bold text-foreground"
           initial={{ scale: 0.5 }}
           animate={{ scale: 1 }}

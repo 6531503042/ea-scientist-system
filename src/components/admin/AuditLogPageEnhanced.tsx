@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Search, 
+import {
+  Search,
   Download,
   Calendar,
   User,
@@ -21,12 +21,12 @@ import {
   BarChart3
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  Tooltip, 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
   ResponsiveContainer
 } from 'recharts';
 
@@ -128,8 +128,8 @@ export function AuditLogPageEnhanced() {
 
   const filteredLogs = mockLogs.filter(log => {
     const matchesSearch = log.target.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          log.user.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTab = 
+      log.user.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesTab =
       (activeTab === 'login' && log.action === 'login') ||
       (activeTab === 'export' && log.action === 'export') ||
       (activeTab === 'audit' && !['login', 'export'].includes(log.action));
@@ -189,8 +189,8 @@ export function AuditLogPageEnhanced() {
             <div key={stat.category} className="space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div 
-                    className="w-3 h-3 rounded-full" 
+                  <div
+                    className="w-3 h-3 rounded-full"
                     style={{ backgroundColor: stat.color }}
                   />
                   <span className="text-sm text-foreground">{stat.category}</span>
@@ -273,7 +273,7 @@ export function AuditLogPageEnhanced() {
 
         {/* Table */}
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[900px]">
             <thead>
               <tr className="border-b border-border bg-muted/30">
                 <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">ชื่อ</th>
@@ -329,10 +329,16 @@ export function AuditLogPageEnhanced() {
                         <td className="px-4 py-4 text-sm text-muted-foreground">admin@oae.go.th</td>
                         <td className="px-4 py-4">
                           <span className={cn(
-                            "px-2 py-1 text-xs font-medium rounded-full",
-                            log.userRole === 'Admin' ? "bg-info text-white" : "bg-warning text-white"
+                            "inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap",
+                            log.userRole === 'Admin'
+                              ? "bg-emerald-100 text-emerald-700 border border-emerald-200"
+                              : "bg-rose-100 text-rose-700 border border-rose-200"
                           )}>
-                            {log.userRole === 'Admin' ? 'เข้าสู่ระบบสำเร็จ' : 'ออกจากระบบ'}
+                            {log.userRole === 'Admin' ? (
+                              <><LogIn className="w-3 h-3" /> เข้าสู่ระบบสำเร็จ</>
+                            ) : (
+                              <>ออกจากระบบ</>
+                            )}
                           </span>
                         </td>
                         <td className="px-4 py-4 text-sm text-muted-foreground">::1</td>

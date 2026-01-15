@@ -1,13 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Layers, Activity, Clock, Users, Shield, AlertTriangle } from 'lucide-react';
+import { Layers, Clock, Activity, Users, Download, Grid, List } from 'lucide-react';
 import { MetricCard } from '@/components/dashboard/MetricCard';
-import { RiskCard } from '@/components/dashboard/RiskCard';
-import { RecentChangesCard } from '@/components/dashboard/RecentChangesCard';
-import { QuickActions } from '@/components/dashboard/QuickActions';
-import { ArtefactTypeChart, TrendChart, RiskByDepartmentChart, CoverageDonut } from '@/components/dashboard/DashboardCharts';
-import { riskHotspots } from '@/data/mockData';
+import { MaturityRadarChart, PillarDetails, RecentActivity, QuickStats } from '@/components/dashboard/MaturityRadarChart';
 import { api, ArtefactStats } from '@/lib/api';
 
 const Index = () => {
@@ -29,64 +25,70 @@ const Index = () => {
     fetchStats();
   }, []);
 
-  const getMetric = (label: string, iconName: string, value: number, change: number, trend: 'up' | 'down' | 'stable') => ({
-    label,
-    value,
-    change,
-    trend,
-    icon: iconName,
-    // Helper to map string to component if needed, or pass component directly
-  });
-
   const displayMetrics = [
-    getMetric('Total Artefacts', 'Layers', stats?.total || 125, 12, 'up'),
-    getMetric('Pending Updates', 'Clock', 23, -5, 'down'),
-    getMetric('System Health', 'Activity', 98.5, 0, 'stable'),
-    getMetric('Active Users', 'Users', 47, 8, 'up'),
+    { label: 'Total Artefacts', value: stats?.total || 1284, change: 12, trend: 'up' as const, icon: 'Layers' },
+    { label: 'Pending Updates', value: 23, change: -5, trend: 'down' as const, icon: 'Clock' },
+    { label: 'System Health', value: 98.5, change: 0, trend: 'stable' as const, icon: 'Activity', suffix: '%' },
+    { label: 'Active Users', value: 47, change: 8, trend: 'up' as const, icon: 'Users' },
   ];
 
   return (
-    <>
-      <div className="flex-1 overflow-y-auto">
-        {/* Welcome Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden p-6 mb-6 bg-gradient-to-r from-primary to-primary/80 rounded-2xl text-primary-foreground"
-        >
-          <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-accent/20 blur-3xl" />
-          <div className="relative z-10">
-            <h2 className="text-2xl font-bold mb-2">Executive Dashboard</h2>
-            <p className="text-primary-foreground/80 max-w-xl">
-              Welcome to the Enterprise Architecture Management System
-            </p>
+    <div className="flex-1 overflow-y-auto">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+            <span>EA Repository</span>
+            <span>›</span>
+            <span>Executive Dashboard</span>
           </div>
-        </motion.div>
-
-        {/* Metrics Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          {displayMetrics.map((metric, index) => (
-            <MetricCard key={metric.label} {...metric} index={index} />
-          ))}
+          <h1 className="text-2xl font-bold text-foreground">Executive Dashboard</h1>
+          <p className="text-sm text-muted-foreground">Maturity Overview</p>
         </div>
-
-        {/* Charts Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <ArtefactTypeChart />
-          <TrendChart />
-        </div>
-
-        {/* Bottom Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <RiskByDepartmentChart />
-          <CoverageDonut />
-          <div className="space-y-6">
-            <RiskCard items={riskHotspots} />
-            <QuickActions onExploreGraph={() => navigate('/graph')} />
+        <div className="flex items-center gap-3">
+          <button className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-lg hover:bg-muted transition-colors">
+            <Download className="w-4 h-4" />
+            <span className="text-sm">Download Report</span>
+          </button>
+          <div className="flex items-center border border-border rounded-lg overflow-hidden">
+            <button className="p-2 bg-muted">
+              <Grid className="w-4 h-4" />
+            </button>
+            <button className="p-2 hover:bg-muted transition-colors">
+              <List className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </div>
-    </>
+
+      {/* Main Grid Layout */}
+      <div className="grid grid-cols-12 gap-6">
+        {/* Left Column - Main Content */}
+        <div className="col-span-12 lg:col-span-9 space-y-6">
+          {/* Metrics Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {displayMetrics.map((metric, index) => (
+              <MetricCard key={metric.label} {...metric} index={index} />
+            ))}
+          </div>
+
+          {/* Maturity Radar Chart */}
+          <MaturityRadarChart />
+
+          {/* Pillar Details */}
+          <PillarDetails />
+        </div>
+
+        {/* Right Column - Sidebar */}
+        <div className="col-span-12 lg:col-span-3 space-y-6">
+          {/* Recent Activity */}
+          <RecentActivity />
+
+          {/* Quick Stats */}
+          <QuickStats />
+        </div>
+      </div>
+    </div>
   );
 };
 
