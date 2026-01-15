@@ -6,12 +6,12 @@ import { MetricCard } from '@/components/dashboard/MetricCard';
 import { RiskCard } from '@/components/dashboard/RiskCard';
 import { RecentChangesCard } from '@/components/dashboard/RecentChangesCard';
 import { QuickActions } from '@/components/dashboard/QuickActions';
-import { CoverageChart } from '@/components/dashboard/CoverageChart';
+import { ArtefactTypeChart, TrendChart, RiskByDepartmentChart, CoverageDonut } from '@/components/dashboard/DashboardCharts';
 import { EAGraph } from '@/components/graph/EAGraph';
-import { ArtefactList } from '@/components/artefacts/ArtefactList';
-import { ReportsPage } from '@/components/reports/ReportsPage';
-import { UsersPage } from '@/components/admin/UsersPage';
-import { AuditLogPage } from '@/components/admin/AuditLogPage';
+import { ArtefactListEnhanced } from '@/components/artefacts/ArtefactListEnhanced';
+import { ReportsPageEnhanced } from '@/components/reports/ReportsPageEnhanced';
+import { UsersPageEnhanced } from '@/components/admin/UsersPageEnhanced';
+import { AuditLogPageEnhanced } from '@/components/admin/AuditLogPageEnhanced';
 import { SettingsPage } from '@/components/admin/SettingsPage';
 import { dashboardMetrics, riskHotspots, recentChanges } from '@/data/mockData';
 
@@ -69,19 +69,18 @@ const Index = () => {
                 ))}
               </div>
 
-              {/* Main Content Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Left Column - Risk & Changes */}
-                <div className="lg:col-span-2 space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <RiskCard items={riskHotspots} />
-                    <RecentChangesCard items={recentChanges} />
-                  </div>
-                  <CoverageChart />
-                </div>
+              {/* Charts Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <ArtefactTypeChart />
+                <TrendChart />
+              </div>
 
-                {/* Right Column - Quick Actions */}
-                <div>
+              {/* Bottom Row */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <RiskByDepartmentChart />
+                <CoverageDonut />
+                <div className="space-y-6">
+                  <RiskCard items={riskHotspots} />
                   <QuickActions onExploreGraph={() => handleNavigate('/graph')} />
                 </div>
               </div>
@@ -102,8 +101,8 @@ const Index = () => {
         {currentView === 'artefacts' && (
           <>
             <AppHeader title="Artefacts" subtitle="จัดการ Artefacts ทั้งหมดในระบบ" />
-            <div className="flex-1 overflow-y-auto">
-              <ArtefactList />
+            <div className="flex-1 overflow-hidden">
+              <ArtefactListEnhanced />
             </div>
           </>
         )}
@@ -112,7 +111,7 @@ const Index = () => {
           <>
             <AppHeader title="รายงาน" subtitle="สร้างและดาวน์โหลดรายงาน" />
             <div className="flex-1 overflow-y-auto">
-              <ReportsPage />
+              <ReportsPageEnhanced />
             </div>
           </>
         )}
@@ -121,7 +120,7 @@ const Index = () => {
           <>
             <AppHeader title="จัดการผู้ใช้งาน" subtitle="บัญชีผู้ใช้และสิทธิ์การเข้าถึง" />
             <div className="flex-1 overflow-y-auto">
-              <UsersPage />
+              <UsersPageEnhanced />
             </div>
           </>
         )}
@@ -130,7 +129,7 @@ const Index = () => {
           <>
             <AppHeader title="Audit Log" subtitle="บันทึกการใช้งานระบบ" />
             <div className="flex-1 overflow-y-auto">
-              <AuditLogPage />
+              <AuditLogPageEnhanced />
             </div>
           </>
         )}

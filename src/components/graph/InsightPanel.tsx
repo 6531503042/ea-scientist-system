@@ -177,6 +177,11 @@ export function InsightPanel({ artefact, onClose }: InsightPanelProps) {
       <motion.button
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
+        onClick={() => {
+          // Trigger impact analysis modal - parent component handles this
+          const event = new CustomEvent('openImpactAnalysis', { detail: artefact });
+          window.dispatchEvent(event);
+        }}
         className="w-full mt-6 px-4 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors"
       >
         วิเคราะห์ผลกระทบ

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, useEffect } from 'react';
 import {
   ReactFlow,
   Node,
@@ -13,9 +13,12 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { motion, AnimatePresence } from 'framer-motion';
+import { History, Plus } from 'lucide-react';
 import { ArtefactNode } from './ArtefactNode';
 import { FilterPanel } from './FilterPanel';
 import { InsightPanel } from './InsightPanel';
+import { ImpactAnalysisModal } from './ImpactAnalysisModal';
+import { TransactionHistory } from './TransactionHistory';
 import { artefacts, relationships, type Artefact, type ArtefactType } from '@/data/mockData';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -86,12 +89,25 @@ function createEdges(): Edge[] {
 export function EAGraph() {
   const [selectedNode, setSelectedNode] = useState<Artefact | null>(null);
   const [filters, setFilters] = useState<ArtefactType[]>([]);
+  const [showImpactAnalysis, setShowImpactAnalysis] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [impactArtefact, setImpactArtefact] = useState<Artefact | null>(null);
   
   const initialNodes = useMemo(() => createNodes(artefacts), []);
   const initialEdges = useMemo(() => createEdges(), []);
   
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+
+  // Listen for impact analysis events
+  useEffect(() => {
+    const handleImpactAnalysis = (e: CustomEvent<Artefact>) => {
+      setImpactArtefact(e.detail);
+      setShowImpactAnalysis(true);
+    };
+    window.addEventListener('openImpactAnalysis', handleImpactAnalysis as EventListener);
+    return () => window.removeEventListener('openImpactAnalysis', handleImpactAnalysis as EventListener);
+  }, []);
 
   const filteredNodes = useMemo(() => {
     if (filters.length === 0) return nodes;
@@ -110,6 +126,11 @@ export function EAGraph() {
   const handlePaneClick = useCallback(() => {
     setSelectedNode(null);
   }, []);
+
+  const handleImpactSave = (action: 'break' | 'modify', affectedIds: string[]) => {
+    console.log('Impact action:', action, 'Affected:', affectedIds);
+    // In real app, this would update the database
+  };
 
   return (
     <div className="relative flex w-full h-[calc(100vh-4rem)]">
@@ -146,11 +167,26 @@ export function EAGraph() {
             <motion.div 
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="flex items-center gap-2 px-4 py-2 bg-card/90 backdrop-blur border border-border rounded-lg shadow-card"
+              className="flex items-center gap-3"
             >
-              <span className="text-sm text-muted-foreground">
-                {filteredNodes.length} Artefacts • {filteredEdges.length} Relationships
-              </span>
+              <div className="flex items-center gap-2 px-4 py-2 bg-card/90 backdrop-blur border border-border rounded-lg shadow-card">
+                <span className="text-sm text-muted-foreground">
+                  {filteredNodes.length} Artefacts • {filteredEdges.length} Relationships
+                </span>
+              </div>
+              <button
+                onClick={() => setShowHistory(true)}
+                className="flex items-center gap-2 px-3 py-2 bg-card/90 backdrop-blur border border-border rounded-lg shadow-card hover:bg-muted transition-colors"
+              >
+                <History className="w-4 h-4" />
+                <span className="text-sm">ประวัติ</span>
+              </button>
+              <button
+                className="flex items-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-lg shadow-card hover:bg-primary/90 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                <span className="text-sm">เพิ่ม Artefact</span>
+              </button>
             </motion.div>
           </Panel>
         </ReactFlow>
@@ -165,6 +201,24 @@ export function EAGraph() {
           />
         )}
       </AnimatePresence>
+
+      {/* Impact Analysis Modal */}
+      {showImpactAnalysis && impactArtefact && (
+        <ImpactAnalysisModal
+          artefact={impactArtefact}
+          onClose={() => {
+            setShowImpactAnalysis(false);
+            setImpactArtefact(null);
+          }}
+          onSave={handleImpactSave}
+        />
+      )}
+
+      {/* Transaction History */}
+      <TransactionHistory 
+        isOpen={showHistory} 
+        onClose={() => setShowHistory(false)} 
+      />
     </div>
   );
 }
