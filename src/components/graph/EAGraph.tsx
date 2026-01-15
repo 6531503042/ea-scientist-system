@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, useEffect } from 'react';
+import { useCallback, useMemo, useState, useEffect, useRef } from 'react';
 import {
   ReactFlow,
   Node,
@@ -10,10 +10,12 @@ import {
   ConnectionMode,
   Panel,
   MarkerType,
+  addEdge,
+  Connection,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { motion, AnimatePresence } from 'framer-motion';
-import { History, Briefcase, User, GitGraph, Network } from 'lucide-react';
+import { History, Briefcase, User, GitGraph, Network, Activity, X, RotateCcw, Trash2, AlertTriangle, Info } from 'lucide-react';
 import { ArtefactNode } from './ArtefactNode';
 import { FilterPanel } from './FilterPanel';
 import { InsightPanel } from './InsightPanel';
@@ -112,108 +114,157 @@ export function EAGraph() {
     else if (role === 'architect') setViewMode('architect');
   }, [role]);
 
-  // Handle Layout Changes
+  // Track previous layout mode to only apply layout on actual changes
+  const prevLayoutModeRef = useRef(layoutMode);
+
+  // Handle Layout Changes - Based on ACTUAL RELATIONSHIPS
+  // Only runs when layoutMode CHANGES, not on every render
   useEffect(() => {
+    // Skip if layout mode hasn't actually changed
+    if (prevLayoutModeRef.current === layoutMode && prevLayoutModeRef.current !== 'graph') {
+      return;
+    }
+    prevLayoutModeRef.current = layoutMode;
+
+    // Build adjacency lists from edges (use initialEdges to avoid dependency)
+    const edgeList = edges;
+    const childrenOf: Record<string, string[]> = {};
+    const parentsOf: Record<string, string[]> = {};
+
+    edgeList.forEach(e => {
+      if (!childrenOf[e.source]) childrenOf[e.source] = [];
+      childrenOf[e.source].push(e.target);
+      if (!parentsOf[e.target]) parentsOf[e.target] = [];
+      parentsOf[e.target].push(e.source);
+    });
+
     setNodes((currentNodes) => {
-      // 1. Group nodes by type for layer processing
-      const typeGroups = {
-        business: currentNodes.filter(n => n.data.type === 'business'),
-        application: currentNodes.filter(n => n.data.type === 'application'),
-        data: currentNodes.filter(n => n.data.type === 'data'),
-        integration: currentNodes.filter(n => n.data.type === 'integration'),
-        technology: currentNodes.filter(n => n.data.type === 'technology'),
-        security: currentNodes.filter(n => n.data.type === 'security'),
-      };
-
       if (layoutMode === 'tree') {
-        // --- STRICT HIERARCHICAL TREE (Previously 'Map' logic) ---
-        // Use the Layered Map logic here because user wants "Tree" to be "Hierarchical/Layered"
-        // and "Graph" to be "Interactive/Radial".
+        // ========== TREE LAYOUT (Organic Tree-like Flow) ==========
+        // Find the most connected node as the center/root
+        const connectionCount: Record<string, number> = {};
+        currentNodes.forEach(n => {
+          connectionCount[n.id] = (childrenOf[n.id]?.length || 0) + (parentsOf[n.id]?.length || 0);
+        });
 
-        // Level 1: Business (Top)
-        // Level 2: Application (Middle-Top)
-        // Level 3: Data / Integration (Middle-Bottom)
-        // Level 4: Technology / Security (Bottom)
+        // Sort by connections to find central node
+        const sortedByConnections = [...currentNodes].sort(
+          (a, b) => (connectionCount[b.id] || 0) - (connectionCount[a.id] || 0)
+        );
 
+        const centralNode = sortedByConnections[0];
+        if (!centralNode) return currentNodes;
+
+        // Position central node
+        const positions: Map<string, { x: number; y: number }> = new Map();
+        positions.set(centralNode.id, { x: 0, y: 200 });
+
+        // Position parents above central node
+        const parents = parentsOf[centralNode.id] || [];
+        parents.forEach((parentId, idx) => {
+          const spread = parents.length > 1 ? 300 : 0;
+          const offsetX = (idx - (parents.length - 1) / 2) * spread;
+          positions.set(parentId, { x: offsetX, y: 0 });
+        });
+
+        // Position direct children below central node in a spread pattern
+        const children = childrenOf[centralNode.id] || [];
+        const childSpread = Math.max(280, 1200 / Math.max(children.length, 1));
+        children.forEach((childId, idx) => {
+          const offsetX = (idx - (children.length - 1) / 2) * childSpread;
+          positions.set(childId, { x: offsetX, y: 420 });
+        });
+
+        // Position grandchildren
+        const grandchildY = 650;
+        children.forEach((childId) => {
+          const grandchildren = childrenOf[childId] || [];
+          const childX = positions.get(childId)?.x || 0;
+          grandchildren.forEach((gcId, gcIdx) => {
+            if (!positions.has(gcId)) {
+              const gcSpread = Math.max(220, 500 / Math.max(grandchildren.length, 1));
+              const offsetX = (gcIdx - (grandchildren.length - 1) / 2) * gcSpread;
+              positions.set(gcId, { x: childX + offsetX, y: grandchildY });
+            }
+          });
+        });
+
+        // Position any remaining unpositioned nodes around the edges
+        const unpositioned = currentNodes.filter(n => !positions.has(n.id));
+        unpositioned.forEach((n, idx) => {
+          const angle = (idx / Math.max(unpositioned.length, 1)) * 2 * Math.PI - Math.PI / 2;
+          const radius = 600;
+          positions.set(n.id, {
+            x: radius * Math.cos(angle),
+            y: 350 + radius * Math.sin(angle) * 0.6
+          });
+        });
+
+        return currentNodes.map(node => ({
+          ...node,
+          position: positions.get(node.id) || node.position
+        }));
+
+      } else {
+        // ========== GRAPH LAYOUT (Block/Row by Type) ==========
+        // Group nodes by artefact type into rows
+        const typeGroups = {
+          business: currentNodes.filter(n => n.data.type === 'business'),
+          application: currentNodes.filter(n => n.data.type === 'application'),
+          data: currentNodes.filter(n => n.data.type === 'data'),
+          integration: currentNodes.filter(n => n.data.type === 'integration'),
+          security: currentNodes.filter(n => n.data.type === 'security'),
+          technology: currentNodes.filter(n => n.data.type === 'technology'),
+        };
+
+        // Define levels (rows)
         const levels = [
           typeGroups.business,
           typeGroups.application,
-          [...typeGroups.data, ...typeGroups.integration],
-          [...typeGroups.technology, ...typeGroups.security]
+          [...typeGroups.data, ...typeGroups.integration, ...typeGroups.security],
+          typeGroups.technology
         ];
 
         const LEVEL_HEIGHT = 200;
         const NODE_WIDTH = 220;
-        const GAP = 50;
+        const GAP = 60;
 
-        return currentNodes.map(node => {
-          let levelIndex = -1;
-          let nodeIndexInLevel = -1;
-          let levelNodesCount = 0;
+        // Build level map
+        const nodeLevel: Map<string, number> = new Map();
+        const nodeIndexInLevel: Map<string, number> = new Map();
+        const levelCounts: Map<number, number> = new Map();
 
-          // Find which level this node belongs to
-          levels.forEach((lvl, idx) => {
-            const foundIndex = lvl.findIndex(n => n.id === node.id);
-            if (foundIndex !== -1) {
-              levelIndex = idx;
-              nodeIndexInLevel = foundIndex;
-              levelNodesCount = lvl.length;
-            }
+        levels.forEach((lvl, levelIdx) => {
+          levelCounts.set(levelIdx, lvl.length);
+          lvl.forEach((n, idx) => {
+            nodeLevel.set(n.id, levelIdx);
+            nodeIndexInLevel.set(n.id, idx);
           });
-
-          if (levelIndex === -1) return node;
-
-          // Calculate X to center the row
-          const totalRowWidth = levelNodesCount * (NODE_WIDTH + GAP) - GAP;
-          const startX = -(totalRowWidth / 2);
-          const x = startX + nodeIndexInLevel * (NODE_WIDTH + GAP);
-          const y = levelIndex * LEVEL_HEIGHT;
-
-          return { ...node, position: { x, y } };
         });
 
-      } else {
-        // --- CONCENTRIC / RADIAL GRAPH (Interactive) ---
-        // Center: Applications (or Specific System)
-        // Ring 1: Business & Data
-        // Ring 2: Technology & Security
-
-        const center = { x: 0, y: 0 };
-        const rings = {
-          inner: { radius: 350, nodes: [...typeGroups.application, ...typeGroups.business] },
-          outer: { radius: 700, nodes: [...typeGroups.data, ...typeGroups.integration, ...typeGroups.technology, ...typeGroups.security] }
-        };
-
         return currentNodes.map(node => {
-          // Find which ring
-          let ringConfig = rings.outer;
-          if (rings.inner.nodes.find(n => n.id === node.id)) ringConfig = rings.inner;
+          const level = nodeLevel.get(node.id) ?? 3;
+          const indexInLevel = nodeIndexInLevel.get(node.id) ?? 0;
+          const count = levelCounts.get(level) ?? 1;
 
-          const nodesInRing = ringConfig.nodes;
-          const totalInRing = nodesInRing.length;
-          const index = nodesInRing.findIndex(n => n.id === node.id);
+          const totalWidth = count * NODE_WIDTH + (count - 1) * GAP;
+          const startX = -totalWidth / 2;
+          const x = startX + indexInLevel * (NODE_WIDTH + GAP) + NODE_WIDTH / 2;
+          const y = level * LEVEL_HEIGHT;
 
-          const angleStep = (2 * Math.PI) / totalInRing;
-          const angle = index * angleStep;
-
-          return {
-            ...node,
-            position: {
-              x: center.x + ringConfig.radius * Math.cos(angle),
-              y: center.y + ringConfig.radius * Math.sin(angle)
-            }
-          };
+          return { ...node, position: { x, y } };
         });
       }
     });
 
-    // Also update edge types
+    // Update edge types
     setEdges((eds) => eds.map(e => ({
       ...e,
-      type: layoutMode === 'tree' ? 'smoothstep' : 'default', // Smooth for Tree, Bezier for Graph
-      style: { ...e.style, strokeWidth: layoutMode === 'tree' ? 2 : 1.5 }
+      type: layoutMode === 'tree' ? 'default' : 'smoothstep', // Bezier for Tree, Smooth for Graph
+      style: { ...e.style, strokeWidth: 2 }
     })));
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [layoutMode, setNodes, setEdges]);
 
   // Impact Analysis State
@@ -281,7 +332,7 @@ export function EAGraph() {
         const isDownstream = downstream.has(node.id);
         const isRelated = isSelected || isUpstream || isDownstream;
 
-        let style = { opacity: isRelated ? 1 : 0.1, transition: 'all 0.3s' };
+        let style: React.CSSProperties = { opacity: isRelated ? 1 : 0.1, transition: 'all 0.3s' };
         let className = '';
 
         if (isSelected) {
@@ -366,7 +417,31 @@ export function EAGraph() {
 
   const handlePaneClick = useCallback(() => {
     setSelectedNode(null);
-  }, []);
+    if (impactMode) setImpactMode(false);
+  }, [impactMode]);
+
+  // Handle new edge connections
+  const onConnect = useCallback(
+    (connection: Connection) => {
+      const newEdge: Edge = {
+        id: `edge-${connection.source}-${connection.target}-${Date.now()}`,
+        source: connection.source!,
+        target: connection.target!,
+        type: layoutMode === 'tree' ? 'default' : 'smoothstep',
+        label: 'new relationship',
+        style: {
+          stroke: 'hsl(var(--muted-foreground))',
+          strokeWidth: 2,
+        },
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          color: 'hsl(var(--muted-foreground))',
+        },
+      };
+      setEdges((eds) => addEdge(newEdge, eds));
+    },
+    [setEdges, layoutMode]
+  );
 
   const handleImpactSave = (action: 'break' | 'modify', affectedIds: string[]) => {
     console.log('Impact action:', action, 'Affected:', affectedIds);
@@ -522,10 +597,13 @@ export function EAGraph() {
             edges={filteredEdges}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
             onNodeClick={handleNodeClick}
             onPaneClick={handlePaneClick}
             nodeTypes={nodeTypes}
             connectionMode={ConnectionMode.Loose}
+            nodesDraggable={true}
+            nodesConnectable={true}
             onDrop={onDrop}
             onDragOver={onDragOver}
             fitView
