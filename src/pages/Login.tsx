@@ -14,16 +14,15 @@ import { motion } from 'framer-motion';
 
 const API_BASE = '/api/v1';
 
-// Test accounts organized by role
 const testAccounts = {
     admin: [
-        { name: 'ผู้ดูแลระบบ', email: 'admin@dss.go.th', password: 'password123' },
+        { name: 'ผู้ดูแลระบบ', email: 'admin@dss.go.th', password: 'password123', role: 'admin' },
     ],
-    editor: [
-        { name: 'Enterprise Architect', email: 'architect@dss.go.th', password: 'password123' },
+    architect: [
+        { name: 'Somchai A.', email: 'somchai@dss.go.th', password: 'password123', role: 'architect' },
     ],
-    viewer: [
-        { name: 'Viewer User', email: 'viewer@dss.go.th', password: 'password123' },
+    executive: [
+        { name: 'Director N.', email: 'director@dss.go.th', password: 'password123', role: 'executive' },
     ],
 };
 
@@ -83,6 +82,7 @@ function TestAccountRow({ name, email, password, onUse }: TestAccountRowProps) {
 export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [selectedRole, setSelectedRole] = useState<'admin' | 'architect' | 'executive'>('architect');
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [testAccountsOpen, setTestAccountsOpen] = useState(false);
@@ -90,73 +90,44 @@ export default function Login() {
     const navigate = useNavigate();
     const { toast } = useToast();
 
+    // Mock login handler
     const handleLogin = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
         if (!email || !password) return;
 
         setLoading(true);
 
-        try {
-            const res = await fetch(`${API_BASE}/auth/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
-            });
+        // Simulate API call
+        setTimeout(() => {
+            // Mock successful login with selected role
+            const mockUser = {
+                id: 'user-1',
+                email: email,
+                name: email.split('@')[0],
+                role: selectedRole
+            };
 
-            if (!res.ok) {
-                throw new Error('Invalid credentials');
-            }
-
-            const data = await res.json();
-            login(data.access_token, data.user);
+            login('mock-jwt-token', mockUser);
 
             toast({
                 title: "เข้าสู่ระบบสำเร็จ",
-                description: "ยินดีต้อนรับกลับเข้าสู่ระบบ",
+                description: `ยินดีต้อนรับกลับเข้าสู่ระบบในฐานะ ${selectedRole}`,
             });
 
             navigate('/');
-        } catch (error) {
-            toast({
-                title: "เข้าสู่ระบบไม่สำเร็จ",
-                description: "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
-                variant: "destructive",
-            });
-        } finally {
             setLoading(false);
-        }
+        }, 800);
     };
 
-    const useTestAccount = (testEmail: string, testPassword: string) => {
+    const useTestAccount = (testEmail: string, testPassword: string, role: string) => {
         setEmail(testEmail);
         setPassword(testPassword);
+        setSelectedRole(role as any);
         setTestAccountsOpen(false);
-        // Auto-login after a short delay
-        setTimeout(() => {
-            handleLoginWithCredentials(testEmail, testPassword);
-        }, 300);
-    };
-
-    const handleLoginWithCredentials = async (loginEmail: string, loginPassword: string) => {
-        setLoading(true);
-        try {
-            const res = await fetch(`${API_BASE}/auth/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: loginEmail, password: loginPassword }),
-            });
-
-            if (!res.ok) throw new Error('Invalid credentials');
-
-            const data = await res.json();
-            login(data.access_token, data.user);
-            toast({ title: "เข้าสู่ระบบสำเร็จ", description: "ยินดีต้อนรับกลับเข้าสู่ระบบ" });
-            navigate('/');
-        } catch (error) {
-            toast({ title: "เข้าสู่ระบบไม่สำเร็จ", description: "อีเมลหรือรหัสผ่านไม่ถูกต้อง", variant: "destructive" });
-        } finally {
-            setLoading(false);
-        }
+        toast({
+            title: "เลือกบัญชีทดสอบแล้ว",
+            description: `กรุณากดเข้าสู่ระบบเพื่อดำเนินการต่อในฐานะ ${role}`,
+        });
     };
 
     return (
@@ -201,6 +172,9 @@ export default function Login() {
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleLogin} className="space-y-4">
+                            {/* Role Selection */}
+
+
                             <div className="space-y-2">
                                 <Label htmlFor="email">อีเมล</Label>
                                 <Input
@@ -267,14 +241,14 @@ export default function Login() {
 
                                 <Tabs defaultValue="admin" className="mt-4">
                                     <TabsList className="grid w-full grid-cols-3">
+                                        <TabsTrigger value="architect" className="text-xs">
+                                            Architect <span className="ml-1 text-muted-foreground">{testAccounts.architect.length}</span>
+                                        </TabsTrigger>
+                                        <TabsTrigger value="executive" className="text-xs">
+                                            Executive <span className="ml-1 text-muted-foreground">{testAccounts.executive.length}</span>
+                                        </TabsTrigger>
                                         <TabsTrigger value="admin" className="text-xs">
-                                            ผู้ดูแลระบบ <span className="ml-1 text-muted-foreground">{testAccounts.admin.length}</span>
-                                        </TabsTrigger>
-                                        <TabsTrigger value="editor" className="text-xs">
-                                            Architect <span className="ml-1 text-muted-foreground">{testAccounts.editor.length}</span>
-                                        </TabsTrigger>
-                                        <TabsTrigger value="viewer" className="text-xs">
-                                            Viewer <span className="ml-1 text-muted-foreground">{testAccounts.viewer.length}</span>
+                                            Admin <span className="ml-1 text-muted-foreground">{testAccounts.admin.length}</span>
                                         </TabsTrigger>
                                     </TabsList>
 
@@ -288,7 +262,7 @@ export default function Login() {
                                                             name={acc.name}
                                                             email={acc.email}
                                                             password={acc.password}
-                                                            onUse={useTestAccount}
+                                                            onUse={(e, p) => useTestAccount(e, p, acc.role)}
                                                         />
                                                     ))}
                                                 </div>

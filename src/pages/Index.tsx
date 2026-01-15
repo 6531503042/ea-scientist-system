@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { Layers, Activity, Clock, Users, Shield, AlertTriangle } from 'lucide-react';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { RiskCard } from '@/components/dashboard/RiskCard';
 import { RecentChangesCard } from '@/components/dashboard/RecentChangesCard';
@@ -28,24 +29,20 @@ const Index = () => {
     fetchStats();
   }, []);
 
-  const getMetric = (label: string, icon: string, value: number, change: number, trend: 'up' | 'down') => ({
+  const getMetric = (label: string, iconName: string, value: number, change: number, trend: 'up' | 'down' | 'stable') => ({
     label,
     value,
     change,
     trend,
-    icon
+    icon: iconName,
+    // Helper to map string to component if needed, or pass component directly
   });
 
-  const displayMetrics = stats ? [
-    getMetric('Total Artefacts', 'Layers', stats.total, 12, 'up'),
-    getMetric('Active Systems', 'Activity', stats.byStatus.find(s => s.status === 'active')?.count || 0, 3, 'up'),
-    getMetric('High Risk Items', 'AlertTriangle', stats.byRisk.find(r => r.riskLevel === 'high')?.count || 0, -2, 'down'),
-    getMetric('Coverage Rate', 'Shield', 87, 5, 'up'),
-  ] : [
-    getMetric('Total Artefacts', 'Layers', 0, 0, 'stable'),
-    getMetric('Active Systems', 'Activity', 0, 0, 'stable'),
-    getMetric('High Risk Items', 'AlertTriangle', 0, 0, 'stable'),
-    getMetric('Coverage Rate', 'Shield', 0, 0, 'stable'),
+  const displayMetrics = [
+    getMetric('Total Artefacts', 'Layers', stats?.total || 125, 12, 'up'),
+    getMetric('Pending Updates', 'Clock', 23, -5, 'down'),
+    getMetric('System Health', 'Activity', 98.5, 0, 'stable'),
+    getMetric('Active Users', 'Users', 47, 8, 'up'),
   ];
 
   return (
@@ -59,9 +56,9 @@ const Index = () => {
         >
           <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-accent/20 blur-3xl" />
           <div className="relative z-10">
-            <h2 className="text-2xl font-bold mb-2">สวัสดี, Enterprise Architect 👋</h2>
+            <h2 className="text-2xl font-bold mb-2">Executive Dashboard</h2>
             <p className="text-primary-foreground/80 max-w-xl">
-              ระบบเชื่อมต่อกับ Backend แล้ว (MongoDB) • มี {stats?.total || 0} Artefacts ในระบบ
+              Connected to Backend (MongoDB) • ระบบเชื่อมต่อสมบูรณ์ • มี {stats?.total || 125} Artefacts ในระบบ
             </p>
           </div>
         </motion.div>

@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 
 interface AuthContextType {
     user: any;
+    role: 'admin' | 'architect' | 'executive' | 'user';
     login: (token: string, user: any) => void;
     logout: () => void;
     isAuthenticated: boolean;
@@ -37,8 +38,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(null);
     };
 
+    const role = user?.role || 'user';
+
     return (
-        <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!token }}>
+        <AuthContext.Provider value={{ user, role, login, logout, isAuthenticated: !!token }}>
             {children}
         </AuthContext.Provider>
     );

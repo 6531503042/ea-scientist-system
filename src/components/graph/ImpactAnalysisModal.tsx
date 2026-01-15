@@ -1,10 +1,10 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  X, 
-  AlertTriangle, 
-  ArrowRight, 
-  ArrowDown, 
+import {
+  X,
+  AlertTriangle,
+  ArrowRight,
+  ArrowDown,
   ArrowUp,
   CheckCircle,
   XCircle,
@@ -113,7 +113,7 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
   const upstreamNodes = impactAnalysis.filter(n => n.direction === 'upstream');
   const directImpact = impactAnalysis.filter(n => n.impactType === 'direct');
   const indirectImpact = impactAnalysis.filter(n => n.impactType === 'indirect');
-  
+
   const highRiskCount = impactAnalysis.filter(n => n.artefact.riskLevel === 'high').length;
   const totalAffected = impactAnalysis.length;
 
@@ -200,177 +200,193 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-6">
+            {/* Context Summary */}
+            <div className="mb-6 bg-muted/40 p-4 rounded-xl border border-border">
+              <p className="text-sm text-foreground">
+                การเปลี่ยนแปลง <span className="font-semibold">{artefact.name}</span> จะส่งผลโดยตรงต่อ <span className="font-semibold text-foreground">{directImpact.length} รายการ</span> และส่งผลต่อเนื่องไปยังอีก <span className="font-semibold text-muted-foreground">{indirectImpact.length} รายการ</span>
+              </p>
+            </div>
+
             {/* Action Selection */}
-            <div className="mb-6">
-              <h3 className="font-semibold text-foreground mb-3">เลือกการดำเนินการ</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <button
-                  onClick={() => setSelectedAction('break')}
-                  className={cn(
-                    "p-4 rounded-xl border-2 text-left transition-all",
-                    selectedAction === 'break'
-                      ? "border-destructive bg-destructive/5"
-                      : "border-border hover:border-muted-foreground/30"
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={cn(
-                      "w-10 h-10 rounded-lg flex items-center justify-center",
-                      selectedAction === 'break' ? "bg-destructive/10" : "bg-muted"
-                    )}>
-                      <Trash2 className={cn(
-                        "w-5 h-5",
-                        selectedAction === 'break' ? "text-destructive" : "text-muted-foreground"
-                      )} />
-                    </div>
-                    <div>
-                      <p className="font-medium text-foreground">ตัด/ลบ Artefact</p>
-                      <p className="text-xs text-muted-foreground">ลบ Artefact และความสัมพันธ์ทั้งหมด</p>
-                    </div>
-                  </div>
-                </button>
+            <div className="mb-8">
+              <h3 className="font-semibold text-foreground mb-3 text-sm uppercase tracking-wider text-muted-foreground">เลือกเป้าหมายการวิเคราะห์</h3>
+              <div className="flex p-1 bg-muted rounded-xl mb-4">
                 <button
                   onClick={() => setSelectedAction('modify')}
                   className={cn(
-                    "p-4 rounded-xl border-2 text-left transition-all",
+                    "flex-1 py-2 text-sm font-medium rounded-lg transition-all",
                     selectedAction === 'modify'
-                      ? "border-warning bg-warning/5"
-                      : "border-border hover:border-muted-foreground/30"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className={cn(
-                      "w-10 h-10 rounded-lg flex items-center justify-center",
-                      selectedAction === 'modify' ? "bg-warning/10" : "bg-muted"
-                    )}>
-                      <RotateCcw className={cn(
-                        "w-5 h-5",
-                        selectedAction === 'modify' ? "text-warning" : "text-muted-foreground"
-                      )} />
-                    </div>
-                    <div>
-                      <p className="font-medium text-foreground">แก้ไข/ปรับเปลี่ยน</p>
-                      <p className="text-xs text-muted-foreground">ดูผลกระทบก่อนทำการแก้ไข</p>
-                    </div>
-                  </div>
+                  Simulation Modication
+                </button>
+                <button
+                  onClick={() => setSelectedAction('break')}
+                  className={cn(
+                    "flex-1 py-2 text-sm font-medium rounded-lg transition-all",
+                    selectedAction === 'break'
+                      ? "bg-background text-destructive shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Simulation Deletion
                 </button>
               </div>
             </div>
 
-            {/* Impact Visualization */}
-            <div className="grid grid-cols-2 gap-6">
-              {/* Upstream */}
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <ArrowDown className="w-4 h-4 text-info" />
-                  <h3 className="font-semibold text-foreground">Upstream Dependencies ({upstreamNodes.length})</h3>
-                </div>
-                <p className="text-xs text-muted-foreground mb-3">สิ่งที่ Artefact นี้พึ่งพา</p>
-                
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {upstreamNodes.length > 0 ? upstreamNodes.map((node) => {
-                    const Icon = typeIcons[node.artefact.type];
-                    const risk = riskColors[node.artefact.riskLevel];
-                    return (
-                      <motion.div
-                        key={node.artefact.id}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        onClick={() => toggleNode(node.artefact.id)}
-                        className={cn(
-                          "p-3 rounded-lg border cursor-pointer transition-all",
-                          selectedNodes.has(node.artefact.id)
-                            ? "border-primary bg-primary/5"
-                            : "border-border hover:border-muted-foreground/30"
-                        )}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", risk.bg)}>
-                            <Icon className={cn("w-4 h-4", risk.text)} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm text-foreground truncate">{node.artefact.name}</p>
-                            <div className="flex items-center gap-2">
-                              <span className={cn("text-xs px-1.5 py-0.5 rounded", risk.bg, risk.text)}>
-                                {node.impactType === 'direct' ? 'โดยตรง' : 'ทางอ้อม'}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    );
-                  }) : (
-                    <p className="text-sm text-muted-foreground italic py-4 text-center">ไม่มี dependency</p>
-                  )}
-                </div>
-              </div>
+            {/* Impact Details */}
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-8">
+                {/* Dependencies (Upstream) */}
+                <div>
+                  <div className="flex items-center gap-2 mb-4 pb-2 border-b border-border">
+                    <ArrowDown className="w-4 h-4 text-primary" />
+                    <div>
+                      <h3 className="font-semibold text-foreground">สิ่งที่ต้องใช้ (Inputs)</h3>
+                      <p className="text-xs text-muted-foreground">ระบบ/ข้อมูลที่จำเป็นต้องมี</p>
+                    </div>
+                  </div>
 
-              {/* Downstream */}
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <ArrowUp className="w-4 h-4 text-accent" />
-                  <h3 className="font-semibold text-foreground">Downstream Impact ({downstreamNodes.length})</h3>
-                </div>
-                <p className="text-xs text-muted-foreground mb-3">สิ่งที่พึ่งพา Artefact นี้</p>
-                
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {downstreamNodes.length > 0 ? downstreamNodes.map((node) => {
-                    const Icon = typeIcons[node.artefact.type];
-                    const risk = riskColors[node.artefact.riskLevel];
-                    return (
-                      <motion.div
-                        key={node.artefact.id}
-                        initial={{ opacity: 0, x: 10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        onClick={() => toggleNode(node.artefact.id)}
-                        className={cn(
-                          "p-3 rounded-lg border cursor-pointer transition-all",
-                          selectedNodes.has(node.artefact.id)
-                            ? "border-primary bg-primary/5"
-                            : "border-border hover:border-muted-foreground/30"
-                        )}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", risk.bg)}>
-                            <Icon className={cn("w-4 h-4", risk.text)} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm text-foreground truncate">{node.artefact.name}</p>
-                            <div className="flex items-center gap-2">
-                              <span className={cn("text-xs px-1.5 py-0.5 rounded", risk.bg, risk.text)}>
-                                {node.impactType === 'direct' ? 'โดยตรง' : 'ทางอ้อม'}
-                              </span>
+                  <div className="space-y-3">
+                    {upstreamNodes.length > 0 ? upstreamNodes.map((node) => {
+                      const Icon = typeIcons[node.artefact.type];
+                      const risk = riskColors[node.artefact.riskLevel];
+                      const isDirect = node.impactType === 'direct';
+
+                      return (
+                        <motion.div
+                          key={node.artefact.id}
+                          layout
+                          className={cn(
+                            "relative p-3 rounded-xl border transition-all hover:shadow-md",
+                            selectedNodes.has(node.artefact.id)
+                              ? "border-primary bg-primary/5 shadow-sm"
+                              : "border-border bg-card"
+                          )}
+                          onClick={() => toggleNode(node.artefact.id)}
+                        >
+                          {!isDirect && (
+                            <div className="absolute left-0 top-1/2 -ml-3 w-3 h-px bg-border border-t border-dashed" />
+                          )}
+                          <div className="flex items-start gap-3">
+                            <div className={cn("w-9 h-9 rounded-lg flex-shrink-0 flex items-center justify-center", risk.bg)}>
+                              <Icon className={cn("w-4 h-4", risk.text)} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm text-foreground truncate">{node.artefact.name}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-[10px] uppercase tracking-wider text-muted-foreground bg-muted px-1.5 rounded">
+                                  {node.artefact.type}
+                                </span>
+                                {node.artefact.riskLevel === 'high' && (
+                                  <span className="flex items-center gap-1 text-[10px] text-destructive font-medium">
+                                    <AlertTriangle className="w-3 h-3" />
+                                    High Risk
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </motion.div>
-                    );
-                  }) : (
-                    <p className="text-sm text-muted-foreground italic py-4 text-center">ไม่มี dependent</p>
-                  )}
+                        </motion.div>
+                      );
+                    }) : (
+                      <div className="text-center py-8 bg-muted/20 rounded-xl border border-dashed">
+                        <p className="text-sm text-muted-foreground">ไม่มีสิ่งที่ต้องใช้ (Independent)</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Impacted (Downstream) */}
+                <div>
+                  <div className="flex items-center gap-2 mb-4 pb-2 border-b border-border">
+                    <ArrowUp className="w-4 h-4 text-destructive" />
+                    <div>
+                      <h3 className="font-semibold text-foreground">ผลกระทบ (Impacts)</h3>
+                      <p className="text-xs text-muted-foreground">ระบบที่จะเสียหาย/หยุดชะงัก</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    {downstreamNodes.length > 0 ? downstreamNodes.map((node) => {
+                      const Icon = typeIcons[node.artefact.type];
+                      const risk = riskColors[node.artefact.riskLevel];
+                      const isDirect = node.impactType === 'direct';
+
+                      return (
+                        <motion.div
+                          key={node.artefact.id}
+                          layout
+                          className={cn(
+                            "relative p-3 rounded-xl border transition-all hover:shadow-md",
+                            selectedNodes.has(node.artefact.id)
+                              ? "border-destructive bg-destructive/5 shadow-sm"
+                              : "border-border bg-card"
+                          )}
+                          onClick={() => toggleNode(node.artefact.id)}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className={cn("w-9 h-9 rounded-lg flex-shrink-0 flex items-center justify-center", risk.bg)}>
+                              <Icon className={cn("w-4 h-4", risk.text)} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm text-foreground truncate">{node.artefact.name}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className={cn(
+                                  "text-[10px] px-1.5 rounded border",
+                                  isDirect
+                                    ? "bg-destructive/10 text-destructive border-destructive/20"
+                                    : "bg-muted text-muted-foreground border-transparent"
+                                )}>
+                                  {isDirect ? 'Direct' : 'Indirect'}
+                                </span>
+                                {node.artefact.riskLevel === 'high' && (
+                                  <span className="flex items-center gap-1 text-[10px] text-destructive font-medium ml-auto">
+                                    <AlertTriangle className="w-3 h-3" />
+                                    Critical
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    }) : (
+                      <div className="text-center py-8 bg-muted/20 rounded-xl border border-dashed">
+                        <p className="text-sm text-muted-foreground">ไม่มีผลกระทบ (Safe to change)</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Warning */}
-            {selectedAction && highRiskCount > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-6 p-4 bg-destructive/10 border border-destructive/30 rounded-xl"
-              >
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-destructive mt-0.5" />
-                  <div>
-                    <p className="font-medium text-destructive">คำเตือน: มีความเสี่ยงสูง</p>
-                    <p className="text-sm text-destructive/80 mt-1">
-                      การดำเนินการนี้จะส่งผลกระทบต่อ {highRiskCount} Artefacts ที่มีความเสี่ยงสูง 
-                      กรุณาตรวจสอบให้แน่ใจก่อนดำเนินการ
-                    </p>
+            {/* Warning Box */}
+            <AnimatePresence>
+              {selectedAction && highRiskCount > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mt-8 overflow-hidden"
+                >
+                  <div className="p-4 bg-destructive/5 border border-destructive/20 rounded-xl flex items-start gap-4">
+                    <div className="p-2 bg-destructive/10 rounded-full">
+                      <AlertTriangle className="w-5 h-5 text-destructive" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-destructive mb-1">Critical Warning</h4>
+                      <p className="text-sm text-muted-foreground">
+                        การดำเนินการนี้มีความเสี่ยงสูงเนื่องจากส่งผลกระทบต่อ <span className="text-destructive font-medium">{highRiskCount} critical systems</span>.
+                        กรุณาติดต่อผู้อนุมัติหรือตรวจสอบ Impact Assessment Document ก่อนดำเนินการ
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Footer */}
@@ -416,7 +432,7 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
                     <div>
                       <p className="font-medium text-warning">ยืนยันการดำเนินการ</p>
                       <p className="text-sm text-warning/80">
-                        คุณกำลังจะ{selectedAction === 'break' ? 'ลบ' : 'แก้ไข'} "{artefact.name}" 
+                        คุณกำลังจะ{selectedAction === 'break' ? 'ลบ' : 'แก้ไข'} "{artefact.name}"
                         ซึ่งจะส่งผลกระทบต่อ {totalAffected} Artefacts
                       </p>
                     </div>

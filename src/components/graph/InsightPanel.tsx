@@ -1,10 +1,10 @@
 import { motion } from 'framer-motion';
-import { 
-  X, 
-  User, 
-  Building, 
-  Calendar, 
-  GitBranch, 
+import {
+  X,
+  User,
+  Building,
+  Calendar,
+  GitBranch,
   AlertTriangle,
   ArrowUpRight,
   ArrowDownRight,
@@ -17,6 +17,7 @@ import { relationships, artefacts } from '@/data/mockData';
 interface InsightPanelProps {
   artefact: Artefact;
   onClose: () => void;
+  onImpactAnalysis: () => void;
 }
 
 const riskStyles: Record<RiskLevel, { bg: string; text: string; label: string }> = {
@@ -33,11 +34,11 @@ const statusStyles: Record<string, { bg: string; text: string }> = {
   planned: { bg: 'bg-info/10', text: 'text-info' },
 };
 
-export function InsightPanel({ artefact, onClose }: InsightPanelProps) {
+export function InsightPanel({ artefact, onClose, onImpactAnalysis }: InsightPanelProps) {
   // Find related artefacts
   const upstreamRels = relationships.filter((r) => r.target === artefact.id);
   const downstreamRels = relationships.filter((r) => r.source === artefact.id);
-  
+
   const upstream = upstreamRels.map(r => artefacts.find(a => a.id === r.source)!).filter(Boolean);
   const downstream = downstreamRels.map(r => artefacts.find(a => a.id === r.target)!).filter(Boolean);
 
@@ -177,11 +178,7 @@ export function InsightPanel({ artefact, onClose }: InsightPanelProps) {
       <motion.button
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
-        onClick={() => {
-          // Trigger impact analysis modal - parent component handles this
-          const event = new CustomEvent('openImpactAnalysis', { detail: artefact });
-          window.dispatchEvent(event);
-        }}
+        onClick={onImpactAnalysis}
         className="w-full mt-6 px-4 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors"
       >
         วิเคราะห์ผลกระทบ
