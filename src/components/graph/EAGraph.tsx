@@ -1,12 +1,14 @@
 import { useCallback, useMemo, useState, useEffect, useRef } from 'react';
 import {
   ReactFlow,
+  ReactFlowProvider,
   Node,
   Edge,
   Controls,
   Background,
   useNodesState,
   useEdgesState,
+  useReactFlow,
   ConnectionMode,
   Panel,
   MarkerType,
@@ -89,8 +91,10 @@ function createEdges(): Edge[] {
   }));
 }
 
-export function EAGraph() {
+function EAGraphInner() {
   const { role } = useAuth();
+  const reactFlowWrapper = useRef<HTMLDivElement>(null);
+  const { screenToFlowPosition } = useReactFlow();
   const [selectedNode, setSelectedNode] = useState<Artefact | null>(null);
   const [filters, setFilters] = useState<ArtefactType[]>([]);
   const [showImpactAnalysis, setShowImpactAnalysis] = useState(false);
@@ -462,30 +466,36 @@ export function EAGraph() {
 
       const artefact = JSON.parse(data) as Artefact;
 
-      // Check if node already exists
+      // Use screenToFlowPosition to properly convert screen coordinates to flow coordinates
+      const position = screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+
+      // Check if node already exists - if so, create a copy with a unique ID
+      let nodeId = artefact.id;
+      let nodeName = artefact.name;
       if (nodes.find((n) => n.id === artefact.id)) {
-        // Maybe highlight existing node?
-        return;
+        // Create a unique ID for the copy
+        const timestamp = Date.now();
+        nodeId = `${artefact.id}-copy-${timestamp}`;
+        nodeName = `${artefact.name} (Copy)`;
       }
 
-      // Get drop position relative to the react flow bounds
-      // Note: In a real app we'd need to use useReactFlow().screenToFlowPosition
-      // simplified here for mock
-      const position = {
-        x: event.clientX - 300, // Approximate offset for sidebar
-        y: event.clientY - 100, // Approximate offset for header
-      };
-
       const newNode: AppNode = {
-        id: artefact.id,
+        id: nodeId,
         type: 'artefact',
         position,
-        data: artefact,
+        data: {
+          ...artefact,
+          id: nodeId,
+          name: nodeName,
+        },
       };
 
       setNodes((nds) => nds.concat(newNode));
     },
-    [nodes, setNodes],
+    [nodes, setNodes, screenToFlowPosition],
   );
 
   return (
@@ -591,7 +601,7 @@ export function EAGraph() {
         </div>
 
         {/* Graph Canvas Wrapper */}
-        <div className="flex-1 relative h-full">
+        <div ref={reactFlowWrapper} className="flex-1 relative h-full">
           <ReactFlow
             nodes={filteredNodes}
             edges={filteredEdges}
@@ -732,5 +742,14 @@ export function EAGraph() {
 
       </div>
     </div>
+  );
+}
+
+// Wrapper component that provides ReactFlowProvider
+export function EAGraph() {
+  return (
+    <ReactFlowProvider>
+      <EAGraphInner />
+    </ReactFlowProvider>
   );
 }

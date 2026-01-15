@@ -58,7 +58,7 @@ const Index = () => {
           <div className="relative z-10">
             <h2 className="text-2xl font-bold mb-2">Executive Dashboard</h2>
             <p className="text-primary-foreground/80 max-w-xl">
-              Connected to Backend (MongoDB) • ระบบเชื่อมต่อสมบูรณ์ • มี {stats?.total || 125} Artefacts ในระบบ
+              Welcome to the Enterprise Architecture Management System
             </p>
           </div>
         </motion.div>
