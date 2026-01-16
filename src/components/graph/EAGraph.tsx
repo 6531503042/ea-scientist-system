@@ -501,50 +501,54 @@ function EAGraphInner() {
   return (
     <div className="relative flex w-full h-[calc(100vh-4rem)] flex-col">
       {/* Top Toolbar */}
-      <div className="h-14 border-b bg-background flex items-center justify-between px-6 z-10">
-        <div className="flex items-center gap-4">
+      <div className="h-12 border-b bg-background flex items-center justify-between px-6 z-10">
+        <div className="flex items-center gap-3">
           {/* View Mode Toggle */}
-          <div className="flex items-center p-1 bg-muted rounded-lg">
+          <div className="flex items-center h-8 p-0.5 bg-muted rounded-lg">
             <button
               onClick={() => setViewMode('architect')}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${viewMode === 'architect'
+              className={`flex items-center gap-1.5 px-3 h-7 rounded-md text-xs font-medium transition-all ${viewMode === 'architect'
                 ? 'bg-primary text-primary-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
                 }`}
             >
-              <Briefcase className="w-4 h-4" />
+              <Briefcase className="w-3.5 h-3.5" />
               Architect
             </button>
             <button
               onClick={() => setViewMode('executive')}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${viewMode === 'executive'
+              className={`flex items-center gap-1.5 px-3 h-7 rounded-md text-xs font-medium transition-all ${viewMode === 'executive'
                 ? 'bg-primary text-primary-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
                 }`}
             >
-              <User className="w-4 h-4" />
+              <User className="w-3.5 h-3.5" />
               Executive
             </button>
           </div>
 
-          <div className="w-px h-6 bg-border" />
+          <div className="w-px h-5 bg-border" />
 
-          {/* Layout Toggle */}
-          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+          {/* Layout Toggle - Fixed height */}
+          <div className="flex items-center h-8 p-0.5 bg-muted rounded-lg">
             <button
               onClick={() => setLayoutMode('tree')}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors ${layoutMode === 'tree' ? 'text-primary bg-primary/10 font-medium' : 'hover:bg-muted'
+              className={`flex items-center gap-1.5 px-3 h-7 rounded-md text-xs font-medium transition-all ${layoutMode === 'tree' 
+                ? 'bg-card text-foreground shadow-sm' 
+                : 'text-muted-foreground hover:text-foreground'
                 }`}
             >
-              <GitGraph className="w-4 h-4" />
-              Tree Layout
+              <GitGraph className="w-3.5 h-3.5" />
+              Tree
             </button>
             <button
               onClick={() => setLayoutMode('graph')}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors ${layoutMode === 'graph' ? 'text-primary bg-primary/10 font-medium' : 'hover:bg-muted'
+              className={`flex items-center gap-1.5 px-3 h-7 rounded-md text-xs font-medium transition-all ${layoutMode === 'graph' 
+                ? 'bg-card text-foreground shadow-sm' 
+                : 'text-muted-foreground hover:text-foreground'
                 }`}
             >
-              <Network className="w-4 h-4" />
+              <Network className="w-3.5 h-3.5" />
               Graph
             </button>
           </div>

@@ -14,16 +14,17 @@ import {
   Link,
   Shield,
   Briefcase,
-  AlertTriangle,
   Grid,
   List,
-  Filter,
-  X
+  FileText,
+  Upload,
+  LayoutGrid
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { artefacts, typeLabels, type Artefact, type ArtefactType, type RiskLevel } from '@/data/mockData';
+import { artefacts, typeLabels, type Artefact, type ArtefactType } from '@/data/mockData';
 import { ArtefactDetailModal } from './ArtefactDetailModal';
 import { CreateArtefactModal } from './CreateArtefactModal';
+import { EditArtefactModal } from './EditArtefactModal';
 
 const typeIcons: Record<ArtefactType, React.ElementType> = {
   business: Briefcase,
@@ -34,6 +35,9 @@ const typeIcons: Record<ArtefactType, React.ElementType> = {
   security: Shield,
 };
 
+// TOGAF Order - Business → Application → Data → Technology → Security → Integration
+const togafOrder: ArtefactType[] = ['business', 'application', 'data', 'technology', 'security', 'integration'];
+
 const typeColors: Record<ArtefactType, { bg: string; text: string; border: string }> = {
   business: { bg: 'bg-[hsl(262,83%,58%)]/10', text: 'text-[hsl(262,83%,58%)]', border: 'border-[hsl(262,83%,58%)]/30' },
   data: { bg: 'bg-info/10', text: 'text-info', border: 'border-info/30' },
@@ -43,13 +47,6 @@ const typeColors: Record<ArtefactType, { bg: string; text: string; border: strin
   integration: { bg: 'bg-warning/10', text: 'text-warning', border: 'border-warning/30' },
 };
 
-const riskColors: Record<RiskLevel, string> = {
-  high: 'bg-destructive text-white',
-  medium: 'bg-warning text-white',
-  low: 'bg-success text-white',
-  none: 'bg-muted text-muted-foreground',
-};
-
 const statusColors: Record<string, string> = {
   active: 'bg-success/10 text-success',
   draft: 'bg-warning/10 text-warning',
@@ -57,22 +54,55 @@ const statusColors: Record<string, string> = {
   planned: 'bg-info/10 text-info',
 };
 
-const filterCategories = [
-  { type: 'business' as ArtefactType, label: 'กระบวนการ', icon: Briefcase },
-  { type: 'application' as ArtefactType, label: 'แอปพลิเคชัน', icon: Layers },
-  { type: 'data' as ArtefactType, label: 'ข้อมูล', icon: Database },
-  { type: 'technology' as ArtefactType, label: 'เทคโนโลยี', icon: Cpu },
-  { type: 'security' as ArtefactType, label: 'ความปลอดภัย', icon: Shield },
-  { type: 'integration' as ArtefactType, label: 'การเชื่อมต่อ', icon: Link },
-];
+// Full labels following TOGAF
+const togafLabels: Record<ArtefactType, { en: string; th: string; description: string }> = {
+  business: { 
+    en: 'Business Architecture', 
+    th: 'สถาปัตยกรรมธุรกิจ', 
+    description: 'กระบวนการธุรกิจ, กลยุทธ์, องค์กร' 
+  },
+  application: { 
+    en: 'Application Architecture', 
+    th: 'สถาปัตยกรรมแอปพลิเคชัน', 
+    description: 'ระบบซอฟต์แวร์และแอปพลิเคชัน' 
+  },
+  data: { 
+    en: 'Data Architecture', 
+    th: 'สถาปัตยกรรมข้อมูล', 
+    description: 'โครงสร้างข้อมูลและการจัดการ' 
+  },
+  technology: { 
+    en: 'Technology Architecture', 
+    th: 'สถาปัตยกรรมเทคโนโลยี', 
+    description: 'โครงสร้างพื้นฐาน IT' 
+  },
+  security: { 
+    en: 'Security Architecture', 
+    th: 'สถาปัตยกรรมความปลอดภัย', 
+    description: 'การรักษาความปลอดภัย' 
+  },
+  integration: { 
+    en: 'Integration Architecture', 
+    th: 'สถาปัตยกรรมการเชื่อมต่อ', 
+    description: 'การเชื่อมต่อระบบ API' 
+  },
+};
+
+const filterCategories = togafOrder.map(type => ({
+  type,
+  label: togafLabels[type].th,
+  labelEn: togafLabels[type].en,
+  icon: typeIcons[type],
+  description: togafLabels[type].description
+}));
 
 export function ArtefactListEnhanced() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState<ArtefactType | null>(null);
-  const [selectedRisk, setSelectedRisk] = useState<RiskLevel | 'all'>('all');
-  const [sortBy, setSortBy] = useState<'name' | 'type' | 'risk' | 'updated'>('name');
+  const [sortBy, setSortBy] = useState<'name' | 'type' | 'updated'>('type');
   const [selectedArtefact, setSelectedArtefact] = useState<Artefact | null>(null);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [editArtefact, setEditArtefact] = useState<Artefact | null>(null);
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const filteredArtefacts = useMemo(() => {
@@ -91,19 +121,13 @@ export function ArtefactListEnhanced() {
       result = result.filter(a => a.type === selectedType);
     }
 
-    if (selectedRisk !== 'all') {
-      result = result.filter(a => a.riskLevel === selectedRisk);
-    }
-
     result.sort((a, b) => {
       switch (sortBy) {
         case 'name':
           return a.name.localeCompare(b.name);
         case 'type':
-          return a.type.localeCompare(b.type);
-        case 'risk':
-          const riskOrder = { high: 0, medium: 1, low: 2, none: 3 };
-          return riskOrder[a.riskLevel] - riskOrder[b.riskLevel];
+          // Sort by TOGAF order
+          return togafOrder.indexOf(a.type) - togafOrder.indexOf(b.type);
         case 'updated':
           return new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime();
         default:
@@ -112,32 +136,70 @@ export function ArtefactListEnhanced() {
     });
 
     return result;
-  }, [searchQuery, selectedType, selectedRisk, sortBy]);
+  }, [searchQuery, selectedType, sortBy]);
+
+  const artefactCounts = useMemo(() => {
+    const counts: Record<ArtefactType, number> = {
+      business: 0, application: 0, data: 0, technology: 0, security: 0, integration: 0
+    };
+    artefacts.forEach(a => counts[a.type]++);
+    return counts;
+  }, []);
 
   return (
     <div className="flex gap-6">
-      {/* Sidebar Filters */}
-      <div className="w-64 flex-shrink-0 space-y-6">
+      {/* Sidebar Filters - TOGAF Ordered */}
+      <div className="w-72 flex-shrink-0 space-y-6">
         <div className="bg-card rounded-xl border border-border p-4">
-          <h3 className="font-semibold text-foreground mb-4">Artefact Type</h3>
+          <h3 className="font-semibold text-foreground mb-2">ประเภท Artefact</h3>
+          <p className="text-xs text-muted-foreground mb-4">เรียงตามมาตรฐาน TOGAF</p>
+          
           <div className="space-y-1">
-            {filterCategories.map((cat) => {
+            {/* All button */}
+            <button
+              onClick={() => setSelectedType(null)}
+              className={cn(
+                "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors",
+                selectedType === null
+                  ? "bg-primary text-primary-foreground"
+                  : "hover:bg-muted text-foreground"
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <LayoutGrid className="w-4 h-4" />
+                <span className="font-medium">ทั้งหมด</span>
+              </div>
+              <span className={cn(
+                "px-2 py-0.5 text-xs rounded-full",
+                selectedType === null ? "bg-primary-foreground/20" : "bg-muted"
+              )}>
+                {artefacts.length}
+              </span>
+            </button>
+            
+            {filterCategories.map((cat, index) => {
               const Icon = cat.icon;
-              const count = artefacts.filter(a => a.type === cat.type).length;
+              const count = artefactCounts[cat.type];
               return (
                 <button
                   key={cat.type}
                   onClick={() => setSelectedType(selectedType === cat.type ? null : cat.type)}
                   className={cn(
-                    "w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors",
+                    "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors",
                     selectedType === cat.type
                       ? "bg-primary text-primary-foreground"
                       : "hover:bg-muted text-foreground"
                   )}
                 >
-                  <div className="flex items-center gap-2">
-                    <Icon className="w-4 h-4" />
-                    <span>{cat.label}</span>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-muted-foreground w-4">{index + 1}.</span>
+                      <Icon className="w-4 h-4" />
+                    </div>
+                    <div className="text-left">
+                      <span className="block">{cat.label}</span>
+                      <span className="text-xs opacity-70">{cat.labelEn}</span>
+                    </div>
                   </div>
                   <span className={cn(
                     "px-2 py-0.5 text-xs rounded-full",
@@ -152,32 +214,6 @@ export function ArtefactListEnhanced() {
         </div>
 
         <div className="bg-card rounded-xl border border-border p-4">
-          <h3 className="font-semibold text-foreground mb-4">ความเสี่ยง</h3>
-          <div className="space-y-1">
-            {(['all', 'high', 'medium', 'low'] as const).map((risk) => (
-              <button
-                key={risk}
-                onClick={() => setSelectedRisk(risk)}
-                className={cn(
-                  "w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors",
-                  selectedRisk === risk
-                    ? "bg-primary text-primary-foreground"
-                    : "hover:bg-muted text-foreground"
-                )}
-              >
-                <span>{risk === 'all' ? 'ทั้งหมด' : risk === 'high' ? 'สูง' : risk === 'medium' ? 'ปานกลาง' : 'ต่ำ'}</span>
-                <span className={cn(
-                  "px-2 py-0.5 text-xs rounded-full",
-                  selectedRisk === risk ? "bg-primary-foreground/20" : "bg-muted"
-                )}>
-                  {risk === 'all' ? artefacts.length : artefacts.filter(a => a.riskLevel === risk).length}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="bg-card rounded-xl border border-border p-4">
           <h3 className="font-semibold text-foreground mb-4">สรุปข้อมูล</h3>
           <div className="space-y-3">
             <div className="flex justify-between text-sm">
@@ -185,13 +221,27 @@ export function ArtefactListEnhanced() {
               <span className="font-medium text-success">{artefacts.filter(a => a.status === 'active').length}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">ความเสี่ยงสูง</span>
-              <span className="font-medium text-destructive">{artefacts.filter(a => a.riskLevel === 'high').length}</span>
+              <span className="text-muted-foreground">Draft</span>
+              <span className="font-medium text-warning">{artefacts.filter(a => a.status === 'draft').length}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">ไม่มีเจ้าของ</span>
-              <span className="font-medium text-warning">{artefacts.filter(a => !a.owner).length}</span>
+              <span className="font-medium text-muted-foreground">{artefacts.filter(a => !a.owner).length}</span>
             </div>
+          </div>
+        </div>
+
+        <div className="bg-card rounded-xl border border-border p-4">
+          <h3 className="font-semibold text-foreground mb-2">การนำเข้า/ส่งออก</h3>
+          <div className="space-y-2 mt-3">
+            <button className="w-full flex items-center gap-2 px-3 py-2 text-sm bg-muted hover:bg-muted/80 rounded-lg transition-colors">
+              <Download className="w-4 h-4" />
+              ส่งออก Excel
+            </button>
+            <button className="w-full flex items-center gap-2 px-3 py-2 text-sm bg-muted hover:bg-muted/80 rounded-lg transition-colors">
+              <Upload className="w-4 h-4" />
+              นำเข้า Excel
+            </button>
           </div>
         </div>
       </div>
@@ -201,8 +251,12 @@ export function ArtefactListEnhanced() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold text-foreground">Artefacts ทั้งหมด</h2>
-            <p className="text-sm text-muted-foreground">{filteredArtefacts.length} รายการ</p>
+            <h2 className="text-xl font-bold text-foreground">
+              {selectedType ? togafLabels[selectedType].th : 'Artefacts ทั้งหมด'}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {selectedType ? togafLabels[selectedType].description : `${filteredArtefacts.length} รายการ`}
+            </p>
           </div>
           <motion.button
             whileHover={{ scale: 1.02 }}
@@ -233,9 +287,8 @@ export function ArtefactListEnhanced() {
               onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
               className="h-11 pl-4 pr-10 text-sm bg-card border border-border rounded-xl appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
+              <option value="type">เรียงตาม TOGAF</option>
               <option value="name">เรียงตามชื่อ</option>
-              <option value="type">เรียงตามประเภท</option>
-              <option value="risk">เรียงตามความเสี่ยง</option>
               <option value="updated">เรียงตามวันที่อัปเดต</option>
             </select>
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
@@ -260,10 +313,6 @@ export function ArtefactListEnhanced() {
               <Grid className="w-4 h-4" />
             </button>
           </div>
-          <button className="flex items-center gap-2 px-4 h-11 text-sm bg-muted hover:bg-muted/80 rounded-xl transition-colors">
-            <Download className="w-4 h-4" />
-            Export
-          </button>
         </div>
 
         {/* List View */}
@@ -275,8 +324,8 @@ export function ArtefactListEnhanced() {
                   <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Artefact</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">ประเภท</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">สถานะ</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">ความเสี่ยง</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Owner</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Version</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">อัปเดต</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">การดำเนินการ</th>
                 </tr>
@@ -310,7 +359,7 @@ export function ArtefactListEnhanced() {
                         </td>
                         <td className="px-4 py-4">
                           <span className={cn("text-sm px-2 py-1 rounded-lg", colors.bg, colors.text)}>
-                            {typeLabels[artefact.type].th}
+                            {togafLabels[artefact.type].th}
                           </span>
                         </td>
                         <td className="px-4 py-4">
@@ -322,32 +371,32 @@ export function ArtefactListEnhanced() {
                           </span>
                         </td>
                         <td className="px-4 py-4">
-                          <span className={cn(
-                            "inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full",
-                            riskColors[artefact.riskLevel]
-                          )}>
-                            {artefact.riskLevel !== 'none' && artefact.riskLevel !== 'low' && (
-                              <AlertTriangle className="w-3 h-3" />
-                            )}
-                            {artefact.riskLevel === 'high' ? 'สูง' : artefact.riskLevel === 'medium' ? 'ปานกลาง' : artefact.riskLevel === 'low' ? 'ต่ำ' : 'ไม่มี'}
-                          </span>
-                        </td>
-                        <td className="px-4 py-4">
                           <p className="text-sm text-foreground">{artefact.owner}</p>
                           <p className="text-xs text-muted-foreground">{artefact.department}</p>
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className="text-sm text-muted-foreground">v{artefact.version}</span>
                         </td>
                         <td className="px-4 py-4">
                           <span className="text-sm text-muted-foreground">{artefact.lastUpdated}</span>
                         </td>
                         <td className="px-4 py-4">
                           <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                            <button className="p-2 hover:bg-muted rounded-lg transition-colors">
+                            <button 
+                              onClick={() => setSelectedArtefact(artefact)}
+                              className="p-2 hover:bg-muted rounded-lg transition-colors"
+                              title="ดูรายละเอียด"
+                            >
                               <Eye className="w-4 h-4 text-muted-foreground" />
                             </button>
-                            <button className="p-2 hover:bg-muted rounded-lg transition-colors">
+                            <button 
+                              onClick={() => setEditArtefact(artefact)}
+                              className="p-2 hover:bg-muted rounded-lg transition-colors"
+                              title="แก้ไข"
+                            >
                               <Edit className="w-4 h-4 text-muted-foreground" />
                             </button>
-                            <button className="p-2 hover:bg-destructive/10 rounded-lg transition-colors">
+                            <button className="p-2 hover:bg-destructive/10 rounded-lg transition-colors" title="ลบ">
                               <Trash2 className="w-4 h-4 text-destructive" />
                             </button>
                           </div>
@@ -383,9 +432,22 @@ export function ArtefactListEnhanced() {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSubmit={(data) => {
-          console.log('New Artefact:', data);
+          console.log('Create artefact:', data);
+          setIsCreateModalOpen(false);
         }}
       />
+
+      {/* Edit Modal */}
+      {editArtefact && (
+        <EditArtefactModal
+          artefact={editArtefact}
+          onClose={() => setEditArtefact(null)}
+          onSubmit={(data) => {
+            console.log('Update artefact:', data);
+            setEditArtefact(null);
+          }}
+        />
+      )}
     </div>
   );
 }
