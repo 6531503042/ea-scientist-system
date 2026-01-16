@@ -17,12 +17,13 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { motion, AnimatePresence } from 'framer-motion';
-import { History, Briefcase, User, GitGraph, Network, Activity, X, RotateCcw, Trash2, AlertTriangle, Info } from 'lucide-react';
+import { History, Briefcase, User, GitGraph, Network, Activity, X, RotateCcw, Trash2, AlertTriangle, Info, FolderTree } from 'lucide-react';
 import { ArtefactNode } from './ArtefactNode';
 import { FilterPanel } from './FilterPanel';
 import { InsightPanel } from './InsightPanel';
 import { ImpactAnalysisModal } from './ImpactAnalysisModal';
 import { TransactionHistory } from './TransactionHistory';
+import { TreeView } from './TreeView';
 import { artefacts, relationships, type Artefact, type ArtefactType } from '@/data/mockData';
 import { useAuth } from '@/context/AuthContext';
 
@@ -103,7 +104,7 @@ function EAGraphInner() {
 
   // New state for modes
   const [viewMode, setViewMode] = useState<'architect' | 'executive'>(role === 'executive' ? 'executive' : 'architect');
-  const [layoutMode, setLayoutMode] = useState<'graph' | 'tree'>('graph');
+  const [layoutMode, setLayoutMode] = useState<'graph' | 'tree' | 'hierarchy'>('graph');
 
   // Initialize nodes and edges
   const initialNodes = useMemo(() => createNodes(artefacts), []);
@@ -500,99 +501,108 @@ function EAGraphInner() {
 
   return (
     <div className="relative flex w-full h-[calc(100vh-4rem)] flex-col">
-      {/* Top Toolbar */}
-      <div className="h-12 border-b bg-background flex items-center justify-between px-6 z-10">
-        <div className="flex items-center gap-3">
-          {/* View Mode Toggle */}
-          <div className="flex items-center h-8 p-0.5 bg-muted rounded-lg">
-            <button
-              onClick={() => setViewMode('architect')}
-              className={`flex items-center gap-1.5 px-3 h-7 rounded-md text-xs font-medium transition-all ${viewMode === 'architect'
-                ? 'bg-primary text-primary-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-                }`}
-            >
-              <Briefcase className="w-3.5 h-3.5" />
-              Architect
-            </button>
-            <button
-              onClick={() => setViewMode('executive')}
-              className={`flex items-center gap-1.5 px-3 h-7 rounded-md text-xs font-medium transition-all ${viewMode === 'executive'
-                ? 'bg-primary text-primary-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-                }`}
-            >
-              <User className="w-3.5 h-3.5" />
-              Executive
-            </button>
-          </div>
-
-          <div className="w-px h-5 bg-border" />
-
-          {/* Layout Toggle - Fixed height */}
-          <div className="flex items-center h-8 p-0.5 bg-muted rounded-lg">
-            <button
-              onClick={() => setLayoutMode('graph')}
-              className={`flex items-center gap-1.5 px-3 h-7 rounded-md text-xs font-medium transition-all ${layoutMode === 'graph'
-                ? 'bg-card text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-                }`}
-            >
-              <Network className="w-3.5 h-3.5" />
-              Graph
-            </button>
-            <button
-              onClick={() => setLayoutMode('tree')}
-              className={`flex items-center gap-1.5 px-3 h-7 rounded-md text-xs font-medium transition-all ${layoutMode === 'tree'
-                ? 'bg-card text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-                }`}
-            >
-              <GitGraph className="w-3.5 h-3.5" />
-              Tree
-            </button>
-          </div>
+      {/* Top Toolbar - Compact & Responsive */}
+      <div className="min-h-[40px] border-b bg-background flex items-center justify-start px-2 sm:px-4 py-1.5 z-10 flex-wrap gap-1.5">
+        {/* View Mode Toggle */}
+        <div className="flex items-center h-7 p-0.5 bg-muted rounded-md">
+          <button
+            onClick={() => setViewMode('architect')}
+            className={`flex items-center gap-1 px-2 h-6 rounded text-[11px] font-medium transition-all ${viewMode === 'architect'
+              ? 'bg-primary text-primary-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
+              }`}
+          >
+            <Briefcase className="w-3 h-3" />
+            <span className="hidden sm:inline">Architect</span>
+          </button>
+          <button
+            onClick={() => setViewMode('executive')}
+            className={`flex items-center gap-1 px-2 h-6 rounded text-[11px] font-medium transition-all ${viewMode === 'executive'
+              ? 'bg-primary text-primary-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
+              }`}
+          >
+            <User className="w-3 h-3" />
+            <span className="hidden sm:inline">Executive</span>
+          </button>
         </div>
 
+        <div className="w-px h-4 bg-border hidden sm:block" />
+
+        {/* Layout Toggle - Compact */}
+        <div className="flex items-center h-7 p-0.5 bg-muted rounded-md">
+          <button
+            onClick={() => setLayoutMode('graph')}
+            className={`flex items-center gap-1 px-2 h-6 rounded text-[11px] font-medium transition-all ${layoutMode === 'graph'
+              ? 'bg-card text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
+              }`}
+            title="Graph View"
+          >
+            <Network className="w-3 h-3" />
+            <span className="hidden md:inline">Graph</span>
+          </button>
+          <button
+            onClick={() => setLayoutMode('tree')}
+            className={`flex items-center gap-1 px-2 h-6 rounded text-[11px] font-medium transition-all ${layoutMode === 'tree'
+              ? 'bg-card text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
+              }`}
+            title="Tree View"
+          >
+            <GitGraph className="w-3 h-3" />
+            <span className="hidden md:inline">Tree</span>
+          </button>
+          <button
+            onClick={() => setLayoutMode('hierarchy')}
+            className={`flex items-center gap-1 px-2 h-6 rounded text-[11px] font-medium transition-all ${layoutMode === 'hierarchy'
+              ? 'bg-card text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
+              }`}
+            title="Hierarchy View"
+          >
+            <FolderTree className="w-3 h-3" />
+            <span className="hidden md:inline">Hierarchy</span>
+          </button>
+        </div>
       </div>
 
       {/* Sidebar and Canvas */}
       <div className="flex-1 relative flex overflow-hidden">
-        {/* Artefact Library Sidebar */}
-        <div className="w-64 border-r bg-card flex flex-col z-20 shadow-lg">
-          <div className="p-4 border-b">
-            <h3 className="font-semibold mb-1">Artefact Library</h3>
-            <p className="text-xs text-muted-foreground">Drag to add to canvas</p>
+        {/* Artefact Library Sidebar - Compact & Responsive */}
+        <div className="hidden sm:flex w-48 md:w-52 border-r bg-card flex-col z-20 shadow-lg">
+          <div className="px-3 py-2 border-b">
+            <h3 className="font-semibold text-sm">Artefacts</h3>
+            <p className="text-[10px] text-muted-foreground">Drag to canvas</p>
           </div>
-          <div className="flex-1 overflow-y-auto p-3">
-            <div className="space-y-6">
+          <div className="flex-1 overflow-y-auto p-2">
+            <div className="space-y-3">
               {(['business', 'application', 'data', 'technology'] as const).map((type) => {
                 const typeArtefacts = artefacts.filter(a => a.type === type);
                 if (typeArtefacts.length === 0) return null;
 
                 return (
-                  <div key={type} className="space-y-2">
-                    <h4 className="text-xs font-bold uppercase text-muted-foreground flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full bg-ea-${type}`}></span>
+                  <div key={type} className="space-y-1">
+                    <h4 className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1.5">
+                      <span className={`w-1.5 h-1.5 rounded-full bg-ea-${type}`}></span>
                       {type}
                     </h4>
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       {typeArtefacts.map(artefact => (
                         <div
                           key={artefact.id}
-                          className="p-2 bg-muted/30 border border-border rounded-lg hover:bg-muted cursor-move flex items-center gap-3 transition-colors group"
+                          className="p-1.5 bg-muted/30 border border-border rounded hover:bg-muted cursor-move flex items-center gap-2 transition-colors group"
                           draggable
                           onDragStart={(event) => {
                             event.dataTransfer.setData('application/reactflow', JSON.stringify(artefact));
                             event.dataTransfer.effectAllowed = 'move';
                           }}
                         >
-                          <div className="p-1.5 bg-background rounded-md shadow-sm group-hover:shadow-md transition-shadow">
-                            <Briefcase className="w-3 h-3 text-muted-foreground" />
+                          <div className="p-1 bg-background rounded shadow-sm">
+                            <Briefcase className="w-2.5 h-2.5 text-muted-foreground" />
                           </div>
-                          <div className="min-w-0">
-                            <span className="text-sm font-medium block truncate">{artefact.name}</span>
-                            <span className="text-xs text-muted-foreground block truncate">{artefact.id}</span>
+                          <div className="min-w-0 flex-1">
+                            <span className="text-xs font-medium block truncate">{artefact.name}</span>
                           </div>
                         </div>
                       ))}
@@ -606,107 +616,121 @@ function EAGraphInner() {
 
         {/* Graph Canvas Wrapper */}
         <div ref={reactFlowWrapper} className="flex-1 relative h-full">
-          <ReactFlow
-            nodes={filteredNodes}
-            edges={filteredEdges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            onNodeClick={handleNodeClick}
-            onPaneClick={handlePaneClick}
-            nodeTypes={nodeTypes}
-            connectionMode={ConnectionMode.Loose}
-            nodesDraggable={true}
-            nodesConnectable={true}
-            onDrop={onDrop}
-            onDragOver={onDragOver}
-            fitView
-            fitViewOptions={{ padding: 0.2 }}
-            minZoom={0.3}
-            maxZoom={1.5}
-            className="bg-background"
-          >
-            <Background color="hsl(var(--border))" gap={24} />
-            <Controls
-              className="bg-card border border-border rounded-lg shadow-card"
-              showInteractive={false}
+          {layoutMode === 'hierarchy' ? (
+            <TreeView
+              onNodeClick={(node) => {
+                // If node has artefactId, select that artefact
+                if (node.artefactId) {
+                  const artefact = artefacts.find(a => a.id === node.artefactId);
+                  if (artefact) {
+                    setSelectedNode(artefact);
+                  }
+                }
+              }}
             />
+          ) : (
+            <ReactFlow
+              nodes={filteredNodes}
+              edges={filteredEdges}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onConnect={onConnect}
+              onNodeClick={handleNodeClick}
+              onPaneClick={handlePaneClick}
+              nodeTypes={nodeTypes}
+              connectionMode={ConnectionMode.Loose}
+              nodesDraggable={true}
+              nodesConnectable={true}
+              onDrop={onDrop}
+              onDragOver={onDragOver}
+              fitView
+              fitViewOptions={{ padding: 0.2 }}
+              minZoom={0.3}
+              maxZoom={1.5}
+              className="bg-background"
+            >
+              <Background color="hsl(var(--border))" gap={24} />
+              <Controls
+                className="bg-card border border-border rounded-lg shadow-card"
+                showInteractive={false}
+              />
 
-            <Panel position="top-right" className="m-4">
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="flex items-center gap-3"
-              >
-                <div className="flex items-center gap-2 px-4 py-2 bg-card/90 backdrop-blur border border-border rounded-lg shadow-card">
-                  <span className="text-sm text-muted-foreground">
-                    {filteredNodes.length} Artefacts • {filteredEdges.length} Relationships
-                  </span>
-                </div>
-                <button
-                  onClick={() => setShowHistory(true)}
-                  className="flex items-center gap-2 px-3 py-2 bg-card/90 backdrop-blur border border-border rounded-lg shadow-card hover:bg-muted transition-colors"
+              <Panel position="top-right" className="m-4">
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="flex items-center gap-3"
                 >
-                  <History className="w-4 h-4" />
-                  <span className="text-sm">ประวัติ</span>
-                </button>
-              </motion.div>
-            </Panel>
-            {/* Impact Analysis Control Panel */}
-            {impactMode && selectedNode && (
-              <Panel position="bottom-center" className="mb-8 p-4 bg-card/95 backdrop-blur border border-border rounded-xl shadow-2xl flex flex-col gap-4 min-w-[500px]">
-                <div className="flex items-center justify-between border-b pb-3">
-                  <div>
-                    <h3 className="font-bold flex items-center gap-2">
-                      <Activity className="w-5 h-5 text-primary" />
-                      Simulation Mode: {selectedNode.name}
-                    </h3>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Impacts: <span className="text-foreground font-medium">{impactStats.affected} systems</span>
-                      {impactStats.critical > 0 && <span className="text-destructive ml-2 font-bold">({impactStats.critical} Critical)</span>}
-                    </p>
+                  <div className="flex items-center gap-2 px-4 py-2 bg-card/90 backdrop-blur border border-border rounded-lg shadow-card">
+                    <span className="text-sm text-muted-foreground">
+                      {filteredNodes.length} Artefacts • {filteredEdges.length} Relationships
+                    </span>
                   </div>
-                  <button onClick={() => setImpactMode(false)} className="p-2 hover:bg-muted rounded-full">
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-4">
                   <button
-                    onClick={() => setSimulationAction(curr => curr === 'modify' ? 'none' : 'modify')}
-                    className={`flex-1 p-3 rounded-lg border-2 transition-all flex items-center justify-center gap-2 ${simulationAction === 'modify' ? 'border-warning bg-warning/10 text-warning font-bold' : 'border-border hover:bg-muted'}`}
+                    onClick={() => setShowHistory(true)}
+                    className="flex items-center gap-2 px-3 py-2 bg-card/90 backdrop-blur border border-border rounded-lg shadow-card hover:bg-muted transition-colors"
                   >
-                    <RotateCcw className="w-4 h-4" />
-                    Simulate Modify
+                    <History className="w-4 h-4" />
+                    <span className="text-sm">ประวัติ</span>
                   </button>
-                  <button
-                    onClick={() => setSimulationAction(curr => curr === 'delete' ? 'none' : 'delete')}
-                    className={`flex-1 p-3 rounded-lg border-2 transition-all flex items-center justify-center gap-2 ${simulationAction === 'delete' ? 'border-destructive bg-destructive/10 text-destructive font-bold' : 'border-border hover:bg-muted'}`}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Simulate Delete
-                  </button>
-                </div>
-
-                {simulationAction !== 'none' && (
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-sm p-3 bg-muted rounded-lg border border-border">
-                    {simulationAction === 'delete' ? (
-                      <p className="flex items-center gap-2 text-destructive">
-                        <AlertTriangle className="w-4 h-4" />
-                        <strong>Warning:</strong> Deleting this artefact breaks {impactStats.affected} dependent chains.
-                      </p>
-                    ) : (
-                      <p className="flex items-center gap-2 text-warning">
-                        <Info className="w-4 h-4" />
-                        <strong>Note:</strong> Modification requires regression testing for {impactStats.affected} systems.
-                      </p>
-                    )}
-                  </motion.div>
-                )}
+                </motion.div>
               </Panel>
-            )}
+              {/* Impact Analysis Control Panel - Compact & Responsive */}
+              {impactMode && selectedNode && (
+                <Panel position="bottom-center" className="mb-4 mx-2 p-3 bg-card/95 backdrop-blur border border-border rounded-lg shadow-2xl flex flex-col gap-2 w-[calc(100%-1rem)] sm:w-auto sm:min-w-[320px] md:min-w-[400px]">
+                  <div className="flex items-center justify-between border-b pb-2">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-sm font-bold flex items-center gap-1.5 truncate">
+                        <Activity className="w-4 h-4 text-primary flex-shrink-0" />
+                        <span className="truncate">{selectedNode.name}</span>
+                      </h3>
+                      <p className="text-[10px] text-muted-foreground">
+                        <span className="text-foreground font-medium">{impactStats.affected}</span> impacts
+                        {impactStats.critical > 0 && <span className="text-destructive ml-1 font-bold">({impactStats.critical} critical)</span>}
+                      </p>
+                    </div>
+                    <button onClick={() => setImpactMode(false)} className="p-1.5 hover:bg-muted rounded-full flex-shrink-0">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
 
-          </ReactFlow>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setSimulationAction(curr => curr === 'modify' ? 'none' : 'modify')}
+                      className={`flex-1 py-2 px-2 rounded border-2 transition-all flex items-center justify-center gap-1.5 text-xs ${simulationAction === 'modify' ? 'border-warning bg-warning/10 text-warning font-bold' : 'border-border hover:bg-muted'}`}
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Simulate</span> Modify
+                    </button>
+                    <button
+                      onClick={() => setSimulationAction(curr => curr === 'delete' ? 'none' : 'delete')}
+                      className={`flex-1 py-2 px-2 rounded border-2 transition-all flex items-center justify-center gap-1.5 text-xs ${simulationAction === 'delete' ? 'border-destructive bg-destructive/10 text-destructive font-bold' : 'border-border hover:bg-muted'}`}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Simulate</span> Delete
+                    </button>
+                  </div>
+
+                  {simulationAction !== 'none' && (
+                    <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="text-xs p-2 bg-muted rounded border border-border">
+                      {simulationAction === 'delete' ? (
+                        <p className="flex items-start gap-1.5 text-destructive">
+                          <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                          <span>Breaks {impactStats.affected} dependencies</span>
+                        </p>
+                      ) : (
+                        <p className="flex items-start gap-1.5 text-warning">
+                          <Info className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                          <span>Requires testing for {impactStats.affected} systems</span>
+                        </p>
+                      )}
+                    </motion.div>
+                  )}
+                </Panel>
+              )}
+
+            </ReactFlow>
+          )}
         </div>
 
         {/* Right Side: FilterPanel or InsightPanel */}
