@@ -7,7 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { EAGraph } from '@/components/graph/EAGraph';
 import { ArtefactListEnhanced } from '@/components/artefacts/ArtefactListEnhanced';
-import { ReportsPageEnhanced } from '@/components/reports/ReportsPageEnhanced';
+
 import { UsersPageEnhanced } from '@/components/admin/UsersPageEnhanced';
 import { AuditLogPageEnhanced } from '@/components/admin/AuditLogPageEnhanced';
 import { SettingsPage } from '@/components/admin/SettingsPage';
@@ -30,7 +30,7 @@ const Layout = () => {
       case '/': return { title: 'Executive Dashboard', subtitle: 'ภาพรวมสถาปัตยกรรมองค์กร • กรมวิทยาศาสตร์บริการ' };
       case '/graph': return { title: 'Architecture Map', subtitle: 'แผนผังความสัมพันธ์ระหว่าง Artefacts' };
       case '/artefacts': return { title: 'Artefacts', subtitle: 'จัดการ Artefacts ทั้งหมดในระบบ' };
-      case '/reports': return { title: 'รายงาน', subtitle: 'สร้างและดาวน์โหลดรายงาน' };
+
       case '/users': return { title: 'จัดการผู้ใช้งาน', subtitle: 'บัญชีผู้ใช้และสิทธิ์การเข้าถึง' };
       case '/audit': return { title: 'Audit Log', subtitle: 'บันทึกการใช้งานระบบ' };
       case '/settings': return { title: 'ตั้งค่าระบบ', subtitle: 'กำหนดค่าระบบ EA Management' };
@@ -64,7 +64,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/graph" element={<EAGraph />} />
             <Route path="/artefacts" element={<ArtefactListEnhanced />} />
-            <Route path="/reports" element={<ReportsPageEnhanced />} />
+
             <Route path="/users" element={<UsersPageEnhanced />} />
             <Route path="/audit" element={<AuditLogPageEnhanced />} />
             <Route path="/settings" element={<SettingsPage />} />

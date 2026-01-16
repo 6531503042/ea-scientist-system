@@ -11,7 +11,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Shield,
-  FileText,
   LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -29,7 +28,6 @@ const navItems: NavItem[] = [
   { icon: LayoutDashboard, label: 'Dashboard', labelTh: 'แดชบอร์ด', href: '/' },
   { icon: Network, label: 'EA Graph', labelTh: 'แผนผังสถาปัตยกรรม', href: '/graph' },
   { icon: Layers, label: 'Artefacts', labelTh: 'รายการ Artefact', href: '/artefacts' },
-  { icon: FileText, label: 'Reports', labelTh: 'รายงาน', href: '/reports' },
 ];
 
 const adminItems: NavItem[] = [

@@ -532,24 +532,24 @@ function EAGraphInner() {
           {/* Layout Toggle - Fixed height */}
           <div className="flex items-center h-8 p-0.5 bg-muted rounded-lg">
             <button
-              onClick={() => setLayoutMode('tree')}
-              className={`flex items-center gap-1.5 px-3 h-7 rounded-md text-xs font-medium transition-all ${layoutMode === 'tree' 
-                ? 'bg-card text-foreground shadow-sm' 
-                : 'text-muted-foreground hover:text-foreground'
-                }`}
-            >
-              <GitGraph className="w-3.5 h-3.5" />
-              Tree
-            </button>
-            <button
               onClick={() => setLayoutMode('graph')}
-              className={`flex items-center gap-1.5 px-3 h-7 rounded-md text-xs font-medium transition-all ${layoutMode === 'graph' 
-                ? 'bg-card text-foreground shadow-sm' 
+              className={`flex items-center gap-1.5 px-3 h-7 rounded-md text-xs font-medium transition-all ${layoutMode === 'graph'
+                ? 'bg-card text-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
                 }`}
             >
               <Network className="w-3.5 h-3.5" />
               Graph
+            </button>
+            <button
+              onClick={() => setLayoutMode('tree')}
+              className={`flex items-center gap-1.5 px-3 h-7 rounded-md text-xs font-medium transition-all ${layoutMode === 'tree'
+                ? 'bg-card text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+                }`}
+            >
+              <GitGraph className="w-3.5 h-3.5" />
+              Tree
             </button>
           </div>
         </div>
@@ -720,7 +720,11 @@ function EAGraphInner() {
           </AnimatePresence>
         ) : (
           <div className="border-l border-border bg-card">
-            <FilterPanel selectedTypes={filters} onFilterChange={setFilters} />
+            <FilterPanel
+              selectedTypes={filters}
+              onFilterChange={setFilters}
+              relationships={edges}
+            />
           </div>
         )}
 

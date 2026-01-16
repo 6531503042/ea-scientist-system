@@ -1,11 +1,14 @@
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Filter, Layers, Database, Cpu, Link, Shield, Briefcase, X } from 'lucide-react';
+import { Filter, Layers, Database, Cpu, Link, Shield, Briefcase, X, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ArtefactType } from '@/data/mockData';
+import type { Edge } from '@xyflow/react';
 
 interface FilterPanelProps {
   selectedTypes: ArtefactType[];
   onFilterChange: (types: ArtefactType[]) => void;
+  relationships?: Edge[];
 }
 
 const filterOptions: { type: ArtefactType; label: string; labelTh: string; icon: React.ElementType; color: string }[] = [
@@ -17,7 +20,7 @@ const filterOptions: { type: ArtefactType; label: string; labelTh: string; icon:
   { type: 'integration', label: 'Integration', labelTh: 'การเชื่อมต่อ', icon: Link, color: 'ea-integration' },
 ];
 
-export function FilterPanel({ selectedTypes, onFilterChange }: FilterPanelProps) {
+export function FilterPanel({ selectedTypes, onFilterChange, relationships = [] }: FilterPanelProps) {
   const toggleFilter = (type: ArtefactType) => {
     if (selectedTypes.includes(type)) {
       onFilterChange(selectedTypes.filter((t) => t !== type));
@@ -29,6 +32,39 @@ export function FilterPanel({ selectedTypes, onFilterChange }: FilterPanelProps)
   const clearFilters = () => {
     onFilterChange([]);
   };
+
+  // Calculate relationship counts per type based on source/target node prefixes
+  const relationshipCounts = useMemo(() => {
+    const counts: Record<ArtefactType, number> = {
+      business: 0,
+      application: 0,
+      data: 0,
+      technology: 0,
+      security: 0,
+      integration: 0,
+    };
+
+    relationships.forEach(edge => {
+      // Extract type from node ID prefixes (e.g., 'ba-001' -> business, 'app-001' -> application)
+      const getTypeFromId = (id: string): ArtefactType | null => {
+        if (id.startsWith('ba-')) return 'business';
+        if (id.startsWith('app-')) return 'application';
+        if (id.startsWith('data-')) return 'data';
+        if (id.startsWith('tech-')) return 'technology';
+        if (id.startsWith('sec-')) return 'security';
+        if (id.startsWith('int-')) return 'integration';
+        return null;
+      };
+
+      const sourceType = getTypeFromId(edge.source);
+      const targetType = getTypeFromId(edge.target);
+
+      if (sourceType) counts[sourceType]++;
+      if (targetType && targetType !== sourceType) counts[targetType]++;
+    });
+
+    return counts;
+  }, [relationships]);
 
   return (
     <motion.div
@@ -62,7 +98,8 @@ export function FilterPanel({ selectedTypes, onFilterChange }: FilterPanelProps)
             {filterOptions.map((option) => {
               const isSelected = selectedTypes.includes(option.type);
               const Icon = option.icon;
-              
+              const relCount = relationshipCounts[option.type];
+
               return (
                 <button
                   key={option.type}
@@ -81,6 +118,15 @@ export function FilterPanel({ selectedTypes, onFilterChange }: FilterPanelProps)
                     <Icon className="w-4 h-4" />
                   </div>
                   <span className="flex-1 text-left">{option.labelTh}</span>
+                  {relCount > 0 && (
+                    <span className={cn(
+                      "flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded",
+                      isSelected ? "bg-primary-foreground/20" : "bg-muted text-muted-foreground"
+                    )}>
+                      <ArrowRight className="w-3 h-3" />
+                      {relCount}
+                    </span>
+                  )}
                   {isSelected && (
                     <motion.div
                       initial={{ scale: 0 }}
@@ -94,26 +140,20 @@ export function FilterPanel({ selectedTypes, onFilterChange }: FilterPanelProps)
           </div>
         </div>
 
-        {/* Quick Filters */}
-        <div className="pt-4 border-t border-border">
-          <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">
-            Quick Filters
-          </h4>
-          <div className="space-y-1">
-            <button className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-foreground hover:bg-muted transition-colors">
-              <span className="w-2 h-2 rounded-full bg-risk-high" />
-              High Risk Only
-            </button>
-            <button className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-foreground hover:bg-muted transition-colors">
-              <span className="w-2 h-2 rounded-full bg-warning" />
-              Duplicates
-            </button>
-            <button className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-foreground hover:bg-muted transition-colors">
-              <span className="w-2 h-2 rounded-full bg-muted-foreground" />
-              No Owner
-            </button>
+        {/* Relationship Summary */}
+        {relationships.length > 0 && (
+          <div className="pt-4 border-t border-border">
+            <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">
+              Relationships
+            </h4>
+            <div className="p-3 bg-muted/50 rounded-lg">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">ทั้งหมด</span>
+                <span className="font-medium">{relationships.length}</span>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </motion.div>
   );
