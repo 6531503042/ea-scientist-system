@@ -26,8 +26,8 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { icon: LayoutDashboard, label: 'Dashboard', labelTh: 'แดชบอร์ด', href: '/' },
-  { icon: Network, label: 'EA Graph', labelTh: 'แผนผังสถาปัตยกรรม', href: '/graph' },
   { icon: Layers, label: 'Artefacts', labelTh: 'รายการ Artefact', href: '/artefacts' },
+  { icon: Network, label: 'Architecture Map', labelTh: 'แผนผังสถาปัตยกรรม', href: '/graph' },
 ];
 
 const adminItems: NavItem[] = [

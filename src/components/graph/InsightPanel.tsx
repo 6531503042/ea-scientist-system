@@ -6,13 +6,20 @@ import {
   Calendar,
   GitBranch,
   AlertTriangle,
-  ArrowUpRight,
-  ArrowDownRight,
-  ExternalLink
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  ExternalLink,
+  Briefcase,
+  Database,
+  Layers,
+  Cpu,
+  Link,
+  Shield,
+  ChevronRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { Artefact, RiskLevel } from '@/data/mockData';
-import { relationships, artefacts } from '@/data/mockData';
+import type { Artefact, ArtefactType, RiskLevel } from '@/data/mockData';
+import { relationships, artefacts, typeLabels } from '@/data/mockData';
 
 interface InsightPanelProps {
   artefact: Artefact;
@@ -34,16 +41,96 @@ const statusStyles: Record<string, { bg: string; text: string }> = {
   planned: { bg: 'bg-info/10', text: 'text-info' },
 };
 
+// Icon mapping for artefact types
+const typeIcons: Record<ArtefactType, React.ElementType> = {
+  business: Briefcase,
+  data: Database,
+  application: Layers,
+  technology: Cpu,
+  integration: Link,
+  security: Shield,
+};
+
+// Thai labels for relationship types
+const relationshipLabels: Record<string, { th: string; desc: string }> = {
+  uses: { th: 'ใช้งาน', desc: 'ใช้งานระบบนี้' },
+  depends_on: { th: 'พึ่งพา', desc: 'ต้องพึ่งพาระบบนี้' },
+  manages: { th: 'จัดการ', desc: 'จัดการข้อมูลนี้' },
+  integrates_with: { th: 'เชื่อมต่อ', desc: 'เชื่อมต่อกับระบบนี้' },
+  supports: { th: 'สนับสนุน', desc: 'ให้การสนับสนุน' },
+};
+
 export function InsightPanel({ artefact, onClose, onImpactAnalysis }: InsightPanelProps) {
-  // Find related artefacts
+  // Find related artefacts with relationship info
   const upstreamRels = relationships.filter((r) => r.target === artefact.id);
   const downstreamRels = relationships.filter((r) => r.source === artefact.id);
 
-  const upstream = upstreamRels.map(r => artefacts.find(a => a.id === r.source)!).filter(Boolean);
-  const downstream = downstreamRels.map(r => artefacts.find(a => a.id === r.target)!).filter(Boolean);
+  const upstream = upstreamRels.map(r => ({
+    artefact: artefacts.find(a => a.id === r.source)!,
+    relationship: r
+  })).filter(item => item.artefact);
+
+  const downstream = downstreamRels.map(r => ({
+    artefact: artefacts.find(a => a.id === r.target)!,
+    relationship: r
+  })).filter(item => item.artefact);
 
   const riskStyle = riskStyles[artefact.riskLevel];
   const statusStyle = statusStyles[artefact.status];
+
+  // Component to render a related artefact item
+  const RelatedItem = ({ item, direction }: {
+    item: { artefact: Artefact; relationship: typeof relationships[0] };
+    direction: 'upstream' | 'downstream';
+  }) => {
+    const TypeIcon = typeIcons[item.artefact.type];
+    const relLabel = relationshipLabels[item.relationship.type] || { th: item.relationship.label, desc: '' };
+    const typeColor = `bg-ea-${item.artefact.type}`;
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 5 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="group p-3 rounded-lg border border-border bg-card hover:bg-muted/50 cursor-pointer transition-all hover:shadow-sm"
+      >
+        {/* Header with type icon and name */}
+        <div className="flex items-center gap-2 mb-1.5">
+          <div className={cn("flex items-center justify-center w-6 h-6 rounded-md", typeColor)}>
+            <TypeIcon className="w-3.5 h-3.5 text-white" />
+          </div>
+          <span className="text-sm font-medium text-foreground flex-1 truncate">
+            {item.artefact.name}
+          </span>
+          <ExternalLink className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+        </div>
+
+        {/* Thai name */}
+        <p className="text-xs text-muted-foreground ml-8 mb-2 truncate">
+          {item.artefact.nameTh}
+        </p>
+
+        {/* Relationship badge */}
+        <div className="flex items-center gap-1.5 ml-8">
+          <span className={cn(
+            "inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-full",
+            direction === 'upstream'
+              ? "bg-blue-500/10 text-blue-600"
+              : "bg-amber-500/10 text-amber-600"
+          )}>
+            {direction === 'upstream' ? (
+              <ArrowDownToLine className="w-2.5 h-2.5" />
+            ) : (
+              <ArrowUpFromLine className="w-2.5 h-2.5" />
+            )}
+            {relLabel.th}
+          </span>
+          <span className="text-[10px] text-muted-foreground">
+            • {typeLabels[item.artefact.type]?.th || item.artefact.type}
+          </span>
+        </div>
+      </motion.div>
+    );
+  };
 
   return (
     <motion.div
@@ -88,7 +175,7 @@ export function InsightPanel({ artefact, onClose, onImpactAnalysis }: InsightPan
       {/* Description */}
       <div className="mb-6">
         <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">
-          Description
+          รายละเอียด
         </h4>
         <p className="text-sm text-foreground leading-relaxed">{artefact.description}</p>
       </div>
@@ -98,77 +185,83 @@ export function InsightPanel({ artefact, onClose, onImpactAnalysis }: InsightPan
         <div className="p-3 bg-muted/50 rounded-lg">
           <div className="flex items-center gap-2 text-muted-foreground mb-1">
             <User className="w-3.5 h-3.5" />
-            <span className="text-xs">Owner</span>
+            <span className="text-xs">ผู้รับผิดชอบ</span>
           </div>
           <p className="text-sm font-medium text-foreground truncate">{artefact.owner}</p>
         </div>
         <div className="p-3 bg-muted/50 rounded-lg">
           <div className="flex items-center gap-2 text-muted-foreground mb-1">
             <Building className="w-3.5 h-3.5" />
-            <span className="text-xs">Department</span>
+            <span className="text-xs">หน่วยงาน</span>
           </div>
           <p className="text-sm font-medium text-foreground truncate">{artefact.department}</p>
         </div>
         <div className="p-3 bg-muted/50 rounded-lg">
           <div className="flex items-center gap-2 text-muted-foreground mb-1">
             <GitBranch className="w-3.5 h-3.5" />
-            <span className="text-xs">Version</span>
+            <span className="text-xs">เวอร์ชัน</span>
           </div>
           <p className="text-sm font-medium text-foreground">{artefact.version}</p>
         </div>
         <div className="p-3 bg-muted/50 rounded-lg">
           <div className="flex items-center gap-2 text-muted-foreground mb-1">
             <Calendar className="w-3.5 h-3.5" />
-            <span className="text-xs">Last Update</span>
+            <span className="text-xs">อัพเดตล่าสุด</span>
           </div>
           <p className="text-sm font-medium text-foreground">{artefact.lastUpdated}</p>
         </div>
       </div>
 
-      {/* Relationships */}
-      <div className="space-y-4">
-        {/* Upstream */}
+      {/* Enhanced Relationships Section */}
+      <div className="space-y-5">
+        {/* Upstream Section */}
         <div>
-          <div className="flex items-center gap-2 mb-2">
-            <ArrowDownRight className="w-4 h-4 text-info" />
-            <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Upstream ({upstream.length})
-            </h4>
+          <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-500/10">
+              <ArrowDownToLine className="w-3.5 h-3.5 text-blue-600" />
+            </div>
+            <div className="flex-1">
+              <h4 className="text-sm font-semibold text-foreground">
+                Upstream
+              </h4>
+              <p className="text-[10px] text-muted-foreground">
+                ระบบที่ส่งข้อมูลเข้ามา ({upstream.length})
+              </p>
+            </div>
           </div>
           <div className="space-y-2">
             {upstream.length > 0 ? upstream.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 hover:bg-muted cursor-pointer transition-colors"
-              >
-                <span className="text-sm text-foreground flex-1 truncate">{item.name}</span>
-                <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
-              </div>
+              <RelatedItem key={item.artefact.id} item={item} direction="upstream" />
             )) : (
-              <p className="text-sm text-muted-foreground italic">ไม่มี</p>
+              <div className="p-3 rounded-lg border border-dashed border-border text-center">
+                <p className="text-xs text-muted-foreground">ไม่มีระบบที่ส่งข้อมูลเข้ามา</p>
+              </div>
             )}
           </div>
         </div>
 
-        {/* Downstream */}
+        {/* Downstream Section */}
         <div>
-          <div className="flex items-center gap-2 mb-2">
-            <ArrowUpRight className="w-4 h-4 text-accent" />
-            <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Downstream ({downstream.length})
-            </h4>
+          <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center justify-center w-6 h-6 rounded-full bg-amber-500/10">
+              <ArrowUpFromLine className="w-3.5 h-3.5 text-amber-600" />
+            </div>
+            <div className="flex-1">
+              <h4 className="text-sm font-semibold text-foreground">
+                Downstream
+              </h4>
+              <p className="text-[10px] text-muted-foreground">
+                ระบบที่รับข้อมูลไป ({downstream.length})
+              </p>
+            </div>
           </div>
           <div className="space-y-2">
             {downstream.length > 0 ? downstream.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 hover:bg-muted cursor-pointer transition-colors"
-              >
-                <span className="text-sm text-foreground flex-1 truncate">{item.name}</span>
-                <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
-              </div>
+              <RelatedItem key={item.artefact.id} item={item} direction="downstream" />
             )) : (
-              <p className="text-sm text-muted-foreground italic">ไม่มี</p>
+              <div className="p-3 rounded-lg border border-dashed border-border text-center">
+                <p className="text-xs text-muted-foreground">ไม่มีระบบที่รับข้อมูลไป</p>
+              </div>
             )}
           </div>
         </div>
@@ -179,10 +272,13 @@ export function InsightPanel({ artefact, onClose, onImpactAnalysis }: InsightPan
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         onClick={onImpactAnalysis}
-        className="w-full mt-6 px-4 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors"
+        className="w-full mt-6 px-4 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
       >
+        <AlertTriangle className="w-4 h-4" />
         วิเคราะห์ผลกระทบ
+        <ChevronRight className="w-4 h-4" />
       </motion.button>
     </motion.div>
   );
 }
+

@@ -33,83 +33,381 @@ const typeColors: Record<ArtefactType, string> = {
   integration: 'bg-ea-integration',
 };
 
-// Templates for each type
+// Enhanced Templates for each EA type with detailed defaults
 const templates: Record<ArtefactType, { name: string; description: string; fields: Record<string, string> }[]> = {
   business: [
     {
-      name: 'กระบวนการทำงาน',
-      description: 'เทมเพลตสำหรับกระบวนการทำงานหลัก',
-      fields: { name: 'Business Process Name', nameTh: 'ชื่อกระบวนการ', description: 'กระบวนการทำงาน...' }
+      name: 'กระบวนการหลัก (Core Process)',
+      description: 'กระบวนการทำงานหลักที่สร้างมูลค่าให้องค์กร',
+      fields: {
+        name: 'Core Business Process',
+        nameTh: 'กระบวนการหลัก',
+        description: 'กระบวนการทำงานหลักที่สนับสนุนพันธกิจขององค์กร ประกอบด้วยขั้นตอน...',
+        owner: 'ผู้อำนวยการกอง',
+        department: 'กองบริหารงาน'
+      }
     },
     {
-      name: 'บริการ',
-      description: 'เทมเพลตสำหรับบริการที่ให้แก่ลูกค้า',
-      fields: { name: 'Service Name', nameTh: 'ชื่อบริการ', description: 'บริการสำหรับ...' }
+      name: 'กระบวนการสนับสนุน (Support Process)',
+      description: 'กระบวนการที่ช่วยสนับสนุนกระบวนการหลัก',
+      fields: {
+        name: 'Support Process',
+        nameTh: 'กระบวนการสนับสนุน',
+        description: 'กระบวนการสนับสนุนการทำงานภายในองค์กร เช่น การจัดการเอกสาร การติดต่อประสานงาน...',
+        owner: 'หัวหน้าฝ่าย',
+        department: 'ฝ่ายสนับสนุน'
+      }
+    },
+    {
+      name: 'บริการภายนอก (External Service)',
+      description: 'บริการที่ให้กับหน่วยงานหรือบุคคลภายนอก',
+      fields: {
+        name: 'External Service',
+        nameTh: 'บริการภายนอก',
+        description: 'บริการที่เปิดให้หน่วยงานภายนอกหรือประชาชนใช้งาน รวมถึง...',
+        owner: 'ผู้จัดการบริการ',
+        department: 'กองบริการประชาชน'
+      }
+    },
+    {
+      name: 'บริการภายใน (Internal Service)',
+      description: 'บริการที่ให้กับหน่วยงานภายในองค์กร',
+      fields: {
+        name: 'Internal Service',
+        nameTh: 'บริการภายใน',
+        description: 'บริการสำหรับบุคลากรและหน่วยงานภายในองค์กร...',
+        owner: 'หัวหน้าแผนก',
+        department: 'แผนกสนับสนุน'
+      }
     }
   ],
   application: [
     {
       name: 'Web Application',
-      description: 'เทมเพลตสำหรับระบบเว็บแอปพลิเคชัน',
-      fields: { name: 'Web App Name', nameTh: 'ระบบเว็บ', description: 'ระบบเว็บแอปพลิเคชันสำหรับ...' }
+      description: 'ระบบเว็บแอปพลิเคชันที่ใช้งานผ่านเบราว์เซอร์',
+      fields: {
+        name: 'Web Application Name',
+        nameTh: 'ระบบเว็บแอปพลิเคชัน',
+        description: 'ระบบเว็บแอปพลิเคชันสำหรับ... รองรับการใช้งานผ่าน Browser ทุกประเภท',
+        owner: 'นักพัฒนาระบบ',
+        department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      }
     },
     {
       name: 'Mobile Application',
-      description: 'เทมเพลตสำหรับแอปพลิเคชันมือถือ',
-      fields: { name: 'Mobile App Name', nameTh: 'แอปมือถือ', description: 'แอปพลิเคชันมือถือสำหรับ...' }
+      description: 'แอปพลิเคชันมือถือสำหรับ iOS และ Android',
+      fields: {
+        name: 'Mobile App',
+        nameTh: 'แอปพลิเคชันมือถือ',
+        description: 'แอปพลิเคชันมือถือสำหรับ... รองรับ iOS และ Android',
+        owner: 'นักพัฒนาแอป',
+        department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      }
     },
     {
-      name: 'Backend/API',
-      description: 'เทมเพลตสำหรับระบบ Backend หรือ API',
-      fields: { name: 'API Service', nameTh: 'ระบบ API', description: 'API สำหรับ...' }
+      name: 'Desktop Application',
+      description: 'โปรแกรมที่ติดตั้งบนเครื่องคอมพิวเตอร์',
+      fields: {
+        name: 'Desktop App',
+        nameTh: 'โปรแกรม Desktop',
+        description: 'โปรแกรมที่ติดตั้งบนเครื่องคอมพิวเตอร์สำหรับ... รองรับ Windows/macOS',
+        owner: 'นักพัฒนาระบบ',
+        department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      }
+    },
+    {
+      name: 'Microservice',
+      description: 'บริการย่อยที่ทำหน้าที่เฉพาะด้าน',
+      fields: {
+        name: 'Microservice Name',
+        nameTh: 'ไมโครเซอร์วิส',
+        description: 'Microservice สำหรับจัดการ... ทำงานแบบ Stateless และสื่อสารผ่าน REST API',
+        owner: 'DevOps Engineer',
+        department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      }
+    },
+    {
+      name: 'Legacy System',
+      description: 'ระบบเดิมที่ยังใช้งานอยู่',
+      fields: {
+        name: 'Legacy System',
+        nameTh: 'ระบบเดิม',
+        description: 'ระบบเดิมที่พัฒนาตั้งแต่ปี... ยังคงใช้งานสำหรับ... มีแผนปรับปรุง/ทดแทนภายใน...',
+        owner: 'ผู้ดูแลระบบ',
+        department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      }
+    },
+    {
+      name: 'Backend API',
+      description: 'ระบบ Backend ให้บริการ API',
+      fields: {
+        name: 'Backend API Service',
+        nameTh: 'ระบบ API หลังบ้าน',
+        description: 'Backend API สำหรับ... ให้บริการข้อมูลแก่ระบบ Frontend และ Mobile',
+        owner: 'Backend Developer',
+        department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      }
     }
   ],
   data: [
     {
-      name: 'ฐานข้อมูล',
-      description: 'เทมเพลตสำหรับฐานข้อมูล',
-      fields: { name: 'Database Name', nameTh: 'ฐานข้อมูล', description: 'ฐานข้อมูลจัดเก็บ...' }
+      name: 'Master Data',
+      description: 'ข้อมูลหลักที่ใช้อ้างอิงทั่วทั้งองค์กร',
+      fields: {
+        name: 'Master Data',
+        nameTh: 'ข้อมูลหลัก (Master Data)',
+        description: 'ข้อมูลหลักที่ใช้อ้างอิงทั่วทั้งองค์กร เช่น รหัสหน่วยงาน รายชื่อบุคลากร...',
+        owner: 'เจ้าหน้าที่ข้อมูล',
+        department: 'กองข้อมูลและสถิติ'
+      }
     },
     {
-      name: 'ชุดข้อมูล',
-      description: 'เทมเพลตสำหรับชุดข้อมูล',
-      fields: { name: 'Dataset Name', nameTh: 'ชุดข้อมูล', description: 'ชุดข้อมูลประกอบด้วย...' }
+      name: 'Transaction Data',
+      description: 'ข้อมูลธุรกรรมที่เกิดขึ้นจากการทำงาน',
+      fields: {
+        name: 'Transaction Data',
+        nameTh: 'ข้อมูลธุรกรรม',
+        description: 'ข้อมูลธุรกรรมที่บันทึกจากกระบวนการ... มีการสร้างข้อมูลใหม่ประมาณ... รายการต่อวัน',
+        owner: 'นักวิเคราะห์ข้อมูล',
+        department: 'กองข้อมูลและสถิติ'
+      }
+    },
+    {
+      name: 'Reference Data',
+      description: 'ข้อมูลอ้างอิงที่ใช้ร่วมกัน',
+      fields: {
+        name: 'Reference Data',
+        nameTh: 'ข้อมูลอ้างอิง',
+        description: 'ข้อมูลอ้างอิงสำหรับ... เช่น รหัสจังหวัด รหัสประเภท ค่า Lookup ต่างๆ',
+        owner: 'ผู้ดูแลข้อมูล',
+        department: 'กองข้อมูลและสถิติ'
+      }
+    },
+    {
+      name: 'API Data Schema',
+      description: 'โครงสร้างข้อมูลที่ใช้แลกเปลี่ยนผ่าน API',
+      fields: {
+        name: 'API Schema',
+        nameTh: 'โครงสร้างข้อมูล API',
+        description: 'โครงสร้างข้อมูล (Schema) สำหรับการแลกเปลี่ยนข้อมูลผ่าน API รองรับ JSON/XML',
+        owner: 'Solution Architect',
+        department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      }
+    },
+    {
+      name: 'Data Warehouse',
+      description: 'คลังข้อมูลสำหรับวิเคราะห์และรายงาน',
+      fields: {
+        name: 'Data Warehouse',
+        nameTh: 'คลังข้อมูล (Data Warehouse)',
+        description: 'คลังข้อมูลรวมศูนย์สำหรับการวิเคราะห์และจัดทำรายงาน BI Dashboard',
+        owner: 'Data Engineer',
+        department: 'กองข้อมูลและสถิติ'
+      }
     }
   ],
   technology: [
     {
-      name: 'Server Infrastructure',
-      description: 'เทมเพลตสำหรับเซิร์ฟเวอร์',
-      fields: { name: 'Server Name', nameTh: 'เซิร์ฟเวอร์', description: 'เซิร์ฟเวอร์สำหรับ...' }
+      name: 'Physical Server',
+      description: 'เซิร์ฟเวอร์ฮาร์ดแวร์ภายในองค์กร',
+      fields: {
+        name: 'Physical Server',
+        nameTh: 'เซิร์ฟเวอร์กายภาพ',
+        description: 'เซิร์ฟเวอร์ฮาร์ดแวร์ติดตั้งที่... สเปค CPU/RAM/Storage...',
+        owner: 'System Administrator',
+        department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      }
     },
     {
-      name: 'Cloud Service',
-      description: 'เทมเพลตสำหรับบริการ Cloud',
-      fields: { name: 'Cloud Service', nameTh: 'บริการ Cloud', description: 'บริการ Cloud สำหรับ...' }
+      name: 'Virtual Machine',
+      description: 'เครื่องเสมือนที่ทำงานบน Hypervisor',
+      fields: {
+        name: 'Virtual Machine',
+        nameTh: 'เครื่องเสมือน (VM)',
+        description: 'Virtual Machine ที่ทำงานบน VMware/Hyper-V สำหรับรัน...',
+        owner: 'System Administrator',
+        department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      }
+    },
+    {
+      name: 'Cloud Service (IaaS/PaaS/SaaS)',
+      description: 'บริการ Cloud Computing',
+      fields: {
+        name: 'Cloud Service',
+        nameTh: 'บริการ Cloud',
+        description: 'บริการ Cloud จาก AWS/Azure/GCP ประเภท IaaS/PaaS/SaaS สำหรับ...',
+        owner: 'Cloud Engineer',
+        department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      }
+    },
+    {
+      name: 'Network Device',
+      description: 'อุปกรณ์เครือข่าย เช่น Switch, Router, Firewall',
+      fields: {
+        name: 'Network Device',
+        nameTh: 'อุปกรณ์เครือข่าย',
+        description: 'อุปกรณ์เครือข่ายประเภท Switch/Router/Firewall ยี่ห้อ... รุ่น...',
+        owner: 'Network Administrator',
+        department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      }
+    },
+    {
+      name: 'Storage System',
+      description: 'ระบบจัดเก็บข้อมูล SAN/NAS/Object Storage',
+      fields: {
+        name: 'Storage System',
+        nameTh: 'ระบบจัดเก็บข้อมูล',
+        description: 'ระบบจัดเก็บข้อมูลประเภท SAN/NAS/Object Storage ความจุ... TB สำหรับ...',
+        owner: 'Storage Administrator',
+        department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      }
+    },
+    {
+      name: 'Container Platform',
+      description: 'แพลตฟอร์ม Container เช่น Docker, Kubernetes',
+      fields: {
+        name: 'Container Platform',
+        nameTh: 'แพลตฟอร์ม Container',
+        description: 'Container Platform (Docker/Kubernetes) สำหรับ deploy และจัดการ containerized applications',
+        owner: 'DevOps Engineer',
+        department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      }
     }
   ],
   security: [
     {
-      name: 'Authentication',
-      description: 'เทมเพลตสำหรับระบบ Authentication',
-      fields: { name: 'Auth System', nameTh: 'ระบบยืนยันตัวตน', description: 'ระบบยืนยันตัวตนสำหรับ...' }
+      name: 'Authentication System',
+      description: 'ระบบยืนยันตัวตนผู้ใช้งาน',
+      fields: {
+        name: 'Authentication System',
+        nameTh: 'ระบบยืนยันตัวตน',
+        description: 'ระบบยืนยันตัวตนผู้ใช้งาน (Authentication) รองรับ Username/Password, MFA, SSO',
+        owner: 'Security Engineer',
+        department: 'ศูนย์รักษาความปลอดภัย'
+      }
     },
     {
-      name: 'Access Control',
-      description: 'เทมเพลตสำหรับระบบ Access Control',
-      fields: { name: 'Access Control', nameTh: 'ระบบควบคุมการเข้าถึง', description: 'ระบบควบคุมสิทธิ์...' }
+      name: 'Authorization/RBAC',
+      description: 'ระบบจัดการสิทธิ์และบทบาท',
+      fields: {
+        name: 'Authorization System',
+        nameTh: 'ระบบจัดการสิทธิ์ (RBAC)',
+        description: 'ระบบจัดการสิทธิ์ตามบทบาท (Role-Based Access Control) สำหรับควบคุมการเข้าถึง...',
+        owner: 'Security Engineer',
+        department: 'ศูนย์รักษาความปลอดภัย'
+      }
+    },
+    {
+      name: 'Encryption Service',
+      description: 'ระบบเข้ารหัสข้อมูล',
+      fields: {
+        name: 'Encryption Service',
+        nameTh: 'ระบบเข้ารหัสข้อมูล',
+        description: 'ระบบเข้ารหัสข้อมูล (Encryption) ทั้ง Data at Rest และ Data in Transit ใช้มาตรฐาน AES-256',
+        owner: 'Security Engineer',
+        department: 'ศูนย์รักษาความปลอดภัย'
+      }
+    },
+    {
+      name: 'Firewall/WAF',
+      description: 'ระบบ Firewall และ Web Application Firewall',
+      fields: {
+        name: 'Firewall/WAF',
+        nameTh: 'ไฟร์วอลล์',
+        description: 'ระบบ Firewall/WAF สำหรับป้องกันการโจมตีจากภายนอก ยี่ห้อ... รุ่น...',
+        owner: 'Network Security',
+        department: 'ศูนย์รักษาความปลอดภัย'
+      }
+    },
+    {
+      name: 'VPN/Remote Access',
+      description: 'ระบบเข้าถึงระยะไกลอย่างปลอดภัย',
+      fields: {
+        name: 'VPN Service',
+        nameTh: 'ระบบ VPN',
+        description: 'ระบบ VPN สำหรับการเข้าถึงเครือข่ายภายในจากภายนอกอย่างปลอดภัย รองรับผู้ใช้... คน',
+        owner: 'Network Security',
+        department: 'ศูนย์รักษาความปลอดภัย'
+      }
+    },
+    {
+      name: 'SIEM/Log Management',
+      description: 'ระบบรวบรวมและวิเคราะห์ Log',
+      fields: {
+        name: 'SIEM System',
+        nameTh: 'ระบบ SIEM',
+        description: 'ระบบ Security Information and Event Management สำหรับรวบรวมและวิเคราะห์ Log ความปลอดภัย',
+        owner: 'SOC Analyst',
+        department: 'ศูนย์รักษาความปลอดภัย'
+      }
     }
   ],
   integration: [
     {
-      name: 'API Gateway',
-      description: 'เทมเพลตสำหรับ API Gateway',
-      fields: { name: 'API Gateway', nameTh: 'API Gateway', description: 'API Gateway สำหรับ...' }
+      name: 'REST API',
+      description: 'การเชื่อมต่อแบบ RESTful API',
+      fields: {
+        name: 'REST API Integration',
+        nameTh: 'การเชื่อมต่อ REST API',
+        description: 'การเชื่อมต่อระบบผ่าน RESTful API รองรับ JSON format สำหรับแลกเปลี่ยนข้อมูล...',
+        owner: 'Integration Developer',
+        department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      }
     },
     {
-      name: 'External Integration',
-      description: 'เทมเพลตสำหรับการเชื่อมต่อภายนอก',
-      fields: { name: 'External API', nameTh: 'API ภายนอก', description: 'การเชื่อมต่อกับ...' }
+      name: 'SOAP Web Service',
+      description: 'การเชื่อมต่อแบบ SOAP',
+      fields: {
+        name: 'SOAP Integration',
+        nameTh: 'การเชื่อมต่อ SOAP',
+        description: 'การเชื่อมต่อระบบผ่าน SOAP Web Service รองรับ XML format ตาม WSDL...',
+        owner: 'Integration Developer',
+        department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      }
+    },
+    {
+      name: 'Message Queue',
+      description: 'การสื่อสารแบบ Asynchronous ผ่าน Queue',
+      fields: {
+        name: 'Message Queue',
+        nameTh: 'คิวข้อความ (Message Queue)',
+        description: 'ระบบ Message Queue (RabbitMQ/Kafka) สำหรับการสื่อสารแบบ Async ระหว่างระบบ...',
+        owner: 'Integration Developer',
+        department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      }
+    },
+    {
+      name: 'File Transfer (SFTP/FTP)',
+      description: 'การแลกเปลี่ยนข้อมูลผ่านไฟล์',
+      fields: {
+        name: 'File Transfer',
+        nameTh: 'การแลกเปลี่ยนไฟล์ (SFTP)',
+        description: 'การแลกเปลี่ยนข้อมูลผ่านไฟล์ SFTP/FTP รูปแบบไฟล์ CSV/Excel/XML สำหรับ...',
+        owner: 'Data Integration',
+        department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      }
+    },
+    {
+      name: 'ETL/Data Pipeline',
+      description: 'กระบวนการดึง แปลง โหลดข้อมูล',
+      fields: {
+        name: 'ETL Pipeline',
+        nameTh: 'ETL Pipeline',
+        description: 'กระบวนการ Extract-Transform-Load สำหรับนำข้อมูลจาก... ไปยัง... ทำงาน...',
+        owner: 'Data Engineer',
+        department: 'กองข้อมูลและสถิติ'
+      }
+    },
+    {
+      name: 'API Gateway',
+      description: 'จุดเข้าถึง API รวมศูนย์',
+      fields: {
+        name: 'API Gateway',
+        nameTh: 'API Gateway',
+        description: 'API Gateway สำหรับจัดการ API ทั้งหมดขององค์กร รองรับ Rate Limiting, Authentication, Logging',
+        owner: 'API Manager',
+        department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      }
     }
   ]
 };
@@ -174,7 +472,9 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
       ...prev,
       name: template.fields.name,
       nameTh: template.fields.nameTh,
-      description: template.fields.description
+      description: template.fields.description,
+      owner: template.fields.owner || '',
+      department: template.fields.department || ''
     }));
   };
 

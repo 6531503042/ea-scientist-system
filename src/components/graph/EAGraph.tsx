@@ -17,7 +17,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { motion, AnimatePresence } from 'framer-motion';
-import { History, Briefcase, User, GitGraph, Network, Activity, X, RotateCcw, Trash2, AlertTriangle, Info, FolderTree } from 'lucide-react';
+import { History, Briefcase, User, GitGraph, Network, Activity, X, RotateCcw, Trash2, AlertTriangle, Info, FolderTree, ArrowDownToLine, ArrowUpFromLine, Zap } from 'lucide-react';
 import { ArtefactNode } from './ArtefactNode';
 import { FilterPanel } from './FilterPanel';
 import { InsightPanel } from './InsightPanel';
