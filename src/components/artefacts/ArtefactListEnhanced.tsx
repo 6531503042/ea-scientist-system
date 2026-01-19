@@ -20,13 +20,16 @@ import {
   LayoutGrid,
   ChevronRight,
   Clock,
-  User
+  User,
+  History
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { artefacts, typeLabels, type Artefact, type ArtefactType } from '@/data/mockData';
 import { ArtefactDetailModal } from './ArtefactDetailModal';
 import { CreateArtefactModal } from './CreateArtefactModal';
 import { EditArtefactModal } from './EditArtefactModal';
+import { ExportImportModal } from './ExportImportModal';
+import { VersionHistoryDrawer } from './VersionHistoryDrawer';
 
 const typeIcons: Record<ArtefactType, React.ElementType> = {
   business: Briefcase,
@@ -58,35 +61,35 @@ const statusConfig: Record<string, { label: string; color: string; icon: React.E
 
 // Full labels following TOGAF
 const togafLabels: Record<ArtefactType, { en: string; th: string; description: string }> = {
-  business: { 
-    en: 'Business Architecture', 
-    th: 'สถาปัตยกรรมธุรกิจ', 
-    description: 'กระบวนการ, กลยุทธ์, โครงสร้างองค์กร' 
+  business: {
+    en: 'Business Architecture',
+    th: 'สถาปัตยกรรมธุรกิจ',
+    description: 'กระบวนการ, กลยุทธ์, โครงสร้างองค์กร'
   },
-  application: { 
-    en: 'Application Architecture', 
-    th: 'สถาปัตยกรรมแอปพลิเคชัน', 
-    description: 'ระบบซอฟต์แวร์และแอปพลิเคชัน' 
+  application: {
+    en: 'Application Architecture',
+    th: 'สถาปัตยกรรมแอปพลิเคชัน',
+    description: 'ระบบซอฟต์แวร์และแอปพลิเคชัน'
   },
-  data: { 
-    en: 'Data Architecture', 
-    th: 'สถาปัตยกรรมข้อมูล', 
-    description: 'โครงสร้างข้อมูลและการจัดการ' 
+  data: {
+    en: 'Data Architecture',
+    th: 'สถาปัตยกรรมข้อมูล',
+    description: 'โครงสร้างข้อมูลและการจัดการ'
   },
-  technology: { 
-    en: 'Technology Architecture', 
-    th: 'สถาปัตยกรรมเทคโนโลยี', 
-    description: 'โครงสร้างพื้นฐาน IT' 
+  technology: {
+    en: 'Technology Architecture',
+    th: 'สถาปัตยกรรมเทคโนโลยี',
+    description: 'โครงสร้างพื้นฐาน IT'
   },
-  security: { 
-    en: 'Security Architecture', 
-    th: 'สถาปัตยกรรมความปลอดภัย', 
-    description: 'การรักษาความปลอดภัย' 
+  security: {
+    en: 'Security Architecture',
+    th: 'สถาปัตยกรรมความปลอดภัย',
+    description: 'การรักษาความปลอดภัย'
   },
-  integration: { 
-    en: 'Integration Architecture', 
-    th: 'สถาปัตยกรรมการเชื่อมต่อ', 
-    description: 'การเชื่อมต่อระบบ API' 
+  integration: {
+    en: 'Integration Architecture',
+    th: 'สถาปัตยกรรมการเชื่อมต่อ',
+    description: 'การเชื่อมต่อระบบ API'
   },
 };
 
@@ -99,6 +102,9 @@ export function ArtefactListEnhanced() {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [expandedSidebar, setExpandedSidebar] = useState(true);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [versionHistoryArtefact, setVersionHistoryArtefact] = useState<Artefact | null>(null);
 
   const filteredArtefacts = useMemo(() => {
     let result = [...artefacts];
@@ -152,7 +158,7 @@ export function ArtefactListEnhanced() {
   return (
     <div className="flex gap-6">
       {/* Sidebar */}
-      <motion.div 
+      <motion.div
         className={cn(
           "flex-shrink-0 space-y-4 transition-all duration-300",
           expandedSidebar ? "w-72" : "w-16"
@@ -177,7 +183,7 @@ export function ArtefactListEnhanced() {
               <p className="text-xs text-muted-foreground mb-3">เรียงตามมาตรฐาน TOGAF</p>
             </>
           )}
-          
+
           <div className="space-y-1">
             {/* All button */}
             <button
@@ -202,7 +208,7 @@ export function ArtefactListEnhanced() {
                 </>
               )}
             </button>
-            
+
             {togafOrder.map((type, index) => {
               const Icon = typeIcons[type];
               const count = artefactCounts[type];
@@ -268,11 +274,17 @@ export function ArtefactListEnhanced() {
           <div className="bg-card rounded-xl border border-border p-3">
             <h3 className="font-semibold text-foreground mb-2 text-sm">นำเข้า/ส่งออก</h3>
             <div className="space-y-2">
-              <button className="w-full flex items-center gap-2 px-3 py-2 text-sm bg-muted hover:bg-muted/80 rounded-lg transition-colors">
+              <button
+                onClick={() => setIsExportModalOpen(true)}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm bg-muted hover:bg-muted/80 rounded-lg transition-colors"
+              >
                 <Download className="w-4 h-4" />
                 ส่งออก Excel
               </button>
-              <button className="w-full flex items-center gap-2 px-3 py-2 text-sm bg-muted hover:bg-muted/80 rounded-lg transition-colors">
+              <button
+                onClick={() => setIsImportModalOpen(true)}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm bg-muted hover:bg-muted/80 rounded-lg transition-colors"
+              >
                 <Upload className="w-4 h-4" />
                 นำเข้า Excel
               </button>
@@ -477,22 +489,29 @@ export function ArtefactListEnhanced() {
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                              <button 
+                              <button
                                 onClick={() => setSelectedArtefact(artefact)}
                                 className="p-1.5 hover:bg-muted rounded-lg transition-colors"
                                 title="ดูรายละเอียด"
                               >
                                 <Eye className="w-4 h-4 text-muted-foreground" />
                               </button>
-                              <button 
+                              <button
+                                onClick={() => setVersionHistoryArtefact(artefact)}
+                                className="p-1.5 hover:bg-muted rounded-lg transition-colors"
+                                title="ประวัติเวอร์ชัน"
+                              >
+                                <History className="w-4 h-4 text-muted-foreground" />
+                              </button>
+                              <button
                                 onClick={() => setEditArtefact(artefact)}
                                 className="p-1.5 hover:bg-muted rounded-lg transition-colors"
                                 title="แก้ไข"
                               >
                                 <Edit className="w-4 h-4 text-muted-foreground" />
                               </button>
-                              <button 
-                                className="p-1.5 hover:bg-destructive/10 rounded-lg transition-colors" 
+                              <button
+                                className="p-1.5 hover:bg-destructive/10 rounded-lg transition-colors"
                                 title="ลบ"
                               >
                                 <Trash2 className="w-4 h-4 text-destructive" />
@@ -547,6 +566,28 @@ export function ArtefactListEnhanced() {
           }}
         />
       )}
+
+      {/* Export Modal */}
+      <ExportImportModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        mode="export"
+      />
+
+      {/* Import Modal */}
+      <ExportImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        mode="import"
+      />
+
+      {/* Version History Drawer */}
+      <VersionHistoryDrawer
+        isOpen={!!versionHistoryArtefact}
+        onClose={() => setVersionHistoryArtefact(null)}
+        artefactId={versionHistoryArtefact?.id || ''}
+        artefactName={versionHistoryArtefact?.name || ''}
+      />
     </div>
   );
 }

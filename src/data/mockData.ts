@@ -38,6 +38,31 @@ export interface DashboardMetric {
   icon: string;
 }
 
+// Version Control - TOR requirement #11
+export interface ArtefactVersion {
+  id: string;
+  artefactId: string;
+  version: string;
+  changes: string;
+  changedBy: string;
+  changedAt: string;
+  previousVersion: string | null;
+}
+
+// Audit Trail - TOR requirement #18
+export interface AuditLogEntry {
+  id: string;
+  action: 'create' | 'update' | 'delete' | 'view' | 'export' | 'import' | 'login' | 'logout';
+  entityType: 'artefact' | 'user' | 'relationship' | 'system';
+  entityId: string;
+  entityName: string;
+  userId: string;
+  userName: string;
+  timestamp: string;
+  details: string;
+  ipAddress: string;
+}
+
 export const artefacts: Artefact[] = [
   {
     id: 'ba-001',
@@ -231,3 +256,22 @@ export const typeLabels: Record<ArtefactType, { en: string; th: string; color: s
   security: { en: 'Security', th: 'ความปลอดภัย', color: 'ea-security' },
   integration: { en: 'Integration', th: 'การเชื่อมต่อ', color: 'ea-integration' },
 };
+
+// Mock Version History Data
+export const artefactVersions: ArtefactVersion[] = [
+  { id: 'v1', artefactId: 'app-001', version: '5.2.1', changes: 'แก้ไขบั๊กการเชื่อมต่อฐานข้อมูล', changedBy: 'คุณประสิทธิ์ เทคโน', changedAt: '2024-01-12 14:30', previousVersion: '5.2.0' },
+  { id: 'v2', artefactId: 'app-001', version: '5.2.0', changes: 'เพิ่มฟีเจอร์ Export รายงาน', changedBy: 'คุณประสิทธิ์ เทคโน', changedAt: '2024-01-05 10:15', previousVersion: '5.1.0' },
+  { id: 'v3', artefactId: 'app-001', version: '5.1.0', changes: 'ปรับปรุงหน้า Dashboard', changedBy: 'คุณสุรีย์ ดิจิทัล', changedAt: '2023-12-20 16:45', previousVersion: '5.0.0' },
+  { id: 'v4', artefactId: 'ba-001', version: '2.1', changes: 'ปรับปรุงขั้นตอนการตรวจสอบ', changedBy: 'ดร.สมชาย วิทยาการ', changedAt: '2024-01-10 09:00', previousVersion: '2.0' },
+  { id: 'v5', artefactId: 'data-001', version: '1.0', changes: 'สร้างชุดข้อมูลใหม่', changedBy: 'ดร.มนัส ข้อมูล', changedAt: '2024-01-12 11:00', previousVersion: null },
+];
+
+// Mock Audit Log Data
+export const auditLogs: AuditLogEntry[] = [
+  { id: 'log1', action: 'update', entityType: 'artefact', entityId: 'app-001', entityName: 'LIMS', userId: 'u1', userName: 'คุณประสิทธิ์ เทคโน', timestamp: '2024-01-12 14:30:22', details: 'อัปเดตเวอร์ชันเป็น 5.2.1', ipAddress: '192.168.1.100' },
+  { id: 'log2', action: 'create', entityType: 'relationship', entityId: 'r11', entityName: 'GovConnect API → LIMS', userId: 'u2', userName: 'คุณเชื่อม ต่อ', timestamp: '2024-01-12 10:15:30', details: 'สร้างความสัมพันธ์ใหม่', ipAddress: '192.168.1.101' },
+  { id: 'log3', action: 'view', entityType: 'artefact', entityId: 'ba-002', entityName: 'การจัดการตัวอย่างห้องปฏิบัติการ', userId: 'u3', userName: 'คุณวิภา สุขใจ', timestamp: '2024-01-12 09:30:00', details: 'เปิดดูรายละเอียด', ipAddress: '192.168.1.102' },
+  { id: 'log4', action: 'export', entityType: 'artefact', entityId: 'all', entityName: 'ทั้งหมด', userId: 'u1', userName: 'คุณประสิทธิ์ เทคโน', timestamp: '2024-01-11 16:00:00', details: 'Export Artefacts เป็น CSV', ipAddress: '192.168.1.100' },
+  { id: 'log5', action: 'login', entityType: 'system', entityId: 'sys', entityName: 'ระบบ', userId: 'u4', userName: 'Admin', timestamp: '2024-01-12 08:00:00', details: 'เข้าสู่ระบบสำเร็จ', ipAddress: '192.168.1.200' },
+  { id: 'log6', action: 'update', entityType: 'user', entityId: 'u5', entityName: 'คุณใหม่ ทดสอบ', userId: 'u4', userName: 'Admin', timestamp: '2024-01-11 14:00:00', details: 'เปลี่ยน Role เป็น Architect', ipAddress: '192.168.1.200' },
+];

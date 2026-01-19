@@ -11,6 +11,7 @@ import { ArtefactListEnhanced } from '@/components/artefacts/ArtefactListEnhance
 import { UsersPageEnhanced } from '@/components/admin/UsersPageEnhanced';
 import { AuditLogPageEnhanced } from '@/components/admin/AuditLogPageEnhanced';
 import { SettingsPage } from '@/components/admin/SettingsPage';
+import { WifiAuthPage } from '@/pages/WifiAuthPage';
 import { AppHeader } from '@/components/layout/AppHeader';
 
 const ProtectedRoute = () => {
@@ -32,6 +33,7 @@ const Layout = () => {
       case '/artefacts': return { title: 'Artefacts', subtitle: 'จัดการ Artefacts ทั้งหมดในระบบ' };
 
       case '/users': return { title: 'จัดการผู้ใช้งาน', subtitle: 'บัญชีผู้ใช้และสิทธิ์การเข้าถึง' };
+      case '/wifi': return { title: 'จัดการ WiFi Authentication', subtitle: 'ระบบยืนยันตัวตนผ่าน WiFi' };
       case '/audit': return { title: 'Audit Log', subtitle: 'บันทึกการใช้งานระบบ' };
       case '/settings': return { title: 'ตั้งค่าระบบ', subtitle: 'กำหนดค่าระบบ EA Management' };
       default: return { title: 'EA Management System', subtitle: '' };
@@ -66,6 +68,7 @@ const App = () => (
             <Route path="/artefacts" element={<ArtefactListEnhanced />} />
 
             <Route path="/users" element={<UsersPageEnhanced />} />
+            <Route path="/wifi" element={<WifiAuthPage />} />
             <Route path="/audit" element={<AuditLogPageEnhanced />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Route>

@@ -109,7 +109,7 @@ const Index = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-card border border-border rounded-xl p-4"
+          className="bg-card border border-border rounded-xl p-4 relative group"
         >
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -120,13 +120,18 @@ const Index = () => {
               <p className="text-xs text-muted-foreground">Artefacts ทั้งหมด</p>
             </div>
           </div>
+          {/* Tooltip */}
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-foreground text-background text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+            จำนวน Artefact ทั้งหมดที่บันทึกในระบบ EA
+            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-foreground" />
+          </div>
         </motion.div>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="bg-card border border-border rounded-xl p-4"
+          className="bg-card border border-border rounded-xl p-4 relative group"
         >
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
@@ -137,13 +142,18 @@ const Index = () => {
               <p className="text-xs text-muted-foreground">ความสัมพันธ์</p>
             </div>
           </div>
+          {/* Tooltip */}
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-foreground text-background text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+            จำนวนความสัมพันธ์ระหว่าง Artefacts (เช่น Uses, Depends On)
+            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-foreground" />
+          </div>
         </motion.div>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-card border border-border rounded-xl p-4"
+          className="bg-card border border-border rounded-xl p-4 relative group"
         >
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-lg bg-info/10 flex items-center justify-center">
@@ -151,8 +161,13 @@ const Index = () => {
             </div>
             <div>
               <p className="text-2xl font-bold text-foreground">{stats.activeCount}</p>
-              <p className="text-xs text-muted-foreground">Active</p>
+              <p className="text-xs text-muted-foreground">ใช้งานจริง</p>
             </div>
+          </div>
+          {/* Tooltip */}
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-foreground text-background text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+            Artefact ที่มีสถานะ Active (ใช้งานจริงในองค์กร)
+            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-foreground" />
           </div>
         </motion.div>
 
@@ -160,7 +175,7 @@ const Index = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="bg-card border border-border rounded-xl p-4"
+          className="bg-card border border-border rounded-xl p-4 relative group"
         >
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
@@ -168,8 +183,13 @@ const Index = () => {
             </div>
             <div>
               <p className="text-2xl font-bold text-foreground">{stats.coverageScore}%</p>
-              <p className="text-xs text-muted-foreground">Coverage</p>
+              <p className="text-xs text-muted-foreground">ความครอบคลุม</p>
             </div>
+          </div>
+          {/* Tooltip */}
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-foreground text-background text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+            สัดส่วน Artefact ที่ใช้งานจริง (Active) จากทั้งหมด
+            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-foreground" />
           </div>
         </motion.div>
       </div>
@@ -394,8 +414,8 @@ const Index = () => {
                       </p>
                     </div>
                     <span className={`text-xs px-2 py-0.5 rounded-full capitalize ${activity.status === 'active' ? 'bg-success/10 text-success' :
-                        activity.status === 'draft' ? 'bg-warning/10 text-warning' :
-                          'bg-muted text-muted-foreground'
+                      activity.status === 'draft' ? 'bg-warning/10 text-warning' :
+                        'bg-muted text-muted-foreground'
                       }`}>
                       {activity.status}
                     </span>

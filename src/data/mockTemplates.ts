@@ -1,0 +1,186 @@
+// Mock Templates & Best Practice Library - TOR Requirement #13
+import { ArtefactType } from './mockData';
+
+export interface ArtefactTemplate {
+    id: string;
+    name: string;
+    nameTh: string;
+    type: ArtefactType;
+    description: string;
+    descriptionTh: string;
+    fields: TemplateField[];
+    bestPractices: string[];
+    category: 'standard' | 'custom';
+}
+
+export interface TemplateField {
+    name: string;
+    label: string;
+    labelTh: string;
+    type: 'text' | 'textarea' | 'select' | 'multiselect' | 'date';
+    required: boolean;
+    placeholder?: string;
+    options?: string[];
+}
+
+export const artefactTemplates: ArtefactTemplate[] = [
+    // Business Templates
+    {
+        id: 'tmpl-ba-001',
+        name: 'Business Process',
+        nameTh: 'กระบวนการธุรกิจ',
+        type: 'business',
+        description: 'Standard template for documenting business processes',
+        descriptionTh: 'เทมเพลตมาตรฐานสำหรับจัดทำเอกสารกระบวนการธุรกิจ',
+        category: 'standard',
+        fields: [
+            { name: 'processOwner', label: 'Process Owner', labelTh: 'เจ้าของกระบวนการ', type: 'text', required: true },
+            { name: 'inputs', label: 'Inputs', labelTh: 'ข้อมูลนำเข้า', type: 'textarea', required: true },
+            { name: 'outputs', label: 'Outputs', labelTh: 'ผลลัพธ์', type: 'textarea', required: true },
+            { name: 'frequency', label: 'Frequency', labelTh: 'ความถี่', type: 'select', required: false, options: ['Daily', 'Weekly', 'Monthly', 'Yearly'] },
+        ],
+        bestPractices: [
+            'ระบุเจ้าของกระบวนการให้ชัดเจน',
+            'กำหนด KPI ที่วัดผลได้',
+            'เชื่อมโยงกับระบบแอปพลิเคชันที่รองรับ',
+        ],
+    },
+    {
+        id: 'tmpl-ba-002',
+        name: 'Service Description',
+        nameTh: 'คำอธิบายบริการ',
+        type: 'business',
+        description: 'Template for service documentation',
+        descriptionTh: 'เทมเพลตสำหรับจัดทำเอกสารบริการ',
+        category: 'standard',
+        fields: [
+            { name: 'serviceLevel', label: 'Service Level', labelTh: 'ระดับบริการ', type: 'select', required: true, options: ['Gold', 'Silver', 'Bronze'] },
+            { name: 'targetAudience', label: 'Target Audience', labelTh: 'กลุ่มเป้าหมาย', type: 'text', required: true },
+            { name: 'sla', label: 'SLA', labelTh: 'ข้อตกลงระดับบริการ', type: 'textarea', required: false },
+        ],
+        bestPractices: [
+            'กำหนด SLA ที่ชัดเจน',
+            'ระบุช่องทางการให้บริการ',
+            'กำหนดผู้รับผิดชอบ',
+        ],
+    },
+
+    // Application Templates
+    {
+        id: 'tmpl-app-001',
+        name: 'Application System',
+        nameTh: 'ระบบแอปพลิเคชัน',
+        type: 'application',
+        description: 'Standard template for application documentation',
+        descriptionTh: 'เทมเพลตมาตรฐานสำหรับจัดทำเอกสารระบบแอปพลิเคชัน',
+        category: 'standard',
+        fields: [
+            { name: 'vendor', label: 'Vendor', labelTh: 'ผู้พัฒนา/ผู้จำหน่าย', type: 'text', required: false },
+            { name: 'technology', label: 'Technology Stack', labelTh: 'เทคโนโลยีที่ใช้', type: 'textarea', required: true },
+            { name: 'deploymentType', label: 'Deployment', labelTh: 'รูปแบบการติดตั้ง', type: 'select', required: true, options: ['On-premise', 'Cloud', 'Hybrid'] },
+            { name: 'users', label: 'Estimated Users', labelTh: 'จำนวนผู้ใช้โดยประมาณ', type: 'text', required: false },
+        ],
+        bestPractices: [
+            'ระบุ Technology Stack ให้ครบถ้วน',
+            'เชื่อมโยงกับ Infrastructure ที่รองรับ',
+            'กำหนดแผนสำรองข้อมูล',
+        ],
+    },
+
+    // Data Templates
+    {
+        id: 'tmpl-data-001',
+        name: 'Data Entity',
+        nameTh: 'ชุดข้อมูล',
+        type: 'data',
+        description: 'Template for data entity documentation',
+        descriptionTh: 'เทมเพลตสำหรับจัดทำเอกสารชุดข้อมูล',
+        category: 'standard',
+        fields: [
+            { name: 'dataClassification', label: 'Classification', labelTh: 'ระดับความลับ', type: 'select', required: true, options: ['Public', 'Internal', 'Confidential', 'Restricted'] },
+            { name: 'retentionPeriod', label: 'Retention Period', labelTh: 'ระยะเวลาจัดเก็บ', type: 'text', required: true },
+            { name: 'dataSource', label: 'Data Source', labelTh: 'แหล่งข้อมูล', type: 'text', required: true },
+            { name: 'updateFrequency', label: 'Update Frequency', labelTh: 'ความถี่การอัปเดต', type: 'select', required: false, options: ['Real-time', 'Daily', 'Weekly', 'Monthly'] },
+        ],
+        bestPractices: [
+            'กำหนดระดับความลับให้เหมาะสม',
+            'ระบุ Data Owner อย่างชัดเจน',
+            'กำหนดนโยบายการเข้าถึงข้อมูล',
+        ],
+    },
+
+    // Technology Templates
+    {
+        id: 'tmpl-tech-001',
+        name: 'Infrastructure Component',
+        nameTh: 'ส่วนประกอบโครงสร้างพื้นฐาน',
+        type: 'technology',
+        description: 'Template for infrastructure documentation',
+        descriptionTh: 'เทมเพลตสำหรับจัดทำเอกสารโครงสร้างพื้นฐาน',
+        category: 'standard',
+        fields: [
+            { name: 'location', label: 'Location', labelTh: 'ที่ตั้ง', type: 'select', required: true, options: ['Data Center', 'Cloud', 'Edge'] },
+            { name: 'specs', label: 'Specifications', labelTh: 'สเปค', type: 'textarea', required: true },
+            { name: 'maintenanceWindow', label: 'Maintenance Window', labelTh: 'ช่วงเวลาบำรุงรักษา', type: 'text', required: false },
+            { name: 'redundancy', label: 'Redundancy', labelTh: 'ความซ้ำซ้อน', type: 'select', required: false, options: ['None', 'Active-Passive', 'Active-Active'] },
+        ],
+        bestPractices: [
+            'กำหนดแผนสำรอง (DR Plan)',
+            'ระบุ SLA ของอุปกรณ์',
+            'กำหนดผู้รับผิดชอบดูแลรักษา',
+        ],
+    },
+
+    // Security Templates
+    {
+        id: 'tmpl-sec-001',
+        name: 'Security Control',
+        nameTh: 'มาตรการความปลอดภัย',
+        type: 'security',
+        description: 'Template for security control documentation',
+        descriptionTh: 'เทมเพลตสำหรับจัดทำเอกสารมาตรการความปลอดภัย',
+        category: 'standard',
+        fields: [
+            { name: 'controlType', label: 'Control Type', labelTh: 'ประเภทมาตรการ', type: 'select', required: true, options: ['Preventive', 'Detective', 'Corrective'] },
+            { name: 'framework', label: 'Framework', labelTh: 'มาตรฐานอ้างอิง', type: 'multiselect', required: false, options: ['ISO 27001', 'NIST', 'CIS Controls', 'PDPA'] },
+            { name: 'scope', label: 'Scope', labelTh: 'ขอบเขต', type: 'textarea', required: true },
+        ],
+        bestPractices: [
+            'อ้างอิงตามมาตรฐานสากล',
+            'ทบทวนมาตรการเป็นประจำ',
+            'ทดสอบประสิทธิภาพของมาตรการ',
+        ],
+    },
+
+    // Integration Templates
+    {
+        id: 'tmpl-int-001',
+        name: 'API Integration',
+        nameTh: 'การเชื่อมต่อ API',
+        type: 'integration',
+        description: 'Template for API integration documentation',
+        descriptionTh: 'เทมเพลตสำหรับจัดทำเอกสารการเชื่อมต่อ API',
+        category: 'standard',
+        fields: [
+            { name: 'protocol', label: 'Protocol', labelTh: 'โปรโตคอล', type: 'select', required: true, options: ['REST', 'SOAP', 'GraphQL', 'gRPC'] },
+            { name: 'authMethod', label: 'Auth Method', labelTh: 'วิธียืนยันตัวตน', type: 'select', required: true, options: ['API Key', 'OAuth2', 'JWT', 'Basic Auth'] },
+            { name: 'endpoints', label: 'Endpoints', labelTh: 'จุดเชื่อมต่อ', type: 'textarea', required: true },
+            { name: 'rateLimit', label: 'Rate Limit', labelTh: 'ขีดจำกัดการเรียกใช้', type: 'text', required: false },
+        ],
+        bestPractices: [
+            'จัดทำ API Documentation',
+            'กำหนด Rate Limiting',
+            'ใช้ HTTPS สำหรับการเชื่อมต่อ',
+        ],
+    },
+];
+
+// Helper function to get templates by type
+export function getTemplatesByType(type: ArtefactType): ArtefactTemplate[] {
+    return artefactTemplates.filter(t => t.type === type);
+}
+
+// Helper function to get template by ID
+export function getTemplateById(id: string): ArtefactTemplate | undefined {
+    return artefactTemplates.find(t => t.id === id);
+}
