@@ -347,7 +347,7 @@ const Index = () => {
               </button>
 
               <button
-                onClick={() => navigate('/admin/users')}
+                onClick={() => navigate('/users')}
                 className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors text-left"
               >
                 <div className="w-8 h-8 rounded-lg bg-warning/10 flex items-center justify-center">
@@ -393,11 +393,10 @@ const Index = () => {
                         {activity.owner} • {activity.date}
                       </p>
                     </div>
-                    <span className={`text-xs px-2 py-0.5 rounded-full capitalize ${
-                      activity.status === 'active' ? 'bg-success/10 text-success' :
-                      activity.status === 'draft' ? 'bg-warning/10 text-warning' :
-                      'bg-muted text-muted-foreground'
-                    }`}>
+                    <span className={`text-xs px-2 py-0.5 rounded-full capitalize ${activity.status === 'active' ? 'bg-success/10 text-success' :
+                        activity.status === 'draft' ? 'bg-warning/10 text-warning' :
+                          'bg-muted text-muted-foreground'
+                      }`}>
                       {activity.status}
                     </span>
                   </motion.div>

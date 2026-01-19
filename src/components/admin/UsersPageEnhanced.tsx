@@ -2,156 +2,38 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
-  Plus,
-  Edit,
-  Trash2,
-  Shield,
-  Mail,
-  UserCheck,
-  UserX,
   Filter,
   MoreVertical,
+  Plus,
+  Shield,
+  Edit,
+  Trash2,
+  Mail,
+  Building,
+  CheckCircle2,
+  UserX,
   Key,
-  Settings,
-  History,
-  Download,
   ChevronDown,
+  Lock,
+  Settings,
   Users as UsersIcon,
-  Lock
+  Briefcase
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CreateUserModal } from './CreateUserModal';
+import { mockUsers, mockRoles, mockDepartments, type User, type Role } from '@/data/mockUserManagement';
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: 'admin' | 'architect' | 'business_owner' | 'auditor' | 'viewer';
-  department: string;
-  status: 'active' | 'inactive' | 'pending';
-  lastLogin: string;
-  avatar?: string;
-}
-
-interface Role {
-  id: string;
-  name: string;
-  description: string;
-  permissions: string[];
-  userCount: number;
-  color: string;
-}
-
-const mockUsers: User[] = [
-  {
-    id: '1',
-    name: 'ดร.สมชาย วิทยาการ',
-    email: 'somchai@dss.go.th',
-    role: 'admin',
-    department: 'ศูนย์เทคโนโลยีสารสนเทศ',
-    status: 'active',
-    lastLogin: '2 ชั่วโมงที่แล้ว',
-  },
-  {
-    id: '2',
-    name: 'คุณวิภา สถาปัตย์',
-    email: 'wipa@dss.go.th',
-    role: 'architect',
-    department: 'ศูนย์เทคโนโลยีสารสนเทศ',
-    status: 'active',
-    lastLogin: '1 วันที่แล้ว',
-  },
-  {
-    id: '3',
-    name: 'คุณประสิทธิ์ เจ้าของ',
-    email: 'prasit@dss.go.th',
-    role: 'business_owner',
-    department: 'กองตรวจวิเคราะห์',
-    status: 'active',
-    lastLogin: '3 วันที่แล้ว',
-  },
-  {
-    id: '4',
-    name: 'คุณสุรีย์ ตรวจสอบ',
-    email: 'suree@dss.go.th',
-    role: 'auditor',
-    department: 'กองมาตรฐาน',
-    status: 'active',
-    lastLogin: '5 วันที่แล้ว',
-  },
-  {
-    id: '5',
-    name: 'คุณนภา ดูได้',
-    email: 'napa@dss.go.th',
-    role: 'viewer',
-    department: 'กองบริการ',
-    status: 'inactive',
-    lastLogin: '2 สัปดาห์ที่แล้ว',
-  },
-  {
-    id: '6',
-    name: 'คุณใหม่ รอยืนยัน',
-    email: 'new@dss.go.th',
-    role: 'viewer',
-    department: 'กองนโยบาย',
-    status: 'pending',
-    lastLogin: '-',
-  },
-];
-
-const mockRoles: Role[] = [
-  {
-    id: 'admin',
-    name: 'Admin',
-    description: 'สิทธิ์เต็มรูปแบบ สามารถจัดการทุกอย่างในระบบ',
-    permissions: ['create', 'read', 'update', 'delete', 'admin', 'export', 'audit'],
-    userCount: 1,
-    color: 'bg-destructive/10 text-destructive border-destructive/30',
-  },
-  {
-    id: 'architect',
-    name: 'Enterprise Architect',
-    description: 'จัดการ Artefacts และความสัมพันธ์',
-    permissions: ['create', 'read', 'update', 'delete', 'export'],
-    userCount: 2,
-    color: 'bg-info/10 text-info border-info/30',
-  },
-  {
-    id: 'business_owner',
-    name: 'Business Owner',
-    description: 'จัดการ Artefacts ที่รับผิดชอบ',
-    permissions: ['read', 'update', 'export'],
-    userCount: 3,
-    color: 'bg-success/10 text-success border-success/30',
-  },
-  {
-    id: 'auditor',
-    name: 'Auditor',
-    description: 'ตรวจสอบและสร้างรายงาน',
-    permissions: ['read', 'export', 'audit'],
-    userCount: 2,
-    color: 'bg-warning/10 text-warning border-warning/30',
-  },
-  {
-    id: 'viewer',
-    name: 'Viewer',
-    description: 'ดูข้อมูลได้อย่างเดียว',
-    permissions: ['read'],
-    userCount: 4,
-    color: 'bg-muted text-muted-foreground border-border',
-  },
-];
-
-const roleLabels: Record<User['role'], { label: string; labelTh: string; color: string }> = {
+const roleLabels: Record<string, { label: string; labelTh: string; color: string }> = {
   admin: { label: 'Admin', labelTh: 'ผู้ดูแลระบบ', color: 'bg-destructive/10 text-destructive' },
   architect: { label: 'Architect', labelTh: 'Enterprise Architect', color: 'bg-info/10 text-info' },
+  manager: { label: 'Manager', labelTh: 'ผู้บริหาร', color: 'bg-amber-500/10 text-amber-700' },
   business_owner: { label: 'Business Owner', labelTh: 'เจ้าของกระบวนการ', color: 'bg-success/10 text-success' },
   auditor: { label: 'Auditor', labelTh: 'ผู้ตรวจสอบ', color: 'bg-warning/10 text-warning' },
   viewer: { label: 'Viewer', labelTh: 'ผู้ดู', color: 'bg-muted text-muted-foreground' },
 };
 
-const statusLabels: Record<User['status'], { label: string; color: string; icon: React.ElementType }> = {
-  active: { label: 'ใช้งาน', color: 'text-success', icon: UserCheck },
+const statusLabels: Record<string, { label: string; color: string; icon: React.ElementType }> = {
+  active: { label: 'ใช้งาน', color: 'text-success', icon: CheckCircle2 },
   inactive: { label: 'ไม่ใช้งาน', color: 'text-muted-foreground', icon: UserX },
   pending: { label: 'รอยืนยัน', color: 'text-warning', icon: Mail },
 };
@@ -159,9 +41,15 @@ const statusLabels: Record<User['status'], { label: string; color: string; icon:
 export function UsersPageEnhanced() {
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<User['role'] | 'all'>('all');
-  const [activeTab, setActiveTab] = useState<'users' | 'roles'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'roles' | 'departments'>('users');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  // Filter departments based on search query
+  const filteredDepartments = mockDepartments.filter(dept =>
+    dept.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    dept.code.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const filteredUsers = mockUsers.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -214,6 +102,18 @@ export function UsersPageEnhanced() {
         >
           <Lock className="w-4 h-4" />
           สิทธิการเข้าถึง
+        </button>
+        <button
+          onClick={() => setActiveTab('departments')}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
+            activeTab === 'departments'
+              ? "bg-card shadow-sm text-primary"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <Briefcase className="w-4 h-4" />
+          หน่วยงาน
         </button>
       </div>
 
@@ -318,7 +218,7 @@ export function UsersPageEnhanced() {
             </div>
           </div>
         </>
-      ) : (
+      ) : activeTab === 'roles' ? (
         /* Roles Tab */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {mockRoles.map((role, index) => (
@@ -368,6 +268,59 @@ export function UsersPageEnhanced() {
               </div>
             </motion.div>
           ))}
+        </div>
+      ) : (
+        /* Departments Tab */
+        <div className="bg-card rounded-xl border border-border overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border bg-muted/30">
+                  <th className="text-left px-5 py-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">รหัสหน่วยงาน</th>
+                  <th className="text-left px-5 py-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">ชื่อหน่วยงาน</th>
+                  <th className="text-left px-5 py-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">หัวหน้าหน่วยงาน</th>
+                  <th className="text-right px-5 py-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">บุคลากร</th>
+                  <th className="text-right px-5 py-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">การดำเนินการ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredDepartments.map((dept, index) => (
+                  <motion.tr
+                    key={dept.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.03 }}
+                    className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
+                  >
+                    <td className="px-5 py-4">
+                      <span className="px-2.5 py-1 text-xs font-medium bg-muted rounded-md text-muted-foreground">
+                        {dept.code}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className="font-medium text-foreground">{dept.name}</span>
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className="text-sm text-foreground">{dept.head}</span>
+                    </td>
+                    <td className="px-5 py-4 text-right">
+                      <span className="text-sm text-muted-foreground">{dept.memberCount} คน</span>
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="flex items-center justify-end gap-1">
+                        <button className="p-2 hover:bg-muted rounded-lg transition-colors" title="แก้ไข">
+                          <Edit className="w-4 h-4 text-muted-foreground" />
+                        </button>
+                        <button className="p-2 hover:bg-destructive/10 rounded-lg transition-colors" title="ลบ">
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { ArtefactType } from '@/data/mockData';
+import { mockUsers, mockDepartments } from '@/data/mockUserManagement';
 
 interface CreateArtefactModalProps {
   isOpen: boolean;
@@ -641,23 +642,39 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
                       <Label htmlFor="owner" className="text-xs">ผู้รับผิดชอบ</Label>
-                      <Input
-                        id="owner"
-                        placeholder="ชื่อผู้รับผิดชอบ"
+                      <Select
                         value={formData.owner}
-                        onChange={(e) => handleChange('owner', e.target.value)}
-                        className="h-9 text-sm"
-                      />
+                        onValueChange={(val) => handleChange('owner', val)}
+                      >
+                        <SelectTrigger className="h-9 text-sm" id="owner">
+                          <SelectValue placeholder="เลือกผู้รับผิดชอบ" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[200px]">
+                          {mockUsers.map(user => (
+                            <SelectItem key={user.id} value={user.name}>
+                              {user.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="space-y-1.5">
                       <Label htmlFor="department" className="text-xs">หน่วยงาน</Label>
-                      <Input
-                        id="department"
-                        placeholder="สังกัดหน่วยงาน"
+                      <Select
                         value={formData.department}
-                        onChange={(e) => handleChange('department', e.target.value)}
-                        className="h-9 text-sm"
-                      />
+                        onValueChange={(val) => handleChange('department', val)}
+                      >
+                        <SelectTrigger className="h-9 text-sm" id="department">
+                          <SelectValue placeholder="เลือกหน่วยงาน" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[200px]">
+                          {mockDepartments.map(dept => (
+                            <SelectItem key={dept.id} value={dept.name}>
+                              {dept.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
 

@@ -275,7 +275,10 @@ function EAGraphInner() {
   // Impact Analysis State
   const [impactMode, setImpactMode] = useState(false);
   const [simulationAction, setSimulationAction] = useState<'none' | 'delete' | 'modify'>('none');
-  const [impactStats, setImpactStats] = useState({ affected: 0, critical: 0 });
+  const [impactStats, setImpactStats] = useState({ affected: 0, critical: 0, upstream: 0 });
+  const [upstreamList, setUpstreamList] = useState<Artefact[]>([]);
+  const [downstreamList, setDownstreamList] = useState<Artefact[]>([]);
+  const [impactEdges, setImpactEdges] = useState<{ source: string; target: string; label: string; isUpstream: boolean }[]>([]);
 
   // Reset simulation when mode changes
   useEffect(() => {
@@ -296,6 +299,7 @@ function EAGraphInner() {
       const upstream = new Set<string>();
       const downstream = new Set<string>();
       const criticalNodes = new Set<string>();
+      const relatedEdges: { source: string; target: string; label: string; isUpstream: boolean }[] = [];
 
       // Find downstream (Impacts)
       const queueDown = [selectedNode.id];
@@ -307,6 +311,7 @@ function EAGraphInner() {
             visitedDown.add(e.target);
             queueDown.push(e.target);
             downstream.add(e.target);
+            relatedEdges.push({ source: e.source, target: e.target, label: (e.label as string) || 'เชื่อมต่อ', isUpstream: false });
             // Check risk
             const node = nodes.find(n => n.id === e.target);
             if (node?.data.riskLevel === 'high') criticalNodes.add(e.target);
@@ -324,11 +329,18 @@ function EAGraphInner() {
             visitedUp.add(e.source);
             queueUp.push(e.source);
             upstream.add(e.source);
+            relatedEdges.push({ source: e.source, target: e.target, label: (e.label as string) || 'เชื่อมต่อ', isUpstream: true });
           }
         });
       }
 
-      setImpactStats({ affected: downstream.size, critical: criticalNodes.size });
+      // Store lists for display
+      const upArtefacts = artefacts.filter(a => upstream.has(a.id));
+      const downArtefacts = artefacts.filter(a => downstream.has(a.id));
+      setUpstreamList(upArtefacts);
+      setDownstreamList(downArtefacts);
+      setImpactEdges(relatedEdges);
+      setImpactStats({ affected: downstream.size, critical: criticalNodes.size, upstream: upstream.size });
 
       // Update Visuals
       setNodes(nds => nds.map(node => {
@@ -337,21 +349,21 @@ function EAGraphInner() {
         const isDownstream = downstream.has(node.id);
         const isRelated = isSelected || isUpstream || isDownstream;
 
-        let style: React.CSSProperties = { opacity: isRelated ? 1 : 0.1, transition: 'all 0.3s' };
-        let className = '';
+        let style: React.CSSProperties = { opacity: isRelated ? 1 : 0.08, transition: 'all 0.3s ease' };
 
         if (isSelected) {
-          style = { ...style, border: '2px solid hsl(var(--primary))', boxShadow: '0 0 20px hsl(var(--primary)/0.3)' };
+          style = { ...style, border: '3px solid #8b5cf6', boxShadow: '0 0 25px rgba(139, 92, 246, 0.4)' };
         } else if (isUpstream) {
-          style = { ...style, border: '2px solid hsl(var(--info))' };
+          // Blue for upstream (data flowing IN)
+          style = { ...style, border: '2px solid #3b82f6', boxShadow: '0 0 15px rgba(59, 130, 246, 0.3)' };
         } else if (isDownstream) {
-          // Simulation styling
+          // Amber/Orange for downstream (data flowing OUT) with simulation effects
           if (simulationAction === 'delete') {
-            style = { ...style, border: '2px solid hsl(var(--destructive))', background: 'hsl(var(--destructive)/0.1)' };
+            style = { ...style, border: '3px solid #ef4444', background: 'rgba(239, 68, 68, 0.15)', boxShadow: '0 0 20px rgba(239, 68, 68, 0.4)' };
           } else if (simulationAction === 'modify') {
-            style = { ...style, border: '2px dashed hsl(var(--warning))', background: 'hsl(var(--warning)/0.1)' };
+            style = { ...style, border: '3px dashed #f59e0b', background: 'rgba(245, 158, 11, 0.1)', boxShadow: '0 0 15px rgba(245, 158, 11, 0.3)' };
           } else {
-            style = { ...style, border: '2px solid hsl(var(--accent))' };
+            style = { ...style, border: '2px solid #f59e0b', boxShadow: '0 0 15px rgba(245, 158, 11, 0.3)' };
           }
         }
 
@@ -363,17 +375,30 @@ function EAGraphInner() {
         const isDownstream = (downstream.has(edge.source) || edge.source === selectedNode.id) && downstream.has(edge.target);
         const isRelated = isUpstream || isDownstream;
 
+        // Color coding: blue for upstream, amber for downstream
+        let strokeColor = 'hsl(var(--muted-foreground))';
+        if (isDownstream) {
+          strokeColor = simulationAction === 'delete' ? '#ef4444' : // red
+            simulationAction === 'modify' ? '#f59e0b' : // amber
+              '#f59e0b'; // amber for downstream
+        } else if (isUpstream) {
+          strokeColor = '#3b82f6'; // blue for upstream
+        }
+
         return {
           ...edge,
           style: {
             ...edge.style,
             opacity: isRelated ? 1 : 0.05,
-            stroke: isDownstream && simulationAction === 'delete' ? 'hsl(var(--destructive))' :
-              isDownstream && simulationAction === 'modify' ? 'hsl(var(--warning))' :
-                isRelated ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))',
+            stroke: strokeColor,
             strokeWidth: isRelated ? 3 : 1
           },
-          animated: isRelated || simulationAction !== 'none'
+          animated: isRelated,
+          labelStyle: isRelated ? {
+            fill: isUpstream ? '#3b82f6' : '#f59e0b',
+            fontWeight: 600,
+            fontSize: 11
+          } : edge.labelStyle
         };
       }));
     };
@@ -500,7 +525,7 @@ function EAGraphInner() {
   );
 
   return (
-    <div className="relative flex w-full h-[calc(100vh-4rem)] flex-col">
+    <div className="relative flex w-full h-full flex-col">
       {/* Top Toolbar - Compact & Responsive */}
       <div className="min-h-[40px] border-b bg-background flex items-center justify-start px-2 sm:px-4 py-1.5 z-10 flex-wrap gap-1.5">
         {/* View Mode Toggle */}
@@ -675,57 +700,157 @@ function EAGraphInner() {
                   </button>
                 </motion.div>
               </Panel>
-              {/* Impact Analysis Control Panel - Compact & Responsive */}
+              {/* Impact Analysis Control Panel - Enhanced with Upstream/Downstream */}
               {impactMode && selectedNode && (
-                <Panel position="bottom-center" className="mb-4 mx-2 p-3 bg-card/95 backdrop-blur border border-border rounded-lg shadow-2xl flex flex-col gap-2 w-[calc(100%-1rem)] sm:w-auto sm:min-w-[320px] md:min-w-[400px]">
-                  <div className="flex items-center justify-between border-b pb-2">
-                    <div className="min-w-0 flex-1">
-                      <h3 className="text-sm font-bold flex items-center gap-1.5 truncate">
-                        <Activity className="w-4 h-4 text-primary flex-shrink-0" />
-                        <span className="truncate">{selectedNode.name}</span>
-                      </h3>
-                      <p className="text-[10px] text-muted-foreground">
-                        <span className="text-foreground font-medium">{impactStats.affected}</span> impacts
-                        {impactStats.critical > 0 && <span className="text-destructive ml-1 font-bold">({impactStats.critical} critical)</span>}
-                      </p>
+                <Panel position="bottom-center" className="mb-4 mx-2 w-[calc(100%-1rem)] sm:w-auto sm:max-w-[600px]">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-card/98 backdrop-blur-xl border border-border rounded-xl shadow-2xl overflow-hidden"
+                  >
+                    {/* Header */}
+                    <div className="flex items-center justify-between p-3 border-b bg-gradient-to-r from-primary/5 to-transparent">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
+                          <Zap className="w-5 h-5 text-primary" />
+                        </div>
+                        <div className="min-w-0">
+                          <h3 className="text-sm font-bold truncate">{selectedNode.name}</h3>
+                          <p className="text-[10px] text-muted-foreground">{selectedNode.nameTh}</p>
+                        </div>
+                      </div>
+                      <button onClick={() => setImpactMode(false)} className="p-2 hover:bg-muted rounded-lg transition-colors">
+                        <X className="w-4 h-4" />
+                      </button>
                     </div>
-                    <button onClick={() => setImpactMode(false)} className="p-1.5 hover:bg-muted rounded-full flex-shrink-0">
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
 
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setSimulationAction(curr => curr === 'modify' ? 'none' : 'modify')}
-                      className={`flex-1 py-2 px-2 rounded border-2 transition-all flex items-center justify-center gap-1.5 text-xs ${simulationAction === 'modify' ? 'border-warning bg-warning/10 text-warning font-bold' : 'border-border hover:bg-muted'}`}
-                    >
-                      <RotateCcw className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Simulate</span> Modify
-                    </button>
-                    <button
-                      onClick={() => setSimulationAction(curr => curr === 'delete' ? 'none' : 'delete')}
-                      className={`flex-1 py-2 px-2 rounded border-2 transition-all flex items-center justify-center gap-1.5 text-xs ${simulationAction === 'delete' ? 'border-destructive bg-destructive/10 text-destructive font-bold' : 'border-border hover:bg-muted'}`}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Simulate</span> Delete
-                    </button>
-                  </div>
+                    {/* Stats Cards */}
+                    <div className="grid grid-cols-3 gap-2 p-3 border-b">
+                      <div className="flex flex-col items-center p-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                        <ArrowDownToLine className="w-4 h-4 text-blue-500 mb-1" />
+                        <span className="text-lg font-bold text-blue-600">{impactStats.upstream}</span>
+                        <span className="text-[9px] text-muted-foreground">Upstream</span>
+                      </div>
+                      <div className="flex flex-col items-center p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                        <ArrowUpFromLine className="w-4 h-4 text-amber-500 mb-1" />
+                        <span className="text-lg font-bold text-amber-600">{impactStats.affected}</span>
+                        <span className="text-[9px] text-muted-foreground">Downstream</span>
+                      </div>
+                      <div className="flex flex-col items-center p-2 rounded-lg bg-red-500/10 border border-red-500/20">
+                        <AlertTriangle className="w-4 h-4 text-red-500 mb-1" />
+                        <span className="text-lg font-bold text-red-600">{impactStats.critical}</span>
+                        <span className="text-[9px] text-muted-foreground">Critical</span>
+                      </div>
+                    </div>
 
-                  {simulationAction !== 'none' && (
-                    <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="text-xs p-2 bg-muted rounded border border-border">
-                      {simulationAction === 'delete' ? (
-                        <p className="flex items-start gap-1.5 text-destructive">
-                          <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
-                          <span>Breaks {impactStats.affected} dependencies</span>
-                        </p>
-                      ) : (
-                        <p className="flex items-start gap-1.5 text-warning">
-                          <Info className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
-                          <span>Requires testing for {impactStats.affected} systems</span>
-                        </p>
+                    {/* Upstream/Downstream Lists */}
+                    <div className="max-h-48 overflow-y-auto">
+                      {/* Upstream Section */}
+                      {upstreamList.length > 0 && (
+                        <div className="p-2 border-b">
+                          <div className="flex items-center gap-1.5 mb-2">
+                            <ArrowDownToLine className="w-3 h-3 text-blue-500" />
+                            <span className="text-[10px] font-semibold text-blue-600 uppercase">Upstream (ระบบที่ส่งข้อมูลเข้ามา)</span>
+                          </div>
+                          <div className="space-y-1">
+                            {upstreamList.slice(0, 4).map(item => (
+                              <div key={item.id} className="flex items-center gap-2 p-1.5 rounded bg-blue-500/5 border border-blue-500/10">
+                                <div className={`w-2 h-2 rounded-full bg-ea-${item.type}`} />
+                                <span className="text-xs font-medium flex-1 truncate">{item.name}</span>
+                                <span className="text-[9px] text-muted-foreground">{item.type}</span>
+                              </div>
+                            ))}
+                            {upstreamList.length > 4 && (
+                              <p className="text-[10px] text-muted-foreground text-center">+{upstreamList.length - 4} more</p>
+                            )}
+                          </div>
+                        </div>
                       )}
-                    </motion.div>
-                  )}
+
+                      {/* Downstream Section */}
+                      {downstreamList.length > 0 && (
+                        <div className="p-2">
+                          <div className="flex items-center gap-1.5 mb-2">
+                            <ArrowUpFromLine className="w-3 h-3 text-amber-500" />
+                            <span className="text-[10px] font-semibold text-amber-600 uppercase">Downstream (ระบบที่ได้รับผลกระทบ)</span>
+                          </div>
+                          <div className="space-y-1">
+                            {downstreamList.slice(0, 4).map(item => (
+                              <div key={item.id} className="flex items-center gap-2 p-1.5 rounded bg-amber-500/5 border border-amber-500/10">
+                                <div className={`w-2 h-2 rounded-full bg-ea-${item.type}`} />
+                                <span className="text-xs font-medium flex-1 truncate">{item.name}</span>
+                                <span className="text-[9px] text-muted-foreground">{item.type}</span>
+                              </div>
+                            ))}
+                            {downstreamList.length > 4 && (
+                              <p className="text-[10px] text-muted-foreground text-center">+{downstreamList.length - 4} more</p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {upstreamList.length === 0 && downstreamList.length === 0 && (
+                        <div className="p-4 text-center text-muted-foreground text-xs">
+                          ไม่พบความสัมพันธ์กับระบบอื่น
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Simulation Actions */}
+                    <div className="p-3 border-t bg-muted/30">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-[10px] font-semibold uppercase text-muted-foreground">จำลองสถานการณ์</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setSimulationAction(curr => curr === 'modify' ? 'none' : 'modify')}
+                          className={`flex-1 py-2 px-3 rounded-lg border-2 transition-all flex items-center justify-center gap-2 text-xs font-medium ${simulationAction === 'modify' ? 'border-warning bg-warning/10 text-warning' : 'border-border hover:bg-muted hover:border-muted-foreground/30'}`}
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" />
+                          ปรับแก้ระบบ
+                        </button>
+                        <button
+                          onClick={() => setSimulationAction(curr => curr === 'delete' ? 'none' : 'delete')}
+                          className={`flex-1 py-2 px-3 rounded-lg border-2 transition-all flex items-center justify-center gap-2 text-xs font-medium ${simulationAction === 'delete' ? 'border-destructive bg-destructive/10 text-destructive' : 'border-border hover:bg-muted hover:border-muted-foreground/30'}`}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          ลบระบบ
+                        </button>
+                      </div>
+
+                      {simulationAction !== 'none' && (
+                        <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="mt-2 text-xs p-2 rounded-lg border">
+                          {simulationAction === 'delete' ? (
+                            <p className="flex items-center gap-2 text-destructive">
+                              <AlertTriangle className="w-4 h-4" />
+                              <span>⚠️ จะทำให้ <strong>{impactStats.affected}</strong> ระบบไม่สามารถทำงานได้</span>
+                            </p>
+                          ) : (
+                            <p className="flex items-center gap-2 text-warning">
+                              <Info className="w-4 h-4" />
+                              <span>📋 ต้องทดสอบ <strong>{impactStats.affected}</strong> ระบบที่เกี่ยวข้อง</span>
+                            </p>
+                          )}
+                        </motion.div>
+                      )}
+                    </div>
+
+                    {/* Legend */}
+                    <div className="flex items-center justify-center gap-4 p-2 border-t bg-muted/20 text-[9px] text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <div className="w-3 h-3 rounded border-2 border-primary bg-primary/20" />
+                        <span>เลือก</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="w-3 h-3 rounded border-2 border-blue-500 bg-blue-500/20" />
+                        <span>Upstream</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="w-3 h-3 rounded border-2 border-amber-500 bg-amber-500/20" />
+                        <span>Downstream</span>
+                      </div>
+                    </div>
+                  </motion.div>
                 </Panel>
               )}
 
