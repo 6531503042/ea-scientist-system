@@ -16,9 +16,11 @@ import {
   Briefcase,
   Grid,
   List,
-  FileText,
   Upload,
-  LayoutGrid
+  LayoutGrid,
+  ChevronRight,
+  Clock,
+  User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { artefacts, typeLabels, type Artefact, type ArtefactType } from '@/data/mockData';
@@ -28,30 +30,30 @@ import { EditArtefactModal } from './EditArtefactModal';
 
 const typeIcons: Record<ArtefactType, React.ElementType> = {
   business: Briefcase,
-  data: Database,
   application: Layers,
+  data: Database,
   technology: Cpu,
-  integration: Link,
   security: Shield,
+  integration: Link,
 };
 
 // TOGAF Order - Business → Application → Data → Technology → Security → Integration
 const togafOrder: ArtefactType[] = ['business', 'application', 'data', 'technology', 'security', 'integration'];
 
-const typeColors: Record<ArtefactType, { bg: string; text: string; border: string }> = {
-  business: { bg: 'bg-[hsl(262,83%,58%)]/10', text: 'text-[hsl(262,83%,58%)]', border: 'border-[hsl(262,83%,58%)]/30' },
-  data: { bg: 'bg-info/10', text: 'text-info', border: 'border-info/30' },
-  application: { bg: 'bg-success/10', text: 'text-success', border: 'border-success/30' },
-  technology: { bg: 'bg-primary/10', text: 'text-primary', border: 'border-primary/30' },
-  security: { bg: 'bg-destructive/10', text: 'text-destructive', border: 'border-destructive/30' },
-  integration: { bg: 'bg-warning/10', text: 'text-warning', border: 'border-warning/30' },
+const typeColors: Record<ArtefactType, { bg: string; text: string; border: string; light: string }> = {
+  business: { bg: 'bg-violet-500/10', text: 'text-violet-500', border: 'border-violet-500/30', light: 'bg-violet-50' },
+  application: { bg: 'bg-sky-500/10', text: 'text-sky-500', border: 'border-sky-500/30', light: 'bg-sky-50' },
+  data: { bg: 'bg-teal-500/10', text: 'text-teal-500', border: 'border-teal-500/30', light: 'bg-teal-50' },
+  technology: { bg: 'bg-indigo-500/10', text: 'text-indigo-500', border: 'border-indigo-500/30', light: 'bg-indigo-50' },
+  security: { bg: 'bg-amber-500/10', text: 'text-amber-500', border: 'border-amber-500/30', light: 'bg-amber-50' },
+  integration: { bg: 'bg-pink-500/10', text: 'text-pink-500', border: 'border-pink-500/30', light: 'bg-pink-50' },
 };
 
-const statusColors: Record<string, string> = {
-  active: 'bg-success/10 text-success',
-  draft: 'bg-warning/10 text-warning',
-  deprecated: 'bg-muted text-muted-foreground',
-  planned: 'bg-info/10 text-info',
+const statusConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
+  active: { label: 'ใช้งาน', color: 'bg-success/10 text-success', icon: Eye },
+  draft: { label: 'ร่าง', color: 'bg-warning/10 text-warning', icon: Edit },
+  deprecated: { label: 'ยกเลิก', color: 'bg-muted text-muted-foreground', icon: Clock },
+  planned: { label: 'วางแผน', color: 'bg-info/10 text-info', icon: Clock },
 };
 
 // Full labels following TOGAF
@@ -59,7 +61,7 @@ const togafLabels: Record<ArtefactType, { en: string; th: string; description: s
   business: { 
     en: 'Business Architecture', 
     th: 'สถาปัตยกรรมธุรกิจ', 
-    description: 'กระบวนการธุรกิจ, กลยุทธ์, องค์กร' 
+    description: 'กระบวนการ, กลยุทธ์, โครงสร้างองค์กร' 
   },
   application: { 
     en: 'Application Architecture', 
@@ -88,14 +90,6 @@ const togafLabels: Record<ArtefactType, { en: string; th: string; description: s
   },
 };
 
-const filterCategories = togafOrder.map(type => ({
-  type,
-  label: togafLabels[type].th,
-  labelEn: togafLabels[type].en,
-  icon: typeIcons[type],
-  description: togafLabels[type].description
-}));
-
 export function ArtefactListEnhanced() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState<ArtefactType | null>(null);
@@ -104,6 +98,7 @@ export function ArtefactListEnhanced() {
   const [editArtefact, setEditArtefact] = useState<Artefact | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [expandedSidebar, setExpandedSidebar] = useState(true);
 
   const filteredArtefacts = useMemo(() => {
     let result = [...artefacts];
@@ -126,7 +121,6 @@ export function ArtefactListEnhanced() {
         case 'name':
           return a.name.localeCompare(b.name);
         case 'type':
-          // Sort by TOGAF order
           return togafOrder.indexOf(a.type) - togafOrder.indexOf(b.type);
         case 'updated':
           return new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime();
@@ -146,116 +140,168 @@ export function ArtefactListEnhanced() {
     return counts;
   }, []);
 
+  const statusCounts = useMemo(() => {
+    return {
+      active: artefacts.filter(a => a.status === 'active').length,
+      draft: artefacts.filter(a => a.status === 'draft').length,
+      deprecated: artefacts.filter(a => a.status === 'deprecated').length,
+      planned: artefacts.filter(a => a.status === 'planned').length,
+    };
+  }, []);
+
   return (
     <div className="flex gap-6">
-      {/* Sidebar Filters - TOGAF Ordered */}
-      <div className="w-72 flex-shrink-0 space-y-6">
-        <div className="bg-card rounded-xl border border-border p-4">
-          <h3 className="font-semibold text-foreground mb-2">ประเภท Artefact</h3>
-          <p className="text-xs text-muted-foreground mb-4">เรียงตามมาตรฐาน TOGAF</p>
+      {/* Sidebar */}
+      <motion.div 
+        className={cn(
+          "flex-shrink-0 space-y-4 transition-all duration-300",
+          expandedSidebar ? "w-72" : "w-16"
+        )}
+      >
+        {/* Toggle Button */}
+        <button
+          onClick={() => setExpandedSidebar(!expandedSidebar)}
+          className="w-full flex items-center justify-center p-2 bg-card border border-border rounded-lg hover:bg-muted transition-colors"
+        >
+          <ChevronRight className={cn(
+            "w-4 h-4 transition-transform",
+            expandedSidebar && "rotate-180"
+          )} />
+        </button>
+
+        {/* Type Filter */}
+        <div className="bg-card rounded-xl border border-border p-3">
+          {expandedSidebar && (
+            <>
+              <h3 className="font-semibold text-foreground mb-1 text-sm">ประเภท Artefact</h3>
+              <p className="text-xs text-muted-foreground mb-3">เรียงตามมาตรฐาน TOGAF</p>
+            </>
+          )}
           
           <div className="space-y-1">
             {/* All button */}
             <button
               onClick={() => setSelectedType(null)}
               className={cn(
-                "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors",
+                "w-full flex items-center gap-2 px-2 py-2 rounded-lg text-sm transition-colors",
                 selectedType === null
                   ? "bg-primary text-primary-foreground"
                   : "hover:bg-muted text-foreground"
               )}
             >
-              <div className="flex items-center gap-3">
-                <LayoutGrid className="w-4 h-4" />
-                <span className="font-medium">ทั้งหมด</span>
-              </div>
-              <span className={cn(
-                "px-2 py-0.5 text-xs rounded-full",
-                selectedType === null ? "bg-primary-foreground/20" : "bg-muted"
-              )}>
-                {artefacts.length}
-              </span>
+              <LayoutGrid className="w-4 h-4 flex-shrink-0" />
+              {expandedSidebar && (
+                <>
+                  <span className="flex-1 text-left font-medium">ทั้งหมด</span>
+                  <span className={cn(
+                    "px-2 py-0.5 text-xs rounded-full",
+                    selectedType === null ? "bg-primary-foreground/20" : "bg-muted"
+                  )}>
+                    {artefacts.length}
+                  </span>
+                </>
+              )}
             </button>
             
-            {filterCategories.map((cat, index) => {
-              const Icon = cat.icon;
-              const count = artefactCounts[cat.type];
+            {togafOrder.map((type, index) => {
+              const Icon = typeIcons[type];
+              const count = artefactCounts[type];
+              const colors = typeColors[type];
               return (
                 <button
-                  key={cat.type}
-                  onClick={() => setSelectedType(selectedType === cat.type ? null : cat.type)}
+                  key={type}
+                  onClick={() => setSelectedType(selectedType === type ? null : type)}
                   className={cn(
-                    "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors",
-                    selectedType === cat.type
-                      ? "bg-primary text-primary-foreground"
+                    "w-full flex items-center gap-2 px-2 py-2 rounded-lg text-sm transition-all",
+                    selectedType === type
+                      ? `${colors.bg} ${colors.text} ${colors.border} border`
                       : "hover:bg-muted text-foreground"
                   )}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-muted-foreground w-4">{index + 1}.</span>
-                      <Icon className="w-4 h-4" />
-                    </div>
-                    <div className="text-left">
-                      <span className="block">{cat.label}</span>
-                      <span className="text-xs opacity-70">{cat.labelEn}</span>
-                    </div>
-                  </div>
-                  <span className={cn(
-                    "px-2 py-0.5 text-xs rounded-full",
-                    selectedType === cat.type ? "bg-primary-foreground/20" : "bg-muted"
+                  <div className={cn(
+                    "w-6 h-6 rounded flex items-center justify-center flex-shrink-0",
+                    selectedType === type ? colors.bg : "bg-muted"
                   )}>
-                    {count}
-                  </span>
+                    <Icon className={cn("w-3.5 h-3.5", selectedType === type ? colors.text : "text-muted-foreground")} />
+                  </div>
+                  {expandedSidebar && (
+                    <>
+                      <div className="flex-1 text-left">
+                        <span className="block text-xs font-medium">{togafLabels[type].th}</span>
+                      </div>
+                      <span className={cn(
+                        "px-1.5 py-0.5 text-xs rounded-full min-w-[24px] text-center",
+                        selectedType === type ? `${colors.bg} ${colors.text}` : "bg-muted text-muted-foreground"
+                      )}>
+                        {count}
+                      </span>
+                    </>
+                  )}
                 </button>
               );
             })}
           </div>
         </div>
 
-        <div className="bg-card rounded-xl border border-border p-4">
-          <h3 className="font-semibold text-foreground mb-4">สรุปข้อมูล</h3>
-          <div className="space-y-3">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Active</span>
-              <span className="font-medium text-success">{artefacts.filter(a => a.status === 'active').length}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Draft</span>
-              <span className="font-medium text-warning">{artefacts.filter(a => a.status === 'draft').length}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">ไม่มีเจ้าของ</span>
-              <span className="font-medium text-muted-foreground">{artefacts.filter(a => !a.owner).length}</span>
+        {/* Status Summary */}
+        {expandedSidebar && (
+          <div className="bg-card rounded-xl border border-border p-3">
+            <h3 className="font-semibold text-foreground mb-3 text-sm">สถานะ</h3>
+            <div className="space-y-2">
+              {Object.entries(statusCounts).map(([status, count]) => {
+                const config = statusConfig[status];
+                return (
+                  <div key={status} className="flex items-center justify-between text-sm">
+                    <span className={cn("px-2 py-0.5 rounded-full text-xs", config.color)}>
+                      {config.label}
+                    </span>
+                    <span className="font-medium text-foreground">{count}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
-        </div>
+        )}
 
-        <div className="bg-card rounded-xl border border-border p-4">
-          <h3 className="font-semibold text-foreground mb-2">การนำเข้า/ส่งออก</h3>
-          <div className="space-y-2 mt-3">
-            <button className="w-full flex items-center gap-2 px-3 py-2 text-sm bg-muted hover:bg-muted/80 rounded-lg transition-colors">
-              <Download className="w-4 h-4" />
-              ส่งออก Excel
-            </button>
-            <button className="w-full flex items-center gap-2 px-3 py-2 text-sm bg-muted hover:bg-muted/80 rounded-lg transition-colors">
-              <Upload className="w-4 h-4" />
-              นำเข้า Excel
-            </button>
+        {/* Import/Export */}
+        {expandedSidebar && (
+          <div className="bg-card rounded-xl border border-border p-3">
+            <h3 className="font-semibold text-foreground mb-2 text-sm">นำเข้า/ส่งออก</h3>
+            <div className="space-y-2">
+              <button className="w-full flex items-center gap-2 px-3 py-2 text-sm bg-muted hover:bg-muted/80 rounded-lg transition-colors">
+                <Download className="w-4 h-4" />
+                ส่งออก Excel
+              </button>
+              <button className="w-full flex items-center gap-2 px-3 py-2 text-sm bg-muted hover:bg-muted/80 rounded-lg transition-colors">
+                <Upload className="w-4 h-4" />
+                นำเข้า Excel
+              </button>
+            </div>
           </div>
-        </div>
-      </div>
+        )}
+      </motion.div>
 
       {/* Main Content */}
-      <div className="flex-1 space-y-4">
+      <div className="flex-1 space-y-4 min-w-0">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+              <span>ระบบสถาปัตยกรรมองค์กร</span>
+              <span>›</span>
+              <span>Artefacts</span>
+              {selectedType && (
+                <>
+                  <span>›</span>
+                  <span className={typeColors[selectedType].text}>{togafLabels[selectedType].th}</span>
+                </>
+              )}
+            </div>
             <h2 className="text-xl font-bold text-foreground">
               {selectedType ? togafLabels[selectedType].th : 'Artefacts ทั้งหมด'}
             </h2>
             <p className="text-sm text-muted-foreground">
-              {selectedType ? togafLabels[selectedType].description : `${filteredArtefacts.length} รายการ`}
+              {selectedType ? togafLabels[selectedType].description : `แสดง ${filteredArtefacts.length} รายการ`}
             </p>
           </div>
           <motion.button
@@ -270,34 +316,34 @@ export function ArtefactListEnhanced() {
         </div>
 
         {/* Search & Controls */}
-        <div className="flex gap-4">
-          <div className="relative flex-1">
+        <div className="flex gap-3 flex-wrap">
+          <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               type="text"
-              placeholder="ค้นหา Artefact..."
+              placeholder="ค้นหา Artefact... (ชื่อ, คำอธิบาย)"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-11 pl-10 pr-4 text-sm bg-card border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+              className="w-full h-10 pl-10 pr-4 text-sm bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
             />
           </div>
           <div className="relative">
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-              className="h-11 pl-4 pr-10 text-sm bg-card border border-border rounded-xl appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="h-10 pl-3 pr-8 text-sm bg-card border border-border rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               <option value="type">เรียงตาม TOGAF</option>
               <option value="name">เรียงตามชื่อ</option>
-              <option value="updated">เรียงตามวันที่อัปเดต</option>
+              <option value="updated">เรียงตามวันที่</option>
             </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
           </div>
-          <div className="flex items-center bg-muted rounded-xl p-1">
+          <div className="flex items-center bg-muted rounded-lg p-1">
             <button
               onClick={() => setViewMode('list')}
               className={cn(
-                "p-2 rounded-lg transition-colors",
+                "p-1.5 rounded transition-colors",
                 viewMode === 'list' ? "bg-card shadow-sm" : "hover:bg-card/50"
               )}
             >
@@ -306,7 +352,7 @@ export function ArtefactListEnhanced() {
             <button
               onClick={() => setViewMode('grid')}
               className={cn(
-                "p-2 rounded-lg transition-colors",
+                "p-1.5 rounded transition-colors",
                 viewMode === 'grid' ? "bg-card shadow-sm" : "hover:bg-card/50"
               )}
             >
@@ -315,110 +361,163 @@ export function ArtefactListEnhanced() {
           </div>
         </div>
 
-        {/* List View */}
-        <div className="bg-card rounded-xl border border-border overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border bg-muted/30">
-                  <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Artefact</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">ประเภท</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">สถานะ</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Owner</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Version</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">อัปเดต</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">การดำเนินการ</th>
-                </tr>
-              </thead>
-              <tbody>
-                <AnimatePresence>
-                  {filteredArtefacts.map((artefact, index) => {
-                    const TypeIcon = typeIcons[artefact.type];
-                    const colors = typeColors[artefact.type];
+        {/* Grid View */}
+        {viewMode === 'grid' ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            <AnimatePresence>
+              {filteredArtefacts.map((artefact, index) => {
+                const TypeIcon = typeIcons[artefact.type];
+                const colors = typeColors[artefact.type];
+                const status = statusConfig[artefact.status];
 
-                    return (
-                      <motion.tr
-                        key={artefact.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ delay: index * 0.02 }}
-                        className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer"
-                        onClick={() => setSelectedArtefact(artefact)}
-                      >
-                        <td className="px-4 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className={cn("flex items-center justify-center w-10 h-10 rounded-lg", colors.bg)}>
-                              <TypeIcon className={cn("w-5 h-5", colors.text)} />
-                            </div>
-                            <div>
-                              <p className="font-medium text-foreground">{artefact.name}</p>
-                              <p className="text-xs text-muted-foreground">{artefact.nameTh}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-4">
-                          <span className={cn("text-sm px-2 py-1 rounded-lg", colors.bg, colors.text)}>
-                            {togafLabels[artefact.type].th}
-                          </span>
-                        </td>
-                        <td className="px-4 py-4">
-                          <span className={cn(
-                            "px-2.5 py-1 text-xs font-medium rounded-full capitalize",
-                            statusColors[artefact.status]
-                          )}>
-                            {artefact.status}
-                          </span>
-                        </td>
-                        <td className="px-4 py-4">
-                          <p className="text-sm text-foreground">{artefact.owner}</p>
-                          <p className="text-xs text-muted-foreground">{artefact.department}</p>
-                        </td>
-                        <td className="px-4 py-4">
-                          <span className="text-sm text-muted-foreground">v{artefact.version}</span>
-                        </td>
-                        <td className="px-4 py-4">
-                          <span className="text-sm text-muted-foreground">{artefact.lastUpdated}</span>
-                        </td>
-                        <td className="px-4 py-4">
-                          <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                            <button 
-                              onClick={() => setSelectedArtefact(artefact)}
-                              className="p-2 hover:bg-muted rounded-lg transition-colors"
-                              title="ดูรายละเอียด"
-                            >
-                              <Eye className="w-4 h-4 text-muted-foreground" />
-                            </button>
-                            <button 
-                              onClick={() => setEditArtefact(artefact)}
-                              className="p-2 hover:bg-muted rounded-lg transition-colors"
-                              title="แก้ไข"
-                            >
-                              <Edit className="w-4 h-4 text-muted-foreground" />
-                            </button>
-                            <button className="p-2 hover:bg-destructive/10 rounded-lg transition-colors" title="ลบ">
-                              <Trash2 className="w-4 h-4 text-destructive" />
-                            </button>
-                          </div>
-                        </td>
-                      </motion.tr>
-                    );
-                  })}
-                </AnimatePresence>
-              </tbody>
-            </table>
+                return (
+                  <motion.div
+                    key={artefact.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ delay: index * 0.02 }}
+                    onClick={() => setSelectedArtefact(artefact)}
+                    className={cn(
+                      "bg-card border rounded-xl p-4 cursor-pointer hover:shadow-md transition-all",
+                      colors.border
+                    )}
+                  >
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", colors.bg)}>
+                        <TypeIcon className={cn("w-5 h-5", colors.text)} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-foreground truncate">{artefact.name}</h3>
+                        <p className="text-xs text-muted-foreground truncate">{artefact.nameTh}</p>
+                      </div>
+                      <span className={cn("px-2 py-0.5 text-xs rounded-full", status.color)}>
+                        {status.label}
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{artefact.description}</p>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <User className="w-3 h-3" />
+                        <span className="truncate max-w-[100px]">{artefact.owner}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        <span>{artefact.lastUpdated}</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
           </div>
+        ) : (
+          /* List View */
+          <div className="bg-card rounded-xl border border-border overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30">
+                    <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Artefact</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">ประเภท</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">สถานะ</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">เจ้าของ</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Version</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">อัปเดต</th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">การดำเนินการ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <AnimatePresence>
+                    {filteredArtefacts.map((artefact, index) => {
+                      const TypeIcon = typeIcons[artefact.type];
+                      const colors = typeColors[artefact.type];
+                      const status = statusConfig[artefact.status];
 
-          {filteredArtefacts.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-12">
-              <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
-                <Search className="w-8 h-8 text-muted-foreground" />
-              </div>
-              <p className="text-lg font-medium text-foreground">ไม่พบ Artefact</p>
-              <p className="text-sm text-muted-foreground">ลองเปลี่ยนคำค้นหาหรือตัวกรอง</p>
+                      return (
+                        <motion.tr
+                          key={artefact.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ delay: index * 0.02 }}
+                          className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer"
+                          onClick={() => setSelectedArtefact(artefact)}
+                        >
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-3">
+                              <div className={cn("flex items-center justify-center w-9 h-9 rounded-lg", colors.bg)}>
+                                <TypeIcon className={cn("w-4 h-4", colors.text)} />
+                              </div>
+                              <div>
+                                <p className="font-medium text-foreground text-sm">{artefact.name}</p>
+                                <p className="text-xs text-muted-foreground">{artefact.nameTh}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={cn("text-xs px-2 py-1 rounded-lg", colors.bg, colors.text)}>
+                              {togafLabels[artefact.type].th}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={cn("px-2 py-1 text-xs font-medium rounded-full", status.color)}>
+                              {status.label}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <p className="text-sm text-foreground">{artefact.owner}</p>
+                            <p className="text-xs text-muted-foreground">{artefact.department}</p>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="text-sm text-muted-foreground">v{artefact.version}</span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="text-sm text-muted-foreground">{artefact.lastUpdated}</span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                              <button 
+                                onClick={() => setSelectedArtefact(artefact)}
+                                className="p-1.5 hover:bg-muted rounded-lg transition-colors"
+                                title="ดูรายละเอียด"
+                              >
+                                <Eye className="w-4 h-4 text-muted-foreground" />
+                              </button>
+                              <button 
+                                onClick={() => setEditArtefact(artefact)}
+                                className="p-1.5 hover:bg-muted rounded-lg transition-colors"
+                                title="แก้ไข"
+                              >
+                                <Edit className="w-4 h-4 text-muted-foreground" />
+                              </button>
+                              <button 
+                                className="p-1.5 hover:bg-destructive/10 rounded-lg transition-colors" 
+                                title="ลบ"
+                              >
+                                <Trash2 className="w-4 h-4 text-destructive" />
+                              </button>
+                            </div>
+                          </td>
+                        </motion.tr>
+                      );
+                    })}
+                  </AnimatePresence>
+                </tbody>
+              </table>
             </div>
-          )}
-        </div>
+
+            {filteredArtefacts.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
+                  <Search className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <p className="text-lg font-medium text-foreground">ไม่พบ Artefact</p>
+                <p className="text-sm text-muted-foreground">ลองเปลี่ยนคำค้นหาหรือตัวกรอง</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Detail Modal */}

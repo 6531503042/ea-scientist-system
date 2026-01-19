@@ -172,8 +172,8 @@ export function RecentActivity({ artefacts }: RecentActivityProps) {
     // Get recent activities from artefact data
     const activities = useMemo(() => {
         return artefacts
-            .filter(a => a.updatedAt)
-            .sort((a, b) => new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime())
+            .filter(a => a.lastUpdated)
+            .sort((a, b) => new Date(b.lastUpdated || 0).getTime() - new Date(a.lastUpdated || 0).getTime())
             .slice(0, 6)
             .map((artefact, idx) => {
                 const actions = ['Updated', 'Created', 'Modified', 'Reviewed'];
@@ -181,7 +181,7 @@ export function RecentActivity({ artefacts }: RecentActivityProps) {
                 const initials = artefact.owner ? artefact.owner.split(' ').map(n => n[0]).join('').toUpperCase() : 'AD';
 
                 // Calculate relative time
-                const updatedDate = new Date(artefact.updatedAt || new Date());
+                const updatedDate = new Date(artefact.lastUpdated || new Date());
                 const now = new Date();
                 const diffMs = now.getTime() - updatedDate.getTime();
                 const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
