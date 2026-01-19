@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   Layers,
   Clock,
-  Activity,
   Database,
   Cpu,
   Shield,
@@ -14,8 +13,7 @@ import {
   FileText,
   ArrowRight,
   CheckCircle2,
-  AlertCircle,
-  TrendingUp,
+  Calendar,
   GitBranch
 } from 'lucide-react';
 import { artefacts, relationships, typeLabels } from '@/data/mockData';
@@ -64,15 +62,11 @@ const Index = () => {
       label: togafLabels[type],
     }));
     const totalRelationships = relationships.length;
-    const activeCount = artefacts.filter(a => a.status === 'active').length;
-    const draftCount = artefacts.filter(a => a.status === 'draft').length;
-    const deprecatedCount = artefacts.filter(a => a.status === 'deprecated').length;
-    const plannedCount = artefacts.filter(a => a.status === 'planned').length;
 
-    // Calculate coverage per type
-    const coverageScore = Math.round((activeCount / total) * 100);
+    // Get unique departments
+    const departments = new Set(artefacts.map(a => a.department));
 
-    return { total, byType, totalRelationships, activeCount, draftCount, deprecatedCount, plannedCount, coverageScore };
+    return { total, byType, totalRelationships, departmentCount: departments.size };
   }, []);
 
   // Recent activities
@@ -104,8 +98,8 @@ const Index = () => {
         </p>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      {/* Quick Stats - 3 cards only */}
+      <div className="grid grid-cols-3 gap-4 mb-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -157,38 +151,16 @@ const Index = () => {
         >
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-lg bg-info/10 flex items-center justify-center">
-              <CheckCircle2 className="w-5 h-5 text-info" />
+              <Users className="w-5 h-5 text-info" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">{stats.activeCount}</p>
-              <p className="text-xs text-muted-foreground">ใช้งานจริง</p>
+              <p className="text-2xl font-bold text-foreground">{stats.departmentCount}</p>
+              <p className="text-xs text-muted-foreground">หน่วยงาน</p>
             </div>
           </div>
           {/* Tooltip */}
           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-foreground text-background text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
-            Artefact ที่มีสถานะ Active (ใช้งานจริงในองค์กร)
-            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-foreground" />
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="bg-card border border-border rounded-xl p-4 relative group"
-        >
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-warning" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground">{stats.coverageScore}%</p>
-              <p className="text-xs text-muted-foreground">ความครอบคลุม</p>
-            </div>
-          </div>
-          {/* Tooltip */}
-          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-foreground text-background text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
-            สัดส่วน Artefact ที่ใช้งานจริง (Active) จากทั้งหมด
+            จำนวนหน่วยงานที่เกี่ยวข้องกับ Artefact
             <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-foreground" />
           </div>
         </motion.div>
@@ -241,77 +213,6 @@ const Index = () => {
                   </motion.button>
                 );
               })}
-            </div>
-          </motion.div>
-
-          {/* Coverage Chart */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-card border border-border rounded-xl p-6"
-          >
-            <h2 className="text-lg font-semibold text-foreground mb-4">สถานะ Artefacts</h2>
-            <div className="space-y-4">
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-muted-foreground">Active</span>
-                  <span className="font-medium text-success">{stats.activeCount}</span>
-                </div>
-                <div className="h-3 bg-muted rounded-full overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${(stats.activeCount / stats.total) * 100}%` }}
-                    transition={{ delay: 0.4, duration: 0.6 }}
-                    className="h-full bg-success rounded-full"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-muted-foreground">Draft</span>
-                  <span className="font-medium text-warning">{stats.draftCount}</span>
-                </div>
-                <div className="h-3 bg-muted rounded-full overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${(stats.draftCount / stats.total) * 100}%` }}
-                    transition={{ delay: 0.45, duration: 0.6 }}
-                    className="h-full bg-warning rounded-full"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-muted-foreground">Planned</span>
-                  <span className="font-medium text-info">{stats.plannedCount}</span>
-                </div>
-                <div className="h-3 bg-muted rounded-full overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${(stats.plannedCount / stats.total) * 100}%` }}
-                    transition={{ delay: 0.5, duration: 0.6 }}
-                    className="h-full bg-info rounded-full"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-muted-foreground">Deprecated</span>
-                  <span className="font-medium text-muted-foreground">{stats.deprecatedCount}</span>
-                </div>
-                <div className="h-3 bg-muted rounded-full overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${(stats.deprecatedCount / stats.total) * 100}%` }}
-                    transition={{ delay: 0.55, duration: 0.6 }}
-                    className="h-full bg-muted-foreground rounded-full"
-                  />
-                </div>
-              </div>
             </div>
           </motion.div>
         </div>
