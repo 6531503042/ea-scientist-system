@@ -6,7 +6,6 @@ import {
   Eye,
   Edit,
   Trash2,
-  Download,
   ChevronDown,
   Layers,
   Database,
@@ -19,7 +18,6 @@ import {
   Upload,
   LayoutGrid,
   Clock,
-  User,
   History,
   FileSpreadsheet,
   FileText
@@ -157,133 +155,11 @@ export function ArtefactListEnhanced() {
   }, []);
 
   return (
-    <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
-      {/* Mobile Type Filter (visible only on mobile) */}
-      <div className="md:hidden overflow-x-auto pb-2 -mx-4 px-4">
-        <div className="flex gap-2 min-w-max">
-          <button
-            onClick={() => setSelectedType(null)}
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors whitespace-nowrap",
-              selectedType === null
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-foreground"
-            )}
-          >
-            <LayoutGrid className="w-3.5 h-3.5" />
-            ทั้งหมด ({artefacts.length})
-          </button>
-          {togafOrder.map((type) => {
-            const Icon = typeIcons[type];
-            const count = artefactCounts[type];
-            const colors = typeColors[type];
-            return (
-              <button
-                key={type}
-                onClick={() => setSelectedType(selectedType === type ? null : type)}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors whitespace-nowrap",
-                  selectedType === type
-                    ? `${colors.bg} ${colors.text}`
-                    : "bg-muted text-foreground"
-                )}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                {togafLabels[type].th} ({count})
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Sidebar - Hidden on mobile, visible on tablet and up */}
-      <div className="hidden md:block flex-shrink-0 w-full md:w-56 lg:w-64 space-y-4">
-
-        {/* Type Filter */}
-        <div className="bg-card rounded-xl border border-border p-3">
-          <h3 className="font-semibold text-foreground mb-1 text-sm">ประเภท Artefact</h3>
-          <p className="text-xs text-muted-foreground mb-3">เรียงตามมาตรฐาน TOGAF</p>
-
-          <div className="space-y-1">
-            {/* All button */}
-            <button
-              onClick={() => setSelectedType(null)}
-              className={cn(
-                "w-full flex items-center gap-2 px-2 py-2 rounded-lg text-sm transition-colors",
-                selectedType === null
-                  ? "bg-primary text-primary-foreground"
-                  : "hover:bg-muted text-foreground"
-              )}
-            >
-              <LayoutGrid className="w-4 h-4 flex-shrink-0" />
-              <span className="flex-1 text-left font-medium">ทั้งหมด</span>
-              <span className={cn(
-                "px-2 py-0.5 text-xs rounded-full",
-                selectedType === null ? "bg-primary-foreground/20" : "bg-muted"
-              )}>
-                {artefacts.length}
-              </span>
-            </button>
-
-            {togafOrder.map((type) => {
-              const Icon = typeIcons[type];
-              const count = artefactCounts[type];
-              const colors = typeColors[type];
-              return (
-                <button
-                  key={type}
-                  onClick={() => setSelectedType(selectedType === type ? null : type)}
-                  className={cn(
-                    "w-full flex items-center gap-2 px-2 py-2 rounded-lg text-sm transition-all",
-                    selectedType === type
-                      ? `${colors.bg} ${colors.text} ${colors.border} border`
-                      : "hover:bg-muted text-foreground"
-                  )}
-                >
-                  <div className={cn(
-                    "w-6 h-6 rounded flex items-center justify-center flex-shrink-0",
-                    selectedType === type ? colors.bg : "bg-muted"
-                  )}>
-                    <Icon className={cn("w-3.5 h-3.5", selectedType === type ? colors.text : "text-muted-foreground")} />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <span className="block text-xs font-medium">{togafLabels[type].th}</span>
-                  </div>
-                  <span className={cn(
-                    "px-1.5 py-0.5 text-xs rounded-full min-w-[24px] text-center",
-                    selectedType === type ? `${colors.bg} ${colors.text}` : "bg-muted text-muted-foreground"
-                  )}>
-                    {count}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Status Summary */}
-        <div className="bg-card rounded-xl border border-border p-3">
-          <h3 className="font-semibold text-foreground mb-3 text-sm">สถานะ</h3>
-          <div className="space-y-2">
-            {Object.entries(statusCounts).map(([status, count]) => {
-              const config = statusConfig[status];
-              return (
-                <div key={status} className="flex items-center justify-between text-sm">
-                  <span className={cn("px-2 py-0.5 rounded-full text-xs", config.color)}>
-                    {config.label}
-                  </span>
-                  <span className="font-medium text-foreground">{count}</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 space-y-4 min-w-0">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="flex flex-col h-full">
+      {/* Header Section - Fixed */}
+      <div className="flex-shrink-0 space-y-4 pb-4">
+        {/* Top Row: Title + Actions */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground mb-1">
               <span>ระบบสถาปัตยกรรมองค์กร</span>
@@ -303,8 +179,9 @@ export function ArtefactListEnhanced() {
               {selectedType ? togafLabels[selectedType].description : `แสดง ${filteredArtefacts.length} รายการ`}
             </p>
           </div>
+
+          {/* Action Buttons */}
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Export Buttons with Icons */}
             <button
               onClick={() => {
                 setExportFormat('excel');
@@ -348,6 +225,46 @@ export function ArtefactListEnhanced() {
           </div>
         </div>
 
+        {/* Filter Tabs (Mobile scrollable) */}
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <div className="flex gap-2 min-w-max pb-2 sm:pb-0">
+            <button
+              onClick={() => setSelectedType(null)}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap",
+                selectedType === null
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-foreground hover:bg-muted/80"
+              )}
+            >
+              <LayoutGrid className="w-4 h-4" />
+              ทั้งหมด ({artefacts.length})
+            </button>
+            {togafOrder.map((type) => {
+              const Icon = typeIcons[type];
+              const count = artefactCounts[type];
+              const colors = typeColors[type];
+              return (
+                <button
+                  key={type}
+                  onClick={() => setSelectedType(selectedType === type ? null : type)}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap",
+                    selectedType === type
+                      ? `${colors.bg} ${colors.text} ${colors.border} border`
+                      : "bg-muted text-foreground hover:bg-muted/80"
+                  )}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span className="hidden md:inline">{togafLabels[type].th}</span>
+                  <span className="md:hidden">{typeLabels[type]?.th || type}</span>
+                  ({count})
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Search & Controls */}
         <div className="flex gap-2 sm:gap-3 flex-wrap">
           <div className="relative flex-1 min-w-[150px] sm:min-w-[200px]">
@@ -357,7 +274,7 @@ export function ArtefactListEnhanced() {
               placeholder="ค้นหา Artefact..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-9 sm:h-10 pl-10 pr-4 text-sm bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+              className="w-full h-10 pl-10 pr-4 text-sm bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
             />
           </div>
           <div className="relative">
@@ -376,7 +293,7 @@ export function ArtefactListEnhanced() {
             <button
               onClick={() => setViewMode('list')}
               className={cn(
-                "p-1.5 rounded transition-colors",
+                "p-2 rounded transition-colors",
                 viewMode === 'list' ? "bg-card shadow-sm" : "hover:bg-card/50"
               )}
             >
@@ -385,7 +302,7 @@ export function ArtefactListEnhanced() {
             <button
               onClick={() => setViewMode('grid')}
               className={cn(
-                "p-1.5 rounded transition-colors",
+                "p-2 rounded transition-colors",
                 viewMode === 'grid' ? "bg-card shadow-sm" : "hover:bg-card/50"
               )}
             >
@@ -394,9 +311,27 @@ export function ArtefactListEnhanced() {
           </div>
         </div>
 
+        {/* Status Summary - Horizontal */}
+        <div className="flex items-center gap-4 text-sm">
+          {Object.entries(statusCounts).map(([status, count]) => {
+            const config = statusConfig[status];
+            return (
+              <div key={status} className="flex items-center gap-1.5">
+                <span className={cn("px-2 py-0.5 rounded-full text-xs", config.color)}>
+                  {config.label}
+                </span>
+                <span className="font-medium text-foreground">{count}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Content Area - Scrollable */}
+      <div className="flex-1 overflow-auto min-h-0">
         {/* Grid View */}
         {viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 pb-4">
             <AnimatePresence>
               {filteredArtefacts.map((artefact, index) => {
                 const TypeIcon = typeIcons[artefact.type];
@@ -412,32 +347,63 @@ export function ArtefactListEnhanced() {
                     transition={{ delay: index * 0.02 }}
                     onClick={() => setSelectedArtefact(artefact)}
                     className={cn(
-                      "bg-card border rounded-xl p-4 cursor-pointer hover:shadow-md transition-all",
-                      colors.border
+                      "group relative bg-card rounded-xl border border-border p-4 cursor-pointer",
+                      "hover:border-primary/30 hover:shadow-lg transition-all duration-200"
                     )}
                   >
+                    {/* Type indicator */}
+                    <div className={cn(
+                      "absolute top-0 left-4 w-8 h-1 rounded-b",
+                      colors.text.replace('text-', 'bg-')
+                    )} />
+
+                    {/* Header */}
                     <div className="flex items-start gap-3 mb-3">
-                      <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", colors.bg)}>
+                      <div className={cn(
+                        "flex items-center justify-center w-10 h-10 rounded-lg flex-shrink-0",
+                        colors.bg
+                      )}>
                         <TypeIcon className={cn("w-5 h-5", colors.text)} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-foreground truncate">{artefact.name}</h3>
+                        <h3 className="font-semibold text-foreground truncate">{artefact.name}</h3>
                         <p className="text-xs text-muted-foreground truncate">{artefact.nameTh}</p>
                       </div>
+                    </div>
+
+                    {/* Description */}
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                      {artefact.description}
+                    </p>
+
+                    {/* Footer */}
+                    <div className="flex items-center justify-between">
                       <span className={cn("px-2 py-0.5 text-xs rounded-full", status.color)}>
                         {status.label}
                       </span>
+                      <span className="text-xs text-muted-foreground">{artefact.lastUpdated}</span>
                     </div>
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{artefact.description}</p>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <User className="w-3 h-3" />
-                        <span className="truncate max-w-[100px]">{artefact.owner}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        <span>{artefact.lastUpdated}</span>
-                      </div>
+
+                    {/* Hover Actions */}
+                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditArtefact(artefact);
+                        }}
+                        className="p-1.5 bg-card border border-border rounded-lg hover:bg-muted transition-colors"
+                      >
+                        <Edit className="w-3.5 h-3.5 text-muted-foreground" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setVersionHistoryArtefact(artefact);
+                        }}
+                        className="p-1.5 bg-card border border-border rounded-lg hover:bg-muted transition-colors"
+                      >
+                        <History className="w-3.5 h-3.5 text-muted-foreground" />
+                      </button>
                     </div>
                   </motion.div>
                 );
@@ -445,128 +411,141 @@ export function ArtefactListEnhanced() {
             </AnimatePresence>
           </div>
         ) : (
-          /* List View - Scrollable on mobile */
+          /* List View */
           <div className="bg-card rounded-xl border border-border overflow-hidden">
-            <div className="overflow-x-auto scrollbar-thin">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border bg-muted/30">
-                    <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Artefact</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">ประเภท</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">สถานะ</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">เจ้าของ</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Version</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">อัปเดต</th>
-                    <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">การดำเนินการ</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <AnimatePresence>
-                    {filteredArtefacts.map((artefact, index) => {
-                      const TypeIcon = typeIcons[artefact.type];
-                      const colors = typeColors[artefact.type];
-                      const status = statusConfig[artefact.status];
-
-                      return (
-                        <motion.tr
-                          key={artefact.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                          transition={{ delay: index * 0.02 }}
-                          className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer"
-                          onClick={() => setSelectedArtefact(artefact)}
-                        >
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-3">
-                              <div className={cn("flex items-center justify-center w-9 h-9 rounded-lg", colors.bg)}>
-                                <TypeIcon className={cn("w-4 h-4", colors.text)} />
-                              </div>
-                              <div>
-                                <p className="font-medium text-foreground text-sm">{artefact.name}</p>
-                                <p className="text-xs text-muted-foreground">{artefact.nameTh}</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className={cn("text-xs px-2 py-1 rounded-lg", colors.bg, colors.text)}>
-                              {togafLabels[artefact.type].th}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className={cn("px-2 py-1 text-xs font-medium rounded-full", status.color)}>
-                              {status.label}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3">
-                            <p className="text-sm text-foreground">{artefact.owner}</p>
-                            <p className="text-xs text-muted-foreground">{artefact.department}</p>
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className="text-sm text-muted-foreground">v{artefact.version}</span>
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className="text-sm text-muted-foreground">{artefact.lastUpdated}</span>
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                              <button
-                                onClick={() => setSelectedArtefact(artefact)}
-                                className="p-1.5 hover:bg-muted rounded-lg transition-colors"
-                                title="ดูรายละเอียด"
-                              >
-                                <Eye className="w-4 h-4 text-muted-foreground" />
-                              </button>
-                              <button
-                                onClick={() => setVersionHistoryArtefact(artefact)}
-                                className="p-1.5 hover:bg-muted rounded-lg transition-colors"
-                                title="ประวัติเวอร์ชัน"
-                              >
-                                <History className="w-4 h-4 text-muted-foreground" />
-                              </button>
-                              <button
-                                onClick={() => setEditArtefact(artefact)}
-                                className="p-1.5 hover:bg-muted rounded-lg transition-colors"
-                                title="แก้ไข"
-                              >
-                                <Edit className="w-4 h-4 text-muted-foreground" />
-                              </button>
-                              <button
-                                className="p-1.5 hover:bg-destructive/10 rounded-lg transition-colors"
-                                title="ลบ"
-                              >
-                                <Trash2 className="w-4 h-4 text-destructive" />
-                              </button>
-                            </div>
-                          </td>
-                        </motion.tr>
-                      );
-                    })}
-                  </AnimatePresence>
-                </tbody>
-              </table>
+            {/* Table Header - Hidden on mobile */}
+            <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-3 bg-muted/50 border-b text-sm font-medium text-muted-foreground">
+              <div className="col-span-4">ชื่อ Artefact</div>
+              <div className="col-span-2">ประเภท</div>
+              <div className="col-span-2">สถานะ</div>
+              <div className="col-span-2">ผู้รับผิดชอบ</div>
+              <div className="col-span-2 text-right">การดำเนินการ</div>
             </div>
 
+            {/* Table Body */}
+            <div className="divide-y divide-border">
+              <AnimatePresence>
+                {filteredArtefacts.map((artefact, index) => {
+                  const TypeIcon = typeIcons[artefact.type];
+                  const colors = typeColors[artefact.type];
+                  const status = statusConfig[artefact.status];
+
+                  return (
+                    <motion.div
+                      key={artefact.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      transition={{ delay: index * 0.02 }}
+                      onClick={() => setSelectedArtefact(artefact)}
+                      className="grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 px-4 py-3 hover:bg-muted/30 cursor-pointer transition-colors group"
+                    >
+                      {/* Name - Always visible */}
+                      <div className="md:col-span-4 flex items-center gap-3">
+                        <div className={cn(
+                          "flex items-center justify-center w-9 h-9 rounded-lg flex-shrink-0",
+                          colors.bg
+                        )}>
+                          <TypeIcon className={cn("w-4 h-4", colors.text)} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-foreground truncate">{artefact.name}</p>
+                          <p className="text-xs text-muted-foreground truncate">{artefact.nameTh}</p>
+                        </div>
+                      </div>
+
+                      {/* Type - Hidden on mobile */}
+                      <div className="hidden md:flex md:col-span-2 items-center">
+                        <span className={cn("px-2 py-1 text-xs rounded-full", colors.bg, colors.text)}>
+                          {togafLabels[artefact.type].th}
+                        </span>
+                      </div>
+
+                      {/* Status - Inline on mobile */}
+                      <div className="md:col-span-2 flex items-center">
+                        <span className={cn("px-2 py-1 text-xs rounded-full", status.color)}>
+                          {status.label}
+                        </span>
+                        {/* Mobile: Show type inline */}
+                        <span className={cn("md:hidden ml-2 px-2 py-0.5 text-xs rounded-full", colors.bg, colors.text)}>
+                          {typeLabels[artefact.type]?.th}
+                        </span>
+                      </div>
+
+                      {/* Owner - Hidden on mobile */}
+                      <div className="hidden md:flex md:col-span-2 items-center">
+                        <span className="text-sm text-muted-foreground truncate">{artefact.owner}</span>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="md:col-span-2 flex items-center justify-end gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedArtefact(artefact);
+                          }}
+                          className="p-2 hover:bg-muted rounded-lg transition-colors"
+                          title="ดูรายละเอียด"
+                        >
+                          <Eye className="w-4 h-4 text-muted-foreground" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditArtefact(artefact);
+                          }}
+                          className="p-2 hover:bg-muted rounded-lg transition-colors"
+                          title="แก้ไข"
+                        >
+                          <Edit className="w-4 h-4 text-muted-foreground" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setVersionHistoryArtefact(artefact);
+                          }}
+                          className="p-2 hover:bg-muted rounded-lg transition-colors"
+                          title="ประวัติ"
+                        >
+                          <History className="w-4 h-4 text-muted-foreground" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Delete action
+                          }}
+                          className="p-2 hover:bg-destructive/10 rounded-lg transition-colors"
+                          title="ลบ"
+                        >
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </button>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
+            </div>
+
+            {/* Empty State */}
             {filteredArtefacts.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-12">
-                <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
+              <div className="p-8 text-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
                   <Search className="w-8 h-8 text-muted-foreground" />
                 </div>
-                <p className="text-lg font-medium text-foreground">ไม่พบ Artefact</p>
-                <p className="text-sm text-muted-foreground">ลองเปลี่ยนคำค้นหาหรือตัวกรอง</p>
+                <h3 className="font-semibold text-foreground mb-1">ไม่พบ Artefact</h3>
+                <p className="text-sm text-muted-foreground">ลองค้นหาด้วยคำอื่น หรือเปลี่ยนตัวกรอง</p>
               </div>
             )}
           </div>
         )}
       </div>
 
-      {/* Detail Modal */}
+      {/* Modals */}
       <ArtefactDetailModal
         artefact={selectedArtefact}
         onClose={() => setSelectedArtefact(null)}
       />
 
-      {/* Create Modal */}
       <CreateArtefactModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
@@ -576,38 +555,30 @@ export function ArtefactListEnhanced() {
         }}
       />
 
-      {/* Edit Modal */}
-      {editArtefact && (
-        <EditArtefactModal
-          artefact={editArtefact}
-          onClose={() => setEditArtefact(null)}
-          onSubmit={(data) => {
-            console.log('Update artefact:', data);
-            setEditArtefact(null);
-          }}
-        />
-      )}
+      <EditArtefactModal
+        artefact={editArtefact}
+        onClose={() => setEditArtefact(null)}
+        onSubmit={(data) => {
+          console.log('Update artefact:', data);
+          setEditArtefact(null);
+        }}
+      />
 
-      {/* Export Modal */}
       <ExportImportModal
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
         mode="export"
       />
 
-      {/* Import Modal */}
       <ExportImportModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         mode="import"
       />
 
-      {/* Version History Drawer */}
       <VersionHistoryDrawer
-        isOpen={!!versionHistoryArtefact}
+        artefactId={versionHistoryArtefact?.id || null}
         onClose={() => setVersionHistoryArtefact(null)}
-        artefactId={versionHistoryArtefact?.id || ''}
-        artefactName={versionHistoryArtefact?.name || ''}
       />
     </div>
   );
