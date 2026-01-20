@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, ChevronDown, Search, Expand, Shrink } from 'lucide-react';
+import { ChevronRight, ChevronDown, Search, Expand, Shrink, User, Activity } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { organizationTree, treeNodeIcons, treeNodeColors, type TreeNode } from '@/data/mockOrganization';
 
@@ -20,6 +20,13 @@ interface TreeNodeItemProps {
     searchQuery: string;
 }
 
+const statusColors: Record<string, string> = {
+    active: 'bg-green-500/10 text-green-600 border-green-200',
+    draft: 'bg-yellow-500/10 text-yellow-600 border-yellow-200',
+    archived: 'bg-gray-500/10 text-gray-600 border-gray-200',
+    planned: 'bg-blue-500/10 text-blue-600 border-blue-200',
+};
+
 function TreeNodeItem({
     node,
     level,
@@ -36,7 +43,7 @@ function TreeNodeItem({
     // Check if this node or any descendant matches the search
     const matchesSearch = (n: TreeNode): boolean => {
         const query = searchQuery.toLowerCase();
-        if (n.name.toLowerCase().includes(query) || n.nameTh.includes(query)) {
+        if (n.name.toLowerCase().includes(query) || n.nameTh.includes(query) || n.owner?.toLowerCase().includes(query)) {
             return true;
         }
         if (n.children) {
@@ -50,66 +57,90 @@ function TreeNodeItem({
     if (!isVisible) return null;
 
     return (
-        <div>
+        <div className="group">
             <motion.div
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
                 className={cn(
-                    "flex items-center gap-2 py-1.5 px-2 rounded-lg cursor-pointer transition-all",
-                    "hover:bg-muted",
-                    isSelected && "bg-primary/10 border border-primary/30"
+                    "flex items-center py-2 px-2 border-b border-border/50 transition-colors",
+                    "hover:bg-muted/50",
+                    isSelected && "bg-primary/5 border-primary/20"
                 )}
-                style={{ paddingLeft: `${level * 16 + 8}px` }}
                 onClick={() => onNodeClick?.(node)}
             >
-                {/* Expand/Collapse Toggle */}
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        if (hasChildren) toggleExpand(node.id);
-                    }}
-                    className={cn(
-                        "w-5 h-5 flex items-center justify-center rounded transition-colors",
-                        hasChildren ? "hover:bg-muted-foreground/10" : "invisible"
-                    )}
-                >
-                    {hasChildren && (
-                        isExpanded ? (
-                            <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                        ) : (
-                            <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                        )
-                    )}
-                </button>
+                {/* Column 1: Name (Tree Indented) - 45% */}
+                <div className="flex-1 min-w-0 flex items-center gap-2" style={{ paddingLeft: `${level * 20}px` }}>
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (hasChildren) toggleExpand(node.id);
+                        }}
+                        className={cn(
+                            "w-5 h-5 flex items-center justify-center rounded transition-colors flex-shrink-0",
+                            hasChildren ? "hover:bg-muted-foreground/10" : "invisible"
+                        )}
+                    >
+                        {hasChildren && (
+                            isExpanded ? (
+                                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                            ) : (
+                                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                            )
+                        )}
+                    </button>
 
-                {/* Icon */}
-                <div
-                    className="w-6 h-6 flex items-center justify-center rounded text-sm"
-                    style={{ backgroundColor: `${treeNodeColors[node.type]}20` }}
-                >
-                    {treeNodeIcons[node.type]}
+                    <div
+                        className="w-6 h-6 flex items-center justify-center rounded text-sm flex-shrink-0"
+                        style={{ backgroundColor: `${treeNodeColors[node.type]}20` }}
+                    >
+                        {treeNodeIcons[node.type]}
+                    </div>
+
+                    <div className="min-w-0">
+                        <span className="text-sm font-medium text-foreground truncate block">
+                            {node.nameTh}
+                        </span>
+                        <span className="text-xs text-muted-foreground truncate block">
+                            {node.name}
+                        </span>
+                    </div>
                 </div>
 
-                {/* Label */}
-                <div className="flex-1 min-w-0">
-                    <span className="text-sm font-medium text-foreground truncate block">
-                        {node.nameTh}
-                    </span>
-                    <span className="text-xs text-muted-foreground truncate block">
-                        {node.name}
+                {/* Column 2: Type - 15% */}
+                <div className="w-[15%] px-2 hidden sm:flex items-center">
+                    <span
+                        className="text-[10px] px-2 py-0.5 rounded-full font-medium uppercase border"
+                        style={{
+                            backgroundColor: `${treeNodeColors[node.type]}10`,
+                            color: treeNodeColors[node.type],
+                            borderColor: `${treeNodeColors[node.type]}30`
+                        }}
+                    >
+                        {node.type}
                     </span>
                 </div>
 
-                {/* Type Badge */}
-                <span
-                    className="text-[10px] px-1.5 py-0.5 rounded font-medium uppercase"
-                    style={{
-                        backgroundColor: `${treeNodeColors[node.type]}20`,
-                        color: treeNodeColors[node.type]
-                    }}
-                >
-                    {node.type}
-                </span>
+                {/* Column 3: Status - 15% */}
+                <div className="w-[15%] px-2 hidden sm:flex items-center">
+                    {node.status && (
+                        <span className={cn(
+                            "text-[10px] px-2 py-0.5 rounded-full font-medium uppercase border",
+                            statusColors[node.status] || "bg-gray-100 text-gray-600"
+                        )}>
+                            {node.status}
+                        </span>
+                    )}
+                </div>
+
+                {/* Column 4: Owner - 25% */}
+                <div className="w-[25%] px-2 hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
+                    {node.owner && node.owner !== '-' && (
+                        <>
+                            <User className="w-3 h-3" />
+                            <span className="truncate">{node.owner}</span>
+                        </>
+                    )}
+                </div>
             </motion.div>
 
             {/* Children */}
@@ -185,28 +216,28 @@ export function TreeView({ onNodeClick, selectedNodeId, searchQuery: externalSea
     const totalNodes = allNodeIds.length;
 
     return (
-        <div className="h-full flex flex-col bg-card">
-            {/* Header */}
-            <div className="p-4 border-b border-border">
-                <div className="flex items-center justify-between mb-3">
+        <div className="h-full flex flex-col bg-card rounded-lg overflow-hidden border border-border shadow-sm">
+            {/* Toolbar */}
+            <div className="p-4 border-b border-border bg-background/50">
+                <div className="flex items-center justify-between mb-4">
                     <div>
-                        <h3 className="font-semibold text-foreground">Organization Hierarchy</h3>
-                        <p className="text-xs text-muted-foreground">{totalNodes} nodes</p>
+                        <h3 className="font-semibold text-lg text-foreground">Organization Hierarchy</h3>
+                        <p className="text-xs text-muted-foreground">{totalNodes} nodes • Department of Science Service</p>
                     </div>
                     <div className="flex items-center gap-1">
                         <button
                             onClick={expandAll}
-                            className="p-1.5 rounded hover:bg-muted transition-colors"
+                            className="p-1.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
                             title="Expand All"
                         >
-                            <Expand className="w-4 h-4 text-muted-foreground" />
+                            <Expand className="w-4 h-4" />
                         </button>
                         <button
                             onClick={collapseAll}
-                            className="p-1.5 rounded hover:bg-muted transition-colors"
+                            className="p-1.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
                             title="Collapse All"
                         >
-                            <Shrink className="w-4 h-4 text-muted-foreground" />
+                            <Shrink className="w-4 h-4" />
                         </button>
                     </div>
                 </div>
@@ -217,17 +248,25 @@ export function TreeView({ onNodeClick, selectedNodeId, searchQuery: externalSea
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <input
                             type="text"
-                            placeholder="ค้นหา..."
+                            placeholder="ค้นหา (หน่วยงาน, ระบบ, ผู้รับผิดชอบ)..."
                             value={internalSearchQuery}
                             onChange={(e) => setInternalSearchQuery(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2 text-sm bg-muted border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
+                            className="w-full pl-9 pr-4 py-2 text-sm bg-muted/50 border border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-border transition-all"
                         />
                     </div>
                 )}
             </div>
 
-            {/* Tree Content */}
-            <div className="flex-1 overflow-y-auto p-2">
+            {/* Table Header */}
+            <div className="flex items-center py-2 px-2 bg-muted/30 border-b border-border text-xs font-semibold text-muted-foreground">
+                <div className="flex-1 pl-10">ชื่อหน่วยงาน / ระบบ</div>
+                <div className="w-[15%] px-2 hidden sm:block">ประเภท</div>
+                <div className="w-[15%] px-2 hidden sm:block">สถานะ</div>
+                <div className="w-[25%] px-2 hidden sm:block">ผู้รับผิดชอบ</div>
+            </div>
+
+            {/* Tree Content (Scrollable) */}
+            <div className="flex-1 overflow-y-auto">
                 <TreeNodeItem
                     node={organizationTree}
                     level={0}
@@ -239,12 +278,12 @@ export function TreeView({ onNodeClick, selectedNodeId, searchQuery: externalSea
                 />
             </div>
 
-            {/* Legend */}
-            <div className="p-3 border-t border-border bg-muted/30">
-                <p className="text-xs text-muted-foreground mb-2">Legend</p>
-                <div className="flex flex-wrap gap-2">
+            {/* Legend Footer */}
+            <div className="p-3 border-t border-border bg-muted/20">
+                <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                    <span className="text-xs font-medium text-muted-foreground whitespace-nowrap mr-2">Legend:</span>
                     {Object.entries(treeNodeIcons).slice(0, 6).map(([type, icon]) => (
-                        <div key={type} className="flex items-center gap-1">
+                        <div key={type} className="flex items-center gap-1 flex-shrink-0 bg-background border border-border rounded px-1.5 py-0.5">
                             <span className="text-xs">{icon}</span>
                             <span className="text-[10px] text-muted-foreground capitalize">{type}</span>
                         </div>

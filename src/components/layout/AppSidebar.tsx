@@ -33,7 +33,6 @@ const navItems: NavItem[] = [
 
 const adminItems: NavItem[] = [
   { icon: Users, label: 'Users', labelTh: 'ผู้ใช้งาน', href: '/users' },
-  { icon: Wifi, label: 'WiFi Management', labelTh: 'จัดการ WiFi', href: '/wifi' },
   { icon: Shield, label: 'Audit Log', labelTh: 'บันทึกการใช้งาน', href: '/audit' },
   { icon: Settings, label: 'Settings', labelTh: 'ตั้งค่า', href: '/settings' },
 ];
