@@ -137,7 +137,7 @@ export function InsightPanel({ artefact, onClose, onImpactAnalysis }: InsightPan
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 20 }}
-      className="w-80 flex-shrink-0 bg-card border-l border-border p-5 overflow-y-auto"
+      className="fixed lg:relative inset-0 lg:inset-auto w-full lg:w-72 xl:w-80 flex-shrink-0 bg-card border-l border-border p-4 lg:p-5 overflow-y-auto z-50 lg:z-auto"
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-4">

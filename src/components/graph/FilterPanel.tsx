@@ -70,7 +70,7 @@ export function FilterPanel({ selectedTypes, onFilterChange, relationships = [] 
     <motion.div
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
-      className="w-64 flex-shrink-0 bg-card border-r border-border p-4 overflow-y-auto"
+      className="hidden lg:block w-56 xl:w-64 flex-shrink-0 bg-card border-r border-border p-4 overflow-y-auto"
     >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">

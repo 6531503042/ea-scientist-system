@@ -7,6 +7,7 @@ import { organizationTree, treeNodeIcons, treeNodeColors, type TreeNode } from '
 interface TreeViewProps {
     onNodeClick?: (node: TreeNode) => void;
     selectedNodeId?: string;
+    searchQuery?: string;
 }
 
 interface TreeNodeItemProps {
@@ -140,9 +141,12 @@ function TreeNodeItem({
     );
 }
 
-export function TreeView({ onNodeClick, selectedNodeId }: TreeViewProps) {
+export function TreeView({ onNodeClick, selectedNodeId, searchQuery: externalSearchQuery }: TreeViewProps) {
     const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set(['org-dss']));
-    const [searchQuery, setSearchQuery] = useState('');
+    const [internalSearchQuery, setInternalSearchQuery] = useState('');
+
+    // Use external search query if provided, otherwise use internal
+    const searchQuery = externalSearchQuery !== undefined ? externalSearchQuery : internalSearchQuery;
 
     const toggleExpand = (id: string) => {
         setExpandedNodes(prev => {
@@ -207,17 +211,19 @@ export function TreeView({ onNodeClick, selectedNodeId }: TreeViewProps) {
                     </div>
                 </div>
 
-                {/* Search */}
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <input
-                        type="text"
-                        placeholder="ค้นหา..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2 text-sm bg-muted border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
-                    />
-                </div>
+                {/* Search - only show if no external search provided */}
+                {externalSearchQuery === undefined && (
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <input
+                            type="text"
+                            placeholder="ค้นหา..."
+                            value={internalSearchQuery}
+                            onChange={(e) => setInternalSearchQuery(e.target.value)}
+                            className="w-full pl-9 pr-4 py-2 text-sm bg-muted border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
+                        />
+                    </div>
+                )}
             </div>
 
             {/* Tree Content */}

@@ -17,7 +17,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { motion, AnimatePresence } from 'framer-motion';
-import { History, Briefcase, User, GitGraph, Network, Activity, X, RotateCcw, Trash2, AlertTriangle, Info, FolderTree, ArrowDownToLine, ArrowUpFromLine, Zap } from 'lucide-react';
+import { History, Briefcase, User, Network, X, RotateCcw, Trash2, AlertTriangle, Info, FolderTree, ArrowDownToLine, ArrowUpFromLine, Zap, Search, PanelRightOpen, PanelRightClose } from 'lucide-react';
 import { ArtefactNode } from './ArtefactNode';
 import { FilterPanel } from './FilterPanel';
 import { InsightPanel } from './InsightPanel';
@@ -104,7 +104,11 @@ function EAGraphInner() {
 
   // New state for modes
   const [viewMode, setViewMode] = useState<'architect' | 'executive'>(role === 'executive' ? 'executive' : 'architect');
-  const [layoutMode, setLayoutMode] = useState<'graph' | 'tree' | 'hierarchy'>('graph');
+  const [layoutMode, setLayoutMode] = useState<'graph' | 'hierarchy'>('graph');
+
+  // Search and floating panel state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showFloatingPanel, setShowFloatingPanel] = useState(true);
 
   // Initialize nodes and edges
   const initialNodes = useMemo(() => createNodes(artefacts), []);
@@ -122,152 +126,72 @@ function EAGraphInner() {
   // Track previous layout mode to only apply layout on actual changes
   const prevLayoutModeRef = useRef(layoutMode);
 
-  // Handle Layout Changes - Based on ACTUAL RELATIONSHIPS
-  // Only runs when layoutMode CHANGES, not on every render
+  // Handle Layout Changes - Graph Layout Only (Block/Row by Type)
   useEffect(() => {
+    // Only apply layout for graph mode, hierarchy uses TreeView component
+    if (layoutMode === 'hierarchy') return;
+
     // Skip if layout mode hasn't actually changed
     if (prevLayoutModeRef.current === layoutMode && prevLayoutModeRef.current !== 'graph') {
       return;
     }
     prevLayoutModeRef.current = layoutMode;
 
-    // Build adjacency lists from edges (use initialEdges to avoid dependency)
-    const edgeList = edges;
-    const childrenOf: Record<string, string[]> = {};
-    const parentsOf: Record<string, string[]> = {};
-
-    edgeList.forEach(e => {
-      if (!childrenOf[e.source]) childrenOf[e.source] = [];
-      childrenOf[e.source].push(e.target);
-      if (!parentsOf[e.target]) parentsOf[e.target] = [];
-      parentsOf[e.target].push(e.source);
-    });
-
     setNodes((currentNodes) => {
-      if (layoutMode === 'tree') {
-        // ========== TREE LAYOUT (Organic Tree-like Flow) ==========
-        // Find the most connected node as the center/root
-        const connectionCount: Record<string, number> = {};
-        currentNodes.forEach(n => {
-          connectionCount[n.id] = (childrenOf[n.id]?.length || 0) + (parentsOf[n.id]?.length || 0);
+      // ========== GRAPH LAYOUT (Block/Row by Type) ==========
+      const typeGroups = {
+        business: currentNodes.filter(n => n.data.type === 'business'),
+        application: currentNodes.filter(n => n.data.type === 'application'),
+        data: currentNodes.filter(n => n.data.type === 'data'),
+        integration: currentNodes.filter(n => n.data.type === 'integration'),
+        security: currentNodes.filter(n => n.data.type === 'security'),
+        technology: currentNodes.filter(n => n.data.type === 'technology'),
+      };
+
+      const levels = [
+        typeGroups.business,
+        typeGroups.application,
+        [...typeGroups.data, ...typeGroups.integration, ...typeGroups.security],
+        typeGroups.technology
+      ];
+
+      const LEVEL_HEIGHT = 200;
+      const NODE_WIDTH = 220;
+      const GAP = 60;
+
+      const nodeLevel: Map<string, number> = new Map();
+      const nodeIndexInLevel: Map<string, number> = new Map();
+      const levelCounts: Map<number, number> = new Map();
+
+      levels.forEach((lvl, levelIdx) => {
+        levelCounts.set(levelIdx, lvl.length);
+        lvl.forEach((n, idx) => {
+          nodeLevel.set(n.id, levelIdx);
+          nodeIndexInLevel.set(n.id, idx);
         });
+      });
 
-        // Sort by connections to find central node
-        const sortedByConnections = [...currentNodes].sort(
-          (a, b) => (connectionCount[b.id] || 0) - (connectionCount[a.id] || 0)
-        );
+      return currentNodes.map(node => {
+        const level = nodeLevel.get(node.id) ?? 3;
+        const indexInLevel = nodeIndexInLevel.get(node.id) ?? 0;
+        const count = levelCounts.get(level) ?? 1;
 
-        const centralNode = sortedByConnections[0];
-        if (!centralNode) return currentNodes;
+        const totalWidth = count * NODE_WIDTH + (count - 1) * GAP;
+        const startX = -totalWidth / 2;
+        const x = startX + indexInLevel * (NODE_WIDTH + GAP) + NODE_WIDTH / 2;
+        const y = level * LEVEL_HEIGHT;
 
-        // Position central node
-        const positions: Map<string, { x: number; y: number }> = new Map();
-        positions.set(centralNode.id, { x: 0, y: 200 });
-
-        // Position parents above central node
-        const parents = parentsOf[centralNode.id] || [];
-        parents.forEach((parentId, idx) => {
-          const spread = parents.length > 1 ? 300 : 0;
-          const offsetX = (idx - (parents.length - 1) / 2) * spread;
-          positions.set(parentId, { x: offsetX, y: 0 });
-        });
-
-        // Position direct children below central node in a spread pattern
-        const children = childrenOf[centralNode.id] || [];
-        const childSpread = Math.max(280, 1200 / Math.max(children.length, 1));
-        children.forEach((childId, idx) => {
-          const offsetX = (idx - (children.length - 1) / 2) * childSpread;
-          positions.set(childId, { x: offsetX, y: 420 });
-        });
-
-        // Position grandchildren
-        const grandchildY = 650;
-        children.forEach((childId) => {
-          const grandchildren = childrenOf[childId] || [];
-          const childX = positions.get(childId)?.x || 0;
-          grandchildren.forEach((gcId, gcIdx) => {
-            if (!positions.has(gcId)) {
-              const gcSpread = Math.max(220, 500 / Math.max(grandchildren.length, 1));
-              const offsetX = (gcIdx - (grandchildren.length - 1) / 2) * gcSpread;
-              positions.set(gcId, { x: childX + offsetX, y: grandchildY });
-            }
-          });
-        });
-
-        // Position any remaining unpositioned nodes around the edges
-        const unpositioned = currentNodes.filter(n => !positions.has(n.id));
-        unpositioned.forEach((n, idx) => {
-          const angle = (idx / Math.max(unpositioned.length, 1)) * 2 * Math.PI - Math.PI / 2;
-          const radius = 600;
-          positions.set(n.id, {
-            x: radius * Math.cos(angle),
-            y: 350 + radius * Math.sin(angle) * 0.6
-          });
-        });
-
-        return currentNodes.map(node => ({
-          ...node,
-          position: positions.get(node.id) || node.position
-        }));
-
-      } else {
-        // ========== GRAPH LAYOUT (Block/Row by Type) ==========
-        // Group nodes by artefact type into rows
-        const typeGroups = {
-          business: currentNodes.filter(n => n.data.type === 'business'),
-          application: currentNodes.filter(n => n.data.type === 'application'),
-          data: currentNodes.filter(n => n.data.type === 'data'),
-          integration: currentNodes.filter(n => n.data.type === 'integration'),
-          security: currentNodes.filter(n => n.data.type === 'security'),
-          technology: currentNodes.filter(n => n.data.type === 'technology'),
-        };
-
-        // Define levels (rows)
-        const levels = [
-          typeGroups.business,
-          typeGroups.application,
-          [...typeGroups.data, ...typeGroups.integration, ...typeGroups.security],
-          typeGroups.technology
-        ];
-
-        const LEVEL_HEIGHT = 200;
-        const NODE_WIDTH = 220;
-        const GAP = 60;
-
-        // Build level map
-        const nodeLevel: Map<string, number> = new Map();
-        const nodeIndexInLevel: Map<string, number> = new Map();
-        const levelCounts: Map<number, number> = new Map();
-
-        levels.forEach((lvl, levelIdx) => {
-          levelCounts.set(levelIdx, lvl.length);
-          lvl.forEach((n, idx) => {
-            nodeLevel.set(n.id, levelIdx);
-            nodeIndexInLevel.set(n.id, idx);
-          });
-        });
-
-        return currentNodes.map(node => {
-          const level = nodeLevel.get(node.id) ?? 3;
-          const indexInLevel = nodeIndexInLevel.get(node.id) ?? 0;
-          const count = levelCounts.get(level) ?? 1;
-
-          const totalWidth = count * NODE_WIDTH + (count - 1) * GAP;
-          const startX = -totalWidth / 2;
-          const x = startX + indexInLevel * (NODE_WIDTH + GAP) + NODE_WIDTH / 2;
-          const y = level * LEVEL_HEIGHT;
-
-          return { ...node, position: { x, y } };
-        });
-      }
+        return { ...node, position: { x, y } };
+      });
     });
 
     // Update edge types
     setEdges((eds) => eds.map(e => ({
       ...e,
-      type: layoutMode === 'tree' ? 'default' : 'smoothstep', // Bezier for Tree, Smooth for Graph
+      type: 'smoothstep',
       style: { ...e.style, strokeWidth: 2 }
     })));
+
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [layoutMode, setNodes, setEdges]);
@@ -526,125 +450,106 @@ function EAGraphInner() {
 
   return (
     <div className="relative flex w-full h-full flex-col">
-      {/* Top Toolbar - Compact & Responsive */}
-      <div className="min-h-[40px] border-b bg-background flex items-center justify-start px-2 sm:px-4 py-1.5 z-10 flex-wrap gap-1.5">
-        {/* View Mode Toggle */}
-        <div className="flex items-center h-7 p-0.5 bg-muted rounded-md">
-          <button
-            onClick={() => setViewMode('architect')}
-            className={`flex items-center gap-1 px-2 h-6 rounded text-[11px] font-medium transition-all ${viewMode === 'architect'
-              ? 'bg-primary text-primary-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
-              }`}
-          >
-            <Briefcase className="w-3 h-3" />
-            <span className="hidden sm:inline">Architect</span>
-          </button>
-          <button
-            onClick={() => setViewMode('executive')}
-            className={`flex items-center gap-1 px-2 h-6 rounded text-[11px] font-medium transition-all ${viewMode === 'executive'
-              ? 'bg-primary text-primary-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
-              }`}
-          >
-            <User className="w-3 h-3" />
-            <span className="hidden sm:inline">Executive</span>
-          </button>
+      {/* Top Toolbar - Responsive */}
+      <div className="border-b bg-background px-2 sm:px-4 py-2 z-10 space-y-2">
+        {/* First Row: Mode toggles */}
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {/* View Mode Toggle */}
+            <div className="flex items-center h-7 p-0.5 bg-muted rounded-md">
+              <button
+                onClick={() => setViewMode('architect')}
+                className={`flex items-center gap-1 px-2 h-6 rounded text-[11px] font-medium transition-all ${viewMode === 'architect'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+                  }`}
+              >
+                <Briefcase className="w-3 h-3" />
+                <span className="hidden xs:inline">Architect</span>
+              </button>
+              <button
+                onClick={() => setViewMode('executive')}
+                className={`flex items-center gap-1 px-2 h-6 rounded text-[11px] font-medium transition-all ${viewMode === 'executive'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+                  }`}
+              >
+                <User className="w-3 h-3" />
+                <span className="hidden xs:inline">Executive</span>
+              </button>
+            </div>
+
+            {/* Layout Toggle - Only Graph and Hierarchy */}
+            <div className="flex items-center h-7 p-0.5 bg-muted rounded-md">
+              <button
+                onClick={() => setLayoutMode('graph')}
+                className={`flex items-center gap-1 px-2 h-6 rounded text-[11px] font-medium transition-all ${layoutMode === 'graph'
+                  ? 'bg-card text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                title="Graph View"
+              >
+                <Network className="w-3 h-3" />
+                <span className="hidden sm:inline">Graph</span>
+              </button>
+              <button
+                onClick={() => setLayoutMode('hierarchy')}
+                className={`flex items-center gap-1 px-2 h-6 rounded text-[11px] font-medium transition-all ${layoutMode === 'hierarchy'
+                  ? 'bg-card text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                title="Hierarchy View"
+              >
+                <FolderTree className="w-3 h-3" />
+                <span className="hidden sm:inline">Hierarchy</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Right side buttons - Desktop only */}
+          <div className="hidden md:flex items-center gap-2">
+            {/* Floating Panel Toggle */}
+            <button
+              onClick={() => setShowFloatingPanel(!showFloatingPanel)}
+              className="flex items-center gap-1 px-2 h-7 rounded-md bg-muted hover:bg-muted/80 text-xs font-medium transition-all"
+              title={showFloatingPanel ? "ซ่อน Artefact Library" : "แสดง Artefact Library"}
+            >
+              {showFloatingPanel ? <PanelRightClose className="w-3.5 h-3.5" /> : <PanelRightOpen className="w-3.5 h-3.5" />}
+              <span className="hidden lg:inline">{showFloatingPanel ? 'ซ่อน' : 'แสดง'}</span>
+            </button>
+          </div>
         </div>
 
-        <div className="w-px h-4 bg-border hidden sm:block" />
+        {/* Second Row: Search - full width on mobile */}
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="ค้นหา Artefact..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full h-8 pl-8 pr-3 text-xs bg-muted border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/60"
+            />
+          </div>
 
-        {/* Layout Toggle - Compact */}
-        <div className="flex items-center h-7 p-0.5 bg-muted rounded-md">
+          {/* Mobile filter toggle - shown on tablet and smaller */}
           <button
-            onClick={() => setLayoutMode('graph')}
-            className={`flex items-center gap-1 px-2 h-6 rounded text-[11px] font-medium transition-all ${layoutMode === 'graph'
-              ? 'bg-card text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
-              }`}
-            title="Graph View"
+            onClick={() => setShowFloatingPanel(!showFloatingPanel)}
+            className="md:hidden flex items-center gap-1 px-2 h-8 rounded-lg bg-muted hover:bg-muted/80 text-xs font-medium transition-all"
           >
-            <Network className="w-3 h-3" />
-            <span className="hidden md:inline">Graph</span>
-          </button>
-          <button
-            onClick={() => setLayoutMode('tree')}
-            className={`flex items-center gap-1 px-2 h-6 rounded text-[11px] font-medium transition-all ${layoutMode === 'tree'
-              ? 'bg-card text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
-              }`}
-            title="Tree View"
-          >
-            <GitGraph className="w-3 h-3" />
-            <span className="hidden md:inline">Tree</span>
-          </button>
-          <button
-            onClick={() => setLayoutMode('hierarchy')}
-            className={`flex items-center gap-1 px-2 h-6 rounded text-[11px] font-medium transition-all ${layoutMode === 'hierarchy'
-              ? 'bg-card text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
-              }`}
-            title="Hierarchy View"
-          >
-            <FolderTree className="w-3 h-3" />
-            <span className="hidden md:inline">Hierarchy</span>
+            {showFloatingPanel ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
           </button>
         </div>
       </div>
 
       {/* Sidebar and Canvas */}
       <div className="flex-1 relative flex overflow-hidden">
-        {/* Artefact Library Sidebar - Compact & Responsive */}
-        <div className="hidden sm:flex w-48 md:w-52 border-r bg-card flex-col z-20 shadow-lg">
-          <div className="px-3 py-2 border-b">
-            <h3 className="font-semibold text-sm">Artefacts</h3>
-            <p className="text-[10px] text-muted-foreground">Drag to canvas</p>
-          </div>
-          <div className="flex-1 overflow-y-auto p-2">
-            <div className="space-y-3">
-              {(['business', 'application', 'data', 'technology'] as const).map((type) => {
-                const typeArtefacts = artefacts.filter(a => a.type === type);
-                if (typeArtefacts.length === 0) return null;
-
-                return (
-                  <div key={type} className="space-y-1">
-                    <h4 className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1.5">
-                      <span className={`w-1.5 h-1.5 rounded-full bg-ea-${type}`}></span>
-                      {type}
-                    </h4>
-                    <div className="space-y-1">
-                      {typeArtefacts.map(artefact => (
-                        <div
-                          key={artefact.id}
-                          className="p-1.5 bg-muted/30 border border-border rounded hover:bg-muted cursor-move flex items-center gap-2 transition-colors group"
-                          draggable
-                          onDragStart={(event) => {
-                            event.dataTransfer.setData('application/reactflow', JSON.stringify(artefact));
-                            event.dataTransfer.effectAllowed = 'move';
-                          }}
-                        >
-                          <div className="p-1 bg-background rounded shadow-sm">
-                            <Briefcase className="w-2.5 h-2.5 text-muted-foreground" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <span className="text-xs font-medium block truncate">{artefact.name}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* Graph Canvas Wrapper */}
+        {/* Graph Canvas Wrapper - Now takes full width */}
         <div ref={reactFlowWrapper} className="flex-1 relative h-full">
           {layoutMode === 'hierarchy' ? (
             <TreeView
               onNodeClick={(node) => {
-                // If node has artefactId, select that artefact
                 if (node.artefactId) {
                   const artefact = artefacts.find(a => a.id === node.artefactId);
                   if (artefact) {
@@ -652,6 +557,7 @@ function EAGraphInner() {
                   }
                 }
               }}
+              searchQuery={searchQuery}
             />
           ) : (
             <ReactFlow
@@ -876,6 +782,77 @@ function EAGraphInner() {
             />
           </div>
         )}
+
+        {/* Floating Artefact Library Panel - LEFT Side (Photoshop-style) */}
+        <AnimatePresence>
+          {showFloatingPanel && layoutMode === 'graph' && (
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -50 }}
+              className="absolute left-4 top-4 bottom-4 w-48 lg:w-52 bg-card/95 backdrop-blur-sm border border-border rounded-xl shadow-2xl flex-col z-30 hidden md:flex"
+            >
+              <div className="px-3 py-2 border-b flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-sm">Artefact Library</h3>
+                  <p className="text-[10px] text-muted-foreground">ลากไปวางบน Canvas</p>
+                </div>
+                <button
+                  onClick={() => setShowFloatingPanel(false)}
+                  className="p-1 hover:bg-muted rounded transition-colors"
+                >
+                  <X className="w-3.5 h-3.5 text-muted-foreground" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-2">
+                <div className="space-y-3">
+                  {(['business', 'application', 'data', 'technology', 'security', 'integration'] as const).map((type) => {
+                    const typeArtefacts = artefacts.filter(a => a.type === type);
+                    if (typeArtefacts.length === 0) return null;
+
+                    const typeColors: Record<string, string> = {
+                      business: 'bg-violet-500',
+                      application: 'bg-sky-500',
+                      data: 'bg-teal-500',
+                      technology: 'bg-indigo-500',
+                      security: 'bg-amber-500',
+                      integration: 'bg-pink-500',
+                    };
+
+                    return (
+                      <div key={type} className="space-y-1">
+                        <h4 className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1.5">
+                          <span className={`w-1.5 h-1.5 rounded-full ${typeColors[type]}`}></span>
+                          {type}
+                        </h4>
+                        <div className="space-y-1">
+                          {typeArtefacts.map(artefact => (
+                            <div
+                              key={artefact.id}
+                              className="p-1.5 bg-muted/30 border border-border rounded hover:bg-muted cursor-move flex items-center gap-2 transition-colors group"
+                              draggable
+                              onDragStart={(event) => {
+                                event.dataTransfer.setData('application/reactflow', JSON.stringify(artefact));
+                                event.dataTransfer.effectAllowed = 'move';
+                              }}
+                            >
+                              <div className={`p-1 ${typeColors[type]}/20 rounded shadow-sm`}>
+                                <Briefcase className="w-2.5 h-2.5 text-muted-foreground" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <span className="text-xs font-medium block truncate">{artefact.name}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
 
         {/* Impact Analysis Modal */}

@@ -18,10 +18,11 @@ import {
   List,
   Upload,
   LayoutGrid,
-  ChevronRight,
   Clock,
   User,
-  History
+  History,
+  FileSpreadsheet,
+  FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { artefacts, typeLabels, type Artefact, type ArtefactType } from '@/data/mockData';
@@ -101,10 +102,10 @@ export function ArtefactListEnhanced() {
   const [editArtefact, setEditArtefact] = useState<Artefact | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [expandedSidebar, setExpandedSidebar] = useState(true);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [versionHistoryArtefact, setVersionHistoryArtefact] = useState<Artefact | null>(null);
+  const [exportFormat, setExportFormat] = useState<'excel' | 'pdf'>('excel');
 
   const filteredArtefacts = useMemo(() => {
     let result = [...artefacts];
@@ -156,33 +157,52 @@ export function ArtefactListEnhanced() {
   }, []);
 
   return (
-    <div className="flex gap-6">
-      {/* Sidebar */}
-      <motion.div
-        className={cn(
-          "flex-shrink-0 space-y-4 transition-all duration-300",
-          expandedSidebar ? "w-72" : "w-16"
-        )}
-      >
-        {/* Toggle Button */}
-        <button
-          onClick={() => setExpandedSidebar(!expandedSidebar)}
-          className="w-full flex items-center justify-center p-2 bg-card border border-border rounded-lg hover:bg-muted transition-colors"
-        >
-          <ChevronRight className={cn(
-            "w-4 h-4 transition-transform",
-            expandedSidebar && "rotate-180"
-          )} />
-        </button>
+    <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+      {/* Mobile Type Filter (visible only on mobile) */}
+      <div className="md:hidden overflow-x-auto pb-2 -mx-4 px-4">
+        <div className="flex gap-2 min-w-max">
+          <button
+            onClick={() => setSelectedType(null)}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors whitespace-nowrap",
+              selectedType === null
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-foreground"
+            )}
+          >
+            <LayoutGrid className="w-3.5 h-3.5" />
+            ทั้งหมด ({artefacts.length})
+          </button>
+          {togafOrder.map((type) => {
+            const Icon = typeIcons[type];
+            const count = artefactCounts[type];
+            const colors = typeColors[type];
+            return (
+              <button
+                key={type}
+                onClick={() => setSelectedType(selectedType === type ? null : type)}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors whitespace-nowrap",
+                  selectedType === type
+                    ? `${colors.bg} ${colors.text}`
+                    : "bg-muted text-foreground"
+                )}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                {togafLabels[type].th} ({count})
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Sidebar - Hidden on mobile, visible on tablet and up */}
+      <div className="hidden md:block flex-shrink-0 w-full md:w-56 lg:w-64 space-y-4">
 
         {/* Type Filter */}
         <div className="bg-card rounded-xl border border-border p-3">
-          {expandedSidebar && (
-            <>
-              <h3 className="font-semibold text-foreground mb-1 text-sm">ประเภท Artefact</h3>
-              <p className="text-xs text-muted-foreground mb-3">เรียงตามมาตรฐาน TOGAF</p>
-            </>
-          )}
+          <h3 className="font-semibold text-foreground mb-1 text-sm">ประเภท Artefact</h3>
+          <p className="text-xs text-muted-foreground mb-3">เรียงตามมาตรฐาน TOGAF</p>
 
           <div className="space-y-1">
             {/* All button */}
@@ -196,20 +216,16 @@ export function ArtefactListEnhanced() {
               )}
             >
               <LayoutGrid className="w-4 h-4 flex-shrink-0" />
-              {expandedSidebar && (
-                <>
-                  <span className="flex-1 text-left font-medium">ทั้งหมด</span>
-                  <span className={cn(
-                    "px-2 py-0.5 text-xs rounded-full",
-                    selectedType === null ? "bg-primary-foreground/20" : "bg-muted"
-                  )}>
-                    {artefacts.length}
-                  </span>
-                </>
-              )}
+              <span className="flex-1 text-left font-medium">ทั้งหมด</span>
+              <span className={cn(
+                "px-2 py-0.5 text-xs rounded-full",
+                selectedType === null ? "bg-primary-foreground/20" : "bg-muted"
+              )}>
+                {artefacts.length}
+              </span>
             </button>
 
-            {togafOrder.map((type, index) => {
+            {togafOrder.map((type) => {
               const Icon = typeIcons[type];
               const count = artefactCounts[type];
               const colors = typeColors[type];
@@ -230,19 +246,15 @@ export function ArtefactListEnhanced() {
                   )}>
                     <Icon className={cn("w-3.5 h-3.5", selectedType === type ? colors.text : "text-muted-foreground")} />
                   </div>
-                  {expandedSidebar && (
-                    <>
-                      <div className="flex-1 text-left">
-                        <span className="block text-xs font-medium">{togafLabels[type].th}</span>
-                      </div>
-                      <span className={cn(
-                        "px-1.5 py-0.5 text-xs rounded-full min-w-[24px] text-center",
-                        selectedType === type ? `${colors.bg} ${colors.text}` : "bg-muted text-muted-foreground"
-                      )}>
-                        {count}
-                      </span>
-                    </>
-                  )}
+                  <div className="flex-1 text-left">
+                    <span className="block text-xs font-medium">{togafLabels[type].th}</span>
+                  </div>
+                  <span className={cn(
+                    "px-1.5 py-0.5 text-xs rounded-full min-w-[24px] text-center",
+                    selectedType === type ? `${colors.bg} ${colors.text}` : "bg-muted text-muted-foreground"
+                  )}>
+                    {count}
+                  </span>
                 </button>
               );
             })}
@@ -250,55 +262,30 @@ export function ArtefactListEnhanced() {
         </div>
 
         {/* Status Summary */}
-        {expandedSidebar && (
-          <div className="bg-card rounded-xl border border-border p-3">
-            <h3 className="font-semibold text-foreground mb-3 text-sm">สถานะ</h3>
-            <div className="space-y-2">
-              {Object.entries(statusCounts).map(([status, count]) => {
-                const config = statusConfig[status];
-                return (
-                  <div key={status} className="flex items-center justify-between text-sm">
-                    <span className={cn("px-2 py-0.5 rounded-full text-xs", config.color)}>
-                      {config.label}
-                    </span>
-                    <span className="font-medium text-foreground">{count}</span>
-                  </div>
-                );
-              })}
-            </div>
+        <div className="bg-card rounded-xl border border-border p-3">
+          <h3 className="font-semibold text-foreground mb-3 text-sm">สถานะ</h3>
+          <div className="space-y-2">
+            {Object.entries(statusCounts).map(([status, count]) => {
+              const config = statusConfig[status];
+              return (
+                <div key={status} className="flex items-center justify-between text-sm">
+                  <span className={cn("px-2 py-0.5 rounded-full text-xs", config.color)}>
+                    {config.label}
+                  </span>
+                  <span className="font-medium text-foreground">{count}</span>
+                </div>
+              );
+            })}
           </div>
-        )}
-
-        {/* Import/Export */}
-        {expandedSidebar && (
-          <div className="bg-card rounded-xl border border-border p-3">
-            <h3 className="font-semibold text-foreground mb-2 text-sm">นำเข้า/ส่งออก</h3>
-            <div className="space-y-2">
-              <button
-                onClick={() => setIsExportModalOpen(true)}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm bg-muted hover:bg-muted/80 rounded-lg transition-colors"
-              >
-                <Download className="w-4 h-4" />
-                ส่งออก Excel
-              </button>
-              <button
-                onClick={() => setIsImportModalOpen(true)}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm bg-muted hover:bg-muted/80 rounded-lg transition-colors"
-              >
-                <Upload className="w-4 h-4" />
-                นำเข้า Excel
-              </button>
-            </div>
-          </div>
-        )}
-      </motion.div>
+        </div>
+      </div>
 
       {/* Main Content */}
       <div className="flex-1 space-y-4 min-w-0">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+            <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground mb-1">
               <span>ระบบสถาปัตยกรรมองค์กร</span>
               <span>›</span>
               <span>Artefacts</span>
@@ -309,34 +296,68 @@ export function ArtefactListEnhanced() {
                 </>
               )}
             </div>
-            <h2 className="text-xl font-bold text-foreground">
+            <h2 className="text-lg sm:text-xl font-bold text-foreground">
               {selectedType ? togafLabels[selectedType].th : 'Artefacts ทั้งหมด'}
             </h2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               {selectedType ? togafLabels[selectedType].description : `แสดง ${filteredArtefacts.length} รายการ`}
             </p>
           </div>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            เพิ่ม Artefact
-          </motion.button>
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Export Buttons with Icons */}
+            <button
+              onClick={() => {
+                setExportFormat('excel');
+                setIsExportModalOpen(true);
+              }}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm border border-border bg-card hover:bg-muted rounded-lg transition-colors"
+              title="ส่งออก Excel"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-green-600" />
+              <span className="hidden sm:inline">Excel</span>
+            </button>
+            <button
+              onClick={() => {
+                setExportFormat('pdf');
+                setIsExportModalOpen(true);
+              }}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm border border-border bg-card hover:bg-muted rounded-lg transition-colors"
+              title="ส่งออก PDF"
+            >
+              <FileText className="w-4 h-4 text-red-600" />
+              <span className="hidden sm:inline">PDF</span>
+            </button>
+            <button
+              onClick={() => setIsImportModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm border border-border bg-card hover:bg-muted rounded-lg transition-colors"
+              title="นำเข้า"
+            >
+              <Upload className="w-4 h-4 text-muted-foreground" />
+              <span className="hidden sm:inline">นำเข้า</span>
+            </button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setIsCreateModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">เพิ่ม Artefact</span>
+              <span className="sm:hidden">เพิ่ม</span>
+            </motion.button>
+          </div>
         </div>
 
         {/* Search & Controls */}
-        <div className="flex gap-3 flex-wrap">
-          <div className="relative flex-1 min-w-[200px]">
+        <div className="flex gap-2 sm:gap-3 flex-wrap">
+          <div className="relative flex-1 min-w-[150px] sm:min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               type="text"
-              placeholder="ค้นหา Artefact... (ชื่อ, คำอธิบาย)"
+              placeholder="ค้นหา Artefact..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-10 pl-10 pr-4 text-sm bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+              className="w-full h-9 sm:h-10 pl-10 pr-4 text-sm bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
             />
           </div>
           <div className="relative">
@@ -375,7 +396,7 @@ export function ArtefactListEnhanced() {
 
         {/* Grid View */}
         {viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
             <AnimatePresence>
               {filteredArtefacts.map((artefact, index) => {
                 const TypeIcon = typeIcons[artefact.type];
@@ -424,9 +445,9 @@ export function ArtefactListEnhanced() {
             </AnimatePresence>
           </div>
         ) : (
-          /* List View */
+          /* List View - Scrollable on mobile */
           <div className="bg-card rounded-xl border border-border overflow-hidden">
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto scrollbar-thin">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border bg-muted/30">
