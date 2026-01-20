@@ -137,14 +137,9 @@ export function AuditLogPageEnhanced() {
   });
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">ข้อมูลการใช้งานของผู้ใช้งาน</h2>
-          <p className="text-muted-foreground">แสดงข้อมูลการใช้งานของผู้ใช้ในระบบ</p>
-        </div>
-      </div>
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+      {/* Subtitle */}
+      <p className="text-sm text-muted-foreground">แสดงข้อมูลการใช้งานของผู้ใช้ในระบบ</p>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

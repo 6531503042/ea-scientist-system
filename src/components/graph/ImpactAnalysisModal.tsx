@@ -157,18 +157,18 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: 100 }}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-md md:max-w-lg lg:max-w-xl bg-card border-l border-border shadow-2xl overflow-hidden flex flex-col"
+        className="fixed right-0 top-0 bottom-0 z-50 w-full sm:w-[90%] sm:max-w-md md:max-w-lg lg:max-w-xl bg-card border-l border-border shadow-2xl overflow-hidden flex flex-col"
       >
         {/* Header */}
-        <div className="p-6 border-b border-border bg-gradient-to-r from-primary/5 to-accent/5">
+        <div className="p-4 sm:p-6 border-b border-border bg-gradient-to-r from-primary/5 to-accent/5">
           <div className="flex items-start justify-between">
             <div>
               <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-warning/10">
-                  <Zap className="w-6 h-6 text-warning" />
+                <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-warning/10">
+                  <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-warning" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-foreground">วิเคราะห์ผลกระทบ</h2>
+                  <h2 className="text-lg sm:text-xl font-bold text-foreground">วิเคราะห์ผลกระทบ</h2>
                   <p className="text-sm text-muted-foreground">Impact Analysis สำหรับ "{artefact.name}"</p>
                 </div>
               </div>
@@ -182,28 +182,28 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
           </div>
 
           {/* Summary Stats */}
-          <div className="grid grid-cols-2 gap-3 mt-4">
-            <div className="p-3 bg-card rounded-xl border border-border">
-              <p className="text-2xl font-bold text-foreground">{totalAffected}</p>
-              <p className="text-xs text-muted-foreground">ผลกระทบทั้งหมด</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mt-4">
+            <div className="p-2 sm:p-3 bg-card rounded-xl border border-border">
+              <p className="text-xl sm:text-2xl font-bold text-foreground">{totalAffected}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">ผลกระทบทั้งหมด</p>
             </div>
-            <div className="p-3 bg-card rounded-xl border border-border">
-              <p className="text-2xl font-bold text-info">{directImpact.length}</p>
-              <p className="text-xs text-muted-foreground">ผลกระทบโดยตรง</p>
+            <div className="p-2 sm:p-3 bg-card rounded-xl border border-border">
+              <p className="text-xl sm:text-2xl font-bold text-info">{directImpact.length}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">ผลกระทบโดยตรง</p>
             </div>
-            <div className="p-3 bg-card rounded-xl border border-border">
-              <p className="text-2xl font-bold text-warning">{indirectImpact.length}</p>
-              <p className="text-xs text-muted-foreground">ผลกระทบทางอ้อม</p>
+            <div className="p-2 sm:p-3 bg-card rounded-xl border border-border">
+              <p className="text-xl sm:text-2xl font-bold text-warning">{indirectImpact.length}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">ผลกระทบทางอ้อม</p>
             </div>
-            <div className="p-3 bg-card rounded-xl border border-destructive/30">
-              <p className="text-2xl font-bold text-destructive">{highRiskCount}</p>
-              <p className="text-xs text-muted-foreground">ความเสี่ยงสูง</p>
+            <div className="p-2 sm:p-3 bg-card rounded-xl border border-destructive/30">
+              <p className="text-xl sm:text-2xl font-bold text-destructive">{highRiskCount}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">ความเสี่ยงสูง</p>
             </div>
           </div>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
           {/* Context Summary */}
           <div className="mb-6 bg-muted/40 p-4 rounded-xl border border-border">
             <p className="text-sm text-foreground">
@@ -394,16 +394,16 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-border bg-muted/30">
+        <div className="p-4 sm:p-6 border-t border-border bg-muted/30">
           {!showConfirm ? (
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-0">
               <button
                 onClick={onClose}
                 className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 ยกเลิก
               </button>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center justify-between sm:justify-end gap-3">
                 <span className="text-sm text-muted-foreground">
                   {selectedNodes.size > 0 && `เลือก ${selectedNodes.size} รายการ`}
                 </span>
@@ -442,14 +442,14 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
                   </div>
                 </div>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-0">
                 <button
                   onClick={() => setShowConfirm(false)}
                   className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   ← กลับ
                 </button>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3">
                   <button
                     onClick={onClose}
                     className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg border border-border hover:bg-muted transition-colors"

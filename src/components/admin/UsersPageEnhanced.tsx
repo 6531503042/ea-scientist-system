@@ -59,21 +59,19 @@ export function UsersPageEnhanced() {
   });
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">จัดการข้อมูลผู้ใช้งาน</h2>
-          <p className="text-muted-foreground">จัดการข้อมูลผู้ใช้งาน บทบาท และสิทธิการเข้าถึงเมนูต่างๆ ในระบบ</p>
-        </div>
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+      {/* Header Row */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <p className="text-sm text-muted-foreground">จัดการข้อมูลผู้ใช้งาน บทบาท และสิทธิการเข้าถึงเมนูต่างๆ ในระบบ</p>
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => setIsCreateModalOpen(true)}
-          className="flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground font-medium rounded-xl hover:bg-primary/90 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground font-medium rounded-xl hover:bg-primary/90 transition-colors"
         >
           <Plus className="w-4 h-4" />
-          เพิ่มผู้ใช้งาน
+          <span className="hidden sm:inline">เพิ่มผู้ใช้งาน</span>
+          <span className="sm:hidden">เพิ่ม</span>
         </motion.button>
       </div>
 

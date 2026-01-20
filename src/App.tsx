@@ -28,14 +28,13 @@ const Layout = () => {
 
   const getHeaderInfo = (path: string) => {
     switch (path) {
-      case '/': return { title: 'Executive Dashboard', subtitle: 'ภาพรวมสถาปัตยกรรมองค์กร • กรมวิทยาศาสตร์บริการ' };
-      case '/graph': return { title: 'Architecture Map', subtitle: 'แผนผังความสัมพันธ์ระหว่าง Artefacts' };
-      case '/artefacts': return { title: 'Artefacts', subtitle: 'จัดการ Artefacts ทั้งหมดในระบบ' };
-
-      case '/users': return { title: 'จัดการผู้ใช้งาน', subtitle: 'บัญชีผู้ใช้และสิทธิ์การเข้าถึง' };
-      case '/wifi': return { title: 'จัดการ WiFi Authentication', subtitle: 'ระบบยืนยันตัวตนผ่าน WiFi' };
-      case '/audit': return { title: 'Audit Log', subtitle: 'บันทึกการใช้งานระบบ' };
-      case '/settings': return { title: 'ตั้งค่าระบบ', subtitle: 'กำหนดค่าระบบ EA Management' };
+      case '/': return { title: 'ภาพรวมสถาปัตยกรรมองค์กร', subtitle: '' };
+      case '/graph': return { title: 'แผนผังสถาปัตยกรรม', subtitle: '' };
+      case '/artefacts': return { title: 'Artefacts ทั้งหมด', subtitle: '' };
+      case '/users': return { title: 'จัดการผู้ใช้งาน', subtitle: '' };
+      case '/wifi': return { title: 'WiFi Authentication', subtitle: '' };
+      case '/audit': return { title: 'ข้อมูลการใช้งาน', subtitle: '' };
+      case '/settings': return { title: 'ตั้งค่าระบบ', subtitle: '' };
       default: return { title: 'EA Management System', subtitle: '' };
     }
   };

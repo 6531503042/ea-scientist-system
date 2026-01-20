@@ -137,13 +137,13 @@ export function InsightPanel({ artefact, onClose, onImpactAnalysis }: InsightPan
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 20 }}
-      className="fixed lg:relative inset-0 lg:inset-auto w-full lg:w-72 xl:w-80 flex-shrink-0 bg-card border-l border-border p-4 lg:p-5 overflow-y-auto z-50 lg:z-auto"
+      className="fixed lg:relative inset-0 lg:inset-auto w-full lg:w-72 xl:w-80 flex-shrink-0 bg-card border-l border-border p-4 pb-20 sm:pb-4 lg:p-5 overflow-y-auto z-50 lg:z-auto"
     >
       {/* Header */}
-      <div className="flex items-start justify-between mb-4">
-        <div>
-          <h3 className="font-semibold text-lg text-foreground">{artefact.name}</h3>
-          <p className="text-sm text-muted-foreground">{artefact.nameTh}</p>
+      <div className="flex items-start justify-between mb-4 gap-2">
+        <div className="min-w-0 flex-1">
+          <h3 className="font-semibold text-base sm:text-lg text-foreground truncate">{artefact.name}</h3>
+          <p className="text-xs sm:text-sm text-muted-foreground truncate">{artefact.nameTh}</p>
         </div>
         <button
           onClick={onClose}
@@ -154,7 +154,7 @@ export function InsightPanel({ artefact, onClose, onImpactAnalysis }: InsightPan
       </div>
 
       {/* Status & Risk */}
-      <div className="flex items-center gap-2 mb-6">
+      <div className="flex flex-wrap items-center gap-2 mb-4 sm:mb-6">
         <span className={cn(
           "px-2.5 py-1 text-xs font-medium rounded-full capitalize",
           statusStyle.bg,
@@ -173,7 +173,7 @@ export function InsightPanel({ artefact, onClose, onImpactAnalysis }: InsightPan
       </div>
 
       {/* Description */}
-      <div className="mb-6">
+      <div className="mb-4 sm:mb-6">
         <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">
           รายละเอียด
         </h4>
@@ -181,34 +181,34 @@ export function InsightPanel({ artefact, onClose, onImpactAnalysis }: InsightPan
       </div>
 
       {/* Metadata */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        <div className="p-3 bg-muted/50 rounded-lg">
-          <div className="flex items-center gap-2 text-muted-foreground mb-1">
-            <User className="w-3.5 h-3.5" />
-            <span className="text-xs">ผู้รับผิดชอบ</span>
+      <div className="grid grid-cols-1 xs:grid-cols-2 gap-2 sm:gap-3 mb-4 sm:mb-6">
+        <div className="p-2 sm:p-3 bg-muted/50 rounded-lg">
+          <div className="flex items-center gap-1.5 sm:gap-2 text-muted-foreground mb-1">
+            <User className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+            <span className="text-[10px] sm:text-xs">ผู้รับผิดชอบ</span>
           </div>
-          <p className="text-sm font-medium text-foreground truncate">{artefact.owner}</p>
+          <p className="text-xs sm:text-sm font-medium text-foreground truncate">{artefact.owner}</p>
         </div>
-        <div className="p-3 bg-muted/50 rounded-lg">
-          <div className="flex items-center gap-2 text-muted-foreground mb-1">
-            <Building className="w-3.5 h-3.5" />
-            <span className="text-xs">หน่วยงาน</span>
+        <div className="p-2 sm:p-3 bg-muted/50 rounded-lg">
+          <div className="flex items-center gap-1.5 sm:gap-2 text-muted-foreground mb-1">
+            <Building className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+            <span className="text-[10px] sm:text-xs">หน่วยงาน</span>
           </div>
-          <p className="text-sm font-medium text-foreground truncate">{artefact.department}</p>
+          <p className="text-xs sm:text-sm font-medium text-foreground truncate">{artefact.department}</p>
         </div>
-        <div className="p-3 bg-muted/50 rounded-lg">
-          <div className="flex items-center gap-2 text-muted-foreground mb-1">
-            <GitBranch className="w-3.5 h-3.5" />
-            <span className="text-xs">เวอร์ชัน</span>
+        <div className="p-2 sm:p-3 bg-muted/50 rounded-lg">
+          <div className="flex items-center gap-1.5 sm:gap-2 text-muted-foreground mb-1">
+            <GitBranch className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+            <span className="text-[10px] sm:text-xs">เวอร์ชัน</span>
           </div>
-          <p className="text-sm font-medium text-foreground">{artefact.version}</p>
+          <p className="text-xs sm:text-sm font-medium text-foreground">{artefact.version}</p>
         </div>
-        <div className="p-3 bg-muted/50 rounded-lg">
-          <div className="flex items-center gap-2 text-muted-foreground mb-1">
-            <Calendar className="w-3.5 h-3.5" />
-            <span className="text-xs">อัพเดตล่าสุด</span>
+        <div className="p-2 sm:p-3 bg-muted/50 rounded-lg">
+          <div className="flex items-center gap-1.5 sm:gap-2 text-muted-foreground mb-1">
+            <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+            <span className="text-[10px] sm:text-xs">อัพเดตล่าสุด</span>
           </div>
-          <p className="text-sm font-medium text-foreground">{artefact.lastUpdated}</p>
+          <p className="text-xs sm:text-sm font-medium text-foreground">{artefact.lastUpdated}</p>
         </div>
       </div>
 
@@ -272,10 +272,11 @@ export function InsightPanel({ artefact, onClose, onImpactAnalysis }: InsightPan
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         onClick={onImpactAnalysis}
-        className="w-full mt-6 px-4 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+        className="w-full mt-4 sm:mt-6 px-4 py-2.5 sm:py-3 bg-primary text-primary-foreground text-sm sm:text-base font-medium rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 fixed sm:relative bottom-4 sm:bottom-auto left-4 right-4 sm:left-auto sm:right-auto z-10"
+        style={{ width: 'calc(100% - 2rem)' }}
       >
         <AlertTriangle className="w-4 h-4" />
-        วิเคราะห์ผลกระทบ
+        <span>วิเคราะห์ผลกระทบ</span>
         <ChevronRight className="w-4 h-4" />
       </motion.button>
     </motion.div>

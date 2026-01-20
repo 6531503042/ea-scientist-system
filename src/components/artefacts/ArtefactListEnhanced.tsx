@@ -157,24 +157,13 @@ export function ArtefactListEnhanced() {
   return (
     <div className="flex flex-col h-full bg-background/95">
       {/* Header Section */}
-      <div className="flex-shrink-0 border-b bg-card px-4 py-4 sm:px-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex-shrink-0 border-b bg-card px-4 py-3 sm:px-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground mb-1">
-              <span>ระบบสถาปัตยกรรมองค์กร</span>
-              <span>›</span>
-              <span>Artefacts</span>
-              {selectedType && (
-                <>
-                  <span>›</span>
-                  <span className={typeColors[selectedType].text}>{togafLabels[selectedType].th}</span>
-                </>
-              )}
-            </div>
-            <h2 className="text-xl font-bold text-foreground">
+            <h2 className="text-lg sm:text-xl font-bold text-foreground">
               {selectedType ? togafLabels[selectedType].th : 'Artefacts ทั้งหมด'}
             </h2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               {selectedType ? togafLabels[selectedType].description : `แสดง ${filteredArtefacts.length} รายการ`}
             </p>
           </div>
@@ -224,19 +213,19 @@ export function ArtefactListEnhanced() {
           </div>
         </div>
 
-        {/* Mobile Filter Tabs (Hidden on Desktop) */}
-        <div className="mt-4 lg:hidden overflow-x-auto -mx-4 px-4">
-          <div className="flex gap-2 min-w-max pb-2">
+        {/* Mobile/Tablet Filter Tabs (Hidden on Desktop) */}
+        <div className="mt-3 sm:mt-4 lg:hidden overflow-x-auto -mx-4 px-4 scrollbar-hide">
+          <div className="flex gap-1.5 sm:gap-2 min-w-max pb-2">
             <button
               onClick={() => setSelectedType(null)}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap",
+                "flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors whitespace-nowrap",
                 selectedType === null
                   ? "bg-primary text-primary-foreground"
                   : "bg-card border border-border hover:bg-muted"
               )}
             >
-              <LayoutGrid className="w-4 h-4" />
+              <LayoutGrid className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               ทั้งหมด ({artefacts.length})
             </button>
             {togafOrder.map((type) => {
@@ -248,15 +237,16 @@ export function ArtefactListEnhanced() {
                   key={type}
                   onClick={() => setSelectedType(selectedType === type ? null : type)}
                   className={cn(
-                    "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap border",
+                    "flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors whitespace-nowrap border",
                     selectedType === type
                       ? cn("border-transparent", colors.bg, colors.text)
                       : "bg-card border-border hover:bg-muted"
                   )}
                 >
-                  <Icon className="w-4 h-4" />
-                  <span>{typeLabels[type]?.th || type}</span>
-                  <span className="opacity-60 ml-1">({count})</span>
+                  <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <span className="hidden xs:inline">{typeLabels[type]?.th || type}</span>
+                  <span className="xs:hidden">{(typeLabels[type]?.th || type).slice(0, 4)}</span>
+                  <span className="opacity-60">({count})</span>
                 </button>
               );
             })}
@@ -319,7 +309,7 @@ export function ArtefactListEnhanced() {
         {/* Main Content Area */}
         <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-background">
           {/* Controls Bar */}
-          <div className="p-4 border-b space-y-4">
+          <div className="p-3 sm:p-4 border-b space-y-3 sm:space-y-4">
             <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
               {/* Search */}
               <div className="relative w-full sm:max-w-md">
@@ -371,7 +361,7 @@ export function ArtefactListEnhanced() {
             </div>
 
             {/* Status Summary */}
-            <div className="flex items-center gap-3 text-sm overflow-x-auto pb-2 sm:pb-0">
+            <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm overflow-x-auto pb-2 sm:pb-0 -mx-3 px-3 sm:mx-0 sm:px-0">
               {Object.entries(statusCounts).map(([status, count]) => {
                 const config = statusConfig[status];
                 return (
@@ -386,9 +376,9 @@ export function ArtefactListEnhanced() {
           </div>
 
           {/* Content Scroll Area */}
-          <div className="flex-1 overflow-auto p-4 sm:p-6">
+          <div className="flex-1 overflow-auto p-3 sm:p-4 md:p-6">
             {viewMode === 'grid' ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
                 <AnimatePresence>
                   {filteredArtefacts.map((artefact, index) => {
                     const TypeIcon = typeIcons[artefact.type];
@@ -404,7 +394,7 @@ export function ArtefactListEnhanced() {
                         transition={{ delay: index * 0.02 }}
                         onClick={() => setSelectedArtefact(artefact)}
                         className={cn(
-                          "group relative bg-card rounded-xl border border-border p-4 cursor-pointer",
+                          "group relative bg-card rounded-xl border border-border p-3 sm:p-4 cursor-pointer",
                           "hover:border-primary/50 hover:shadow-lg transition-all duration-200"
                         )}
                       >
@@ -413,20 +403,20 @@ export function ArtefactListEnhanced() {
                           colors.text.replace('text-', 'bg-')
                         )} />
 
-                        <div className="flex items-start gap-3 mb-3 mt-1">
+                        <div className="flex items-start gap-2 sm:gap-3 mb-2 sm:mb-3 mt-1">
                           <div className={cn(
-                            "flex items-center justify-center w-10 h-10 rounded-lg flex-shrink-0",
+                            "flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex-shrink-0",
                             colors.bg
                           )}>
-                            <TypeIcon className={cn("w-5 h-5", colors.text)} />
+                            <TypeIcon className={cn("w-4 h-4 sm:w-5 sm:h-5", colors.text)} />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-foreground truncate">{artefact.name}</h3>
+                            <h3 className="font-semibold text-sm sm:text-base text-foreground truncate">{artefact.name}</h3>
                             <p className="text-xs text-muted-foreground truncate">{artefact.nameTh}</p>
                           </div>
                         </div>
 
-                        <p className="text-sm text-muted-foreground line-clamp-2 mb-4 h-10">
+                        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mb-3 sm:mb-4 h-8 sm:h-10">
                           {artefact.description}
                         </p>
 
@@ -443,7 +433,7 @@ export function ArtefactListEnhanced() {
               </div>
             ) : (
               <div className="bg-card rounded-xl border border-border overflow-hidden">
-                <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-3 bg-muted/50 border-b text-sm font-medium text-muted-foreground">
+                <div className="hidden md:grid grid-cols-12 gap-2 sm:gap-4 px-3 sm:px-4 py-2 sm:py-3 bg-muted/50 border-b text-xs sm:text-sm font-medium text-muted-foreground">
                   <div className="col-span-4">ชื่อ Artefact</div>
                   <div className="col-span-2">ประเภท</div>
                   <div className="col-span-2">สถานะ</div>
@@ -466,7 +456,7 @@ export function ArtefactListEnhanced() {
                           exit={{ opacity: 0, x: 10 }}
                           transition={{ delay: index * 0.02 }}
                           onClick={() => setSelectedArtefact(artefact)}
-                          className="grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 px-4 py-3 hover:bg-muted/30 cursor-pointer transition-colors group"
+                          className="grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-3 lg:gap-4 px-3 sm:px-4 py-2.5 sm:py-3 hover:bg-muted/30 cursor-pointer transition-colors group"
                         >
                           <div className="md:col-span-4 flex items-center gap-3">
                             <div className={cn("w-2 h-2 rounded-full flex-shrink-0 md:hidden", colors.text.replace('text-', 'bg-'))} />

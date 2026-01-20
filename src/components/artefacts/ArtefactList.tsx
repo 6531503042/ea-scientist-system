@@ -1,12 +1,12 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Search, 
-  Filter, 
-  Plus, 
-  MoreVertical, 
-  Eye, 
-  Edit, 
+import {
+  Search,
+  Filter,
+  Plus,
+  MoreVertical,
+  Eye,
+  Edit,
   Trash2,
   Download,
   ChevronDown,
@@ -55,27 +55,27 @@ export function ArtefactList() {
 
   const filteredArtefacts = useMemo(() => {
     let result = [...artefacts];
-    
+
     // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      result = result.filter(a => 
-        a.name.toLowerCase().includes(query) || 
+      result = result.filter(a =>
+        a.name.toLowerCase().includes(query) ||
         a.nameTh.toLowerCase().includes(query) ||
         a.description.toLowerCase().includes(query)
       );
     }
-    
+
     // Type filter
     if (selectedType !== 'all') {
       result = result.filter(a => a.type === selectedType);
     }
-    
+
     // Risk filter
     if (selectedRisk !== 'all') {
       result = result.filter(a => a.riskLevel === selectedRisk);
     }
-    
+
     // Sort
     result.sort((a, b) => {
       switch (sortBy) {
@@ -92,17 +92,17 @@ export function ArtefactList() {
           return 0;
       }
     });
-    
+
     return result;
   }, [searchQuery, selectedType, selectedRisk, sortBy]);
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Artefacts</h2>
-          <p className="text-muted-foreground">จัดการ Artefacts ทั้งหมดในระบบ ({artefacts.length} รายการ)</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-foreground">Artefacts</h2>
+          <p className="text-sm sm:text-base text-muted-foreground">จัดการ Artefacts ทั้งหมดในระบบ ({artefacts.length} รายการ)</p>
         </div>
         <motion.button
           whileHover={{ scale: 1.02 }}
@@ -115,7 +115,7 @@ export function ArtefactList() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col lg:flex-row gap-4">
+      <div className="flex flex-col gap-3 sm:gap-4">
         {/* Search */}
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -128,71 +128,74 @@ export function ArtefactList() {
           />
         </div>
 
-        {/* Type Filter */}
-        <div className="relative">
-          <select
-            value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value as ArtefactType | 'all')}
-            className="h-10 pl-4 pr-10 text-sm bg-card border border-border rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-accent/50"
-          >
-            <option value="all">ทุกประเภท</option>
-            {Object.entries(typeLabels).map(([key, value]) => (
-              <option key={key} value={key}>{value.th}</option>
-            ))}
-          </select>
-          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-        </div>
+        {/* Filter Row */}
+        <div className="flex flex-wrap gap-2 sm:gap-3">
+          {/* Type Filter */}
+          <div className="relative flex-1 min-w-[120px] sm:flex-none">
+            <select
+              value={selectedType}
+              onChange={(e) => setSelectedType(e.target.value as ArtefactType | 'all')}
+              className="w-full sm:w-auto h-10 pl-3 sm:pl-4 pr-8 sm:pr-10 text-sm bg-card border border-border rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-accent/50"
+            >
+              <option value="all">ทุกประเภท</option>
+              {Object.entries(typeLabels).map(([key, value]) => (
+                <option key={key} value={key}>{value.th}</option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+          </div>
 
-        {/* Risk Filter */}
-        <div className="relative">
-          <select
-            value={selectedRisk}
-            onChange={(e) => setSelectedRisk(e.target.value as RiskLevel | 'all')}
-            className="h-10 pl-4 pr-10 text-sm bg-card border border-border rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-accent/50"
-          >
-            <option value="all">ทุกระดับความเสี่ยง</option>
-            <option value="high">สูง</option>
-            <option value="medium">ปานกลาง</option>
-            <option value="low">ต่ำ</option>
-            <option value="none">ไม่มี</option>
-          </select>
-          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-        </div>
+          {/* Risk Filter */}
+          <div className="relative flex-1 min-w-[130px] sm:flex-none">
+            <select
+              value={selectedRisk}
+              onChange={(e) => setSelectedRisk(e.target.value as RiskLevel | 'all')}
+              className="w-full sm:w-auto h-10 pl-3 sm:pl-4 pr-8 sm:pr-10 text-sm bg-card border border-border rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-accent/50"
+            >
+              <option value="all">ทุกระดับ</option>
+              <option value="high">สูง</option>
+              <option value="medium">ปานกลาง</option>
+              <option value="low">ต่ำ</option>
+              <option value="none">ไม่มี</option>
+            </select>
+            <ChevronDown className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+          </div>
 
-        {/* Sort */}
-        <div className="relative">
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-            className="h-10 pl-4 pr-10 text-sm bg-card border border-border rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-accent/50"
-          >
-            <option value="name">เรียงตามชื่อ</option>
-            <option value="type">เรียงตามประเภท</option>
-            <option value="risk">เรียงตามความเสี่ยง</option>
-            <option value="updated">เรียงตามวันที่อัปเดต</option>
-          </select>
-          <ArrowUpDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-        </div>
+          {/* Sort */}
+          <div className="relative flex-1 min-w-[140px] sm:flex-none">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+              className="w-full sm:w-auto h-10 pl-3 sm:pl-4 pr-8 sm:pr-10 text-sm bg-card border border-border rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-accent/50"
+            >
+              <option value="name">เรียงตามชื่อ</option>
+              <option value="type">ประเภท</option>
+              <option value="risk">ความเสี่ยง</option>
+              <option value="updated">วันที่อัปเดต</option>
+            </select>
+            <ArrowUpDown className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+          </div>
 
-        <button className="flex items-center gap-2 px-4 h-10 text-sm bg-muted hover:bg-muted/80 rounded-lg transition-colors">
-          <Download className="w-4 h-4" />
-          Export
-        </button>
+          <button className="flex items-center justify-center gap-2 px-3 sm:px-4 h-10 text-sm bg-muted hover:bg-muted/80 rounded-lg transition-colors flex-shrink-0">
+            <Download className="w-4 h-4" />
+            <span className="hidden sm:inline">Export</span>
+          </button>
+        </div>
       </div>
 
       {/* Table */}
       <div className="bg-card rounded-xl border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead>
+            <thead className="hidden md:table-header-group">
               <tr className="border-b border-border bg-muted/30">
-                <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Artefact</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">ประเภท</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">สถานะ</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">ความเสี่ยง</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Owner</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">อัปเดต</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">การดำเนินการ</th>
+                <th className="text-left px-3 sm:px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Artefact</th>
+                <th className="text-left px-3 sm:px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">ประเภท</th>
+                <th className="text-left px-3 sm:px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">สถานะ</th>
+                <th className="text-left px-3 sm:px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">ความเสี่ยง</th>
+                <th className="text-left px-3 sm:px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden lg:table-cell">Owner</th>
+                <th className="text-left px-3 sm:px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden lg:table-cell">อัปเดต</th>
+                <th className="text-right px-3 sm:px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">การดำเนินการ</th>
               </tr>
             </thead>
             <tbody>
@@ -206,37 +209,37 @@ export function ArtefactList() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                       transition={{ delay: index * 0.03 }}
-                      className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer"
+                      className="flex flex-col md:table-row border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer p-3 md:p-0"
                       onClick={() => setSelectedArtefact(artefact)}
                     >
-                      <td className="px-4 py-4">
+                      <td className="px-0 md:px-3 lg:px-4 py-2 md:py-4">
                         <div className="flex items-center gap-3">
                           <div className={cn(
-                            "flex items-center justify-center w-10 h-10 rounded-lg",
+                            "flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-lg flex-shrink-0",
                             `bg-${typeLabels[artefact.type].color}/10`
                           )}>
-                            <TypeIcon className={cn("w-5 h-5", `text-${typeLabels[artefact.type].color}`)} />
+                            <TypeIcon className={cn("w-4 h-4 sm:w-5 sm:h-5", `text-${typeLabels[artefact.type].color}`)} />
                           </div>
-                          <div>
-                            <p className="font-medium text-foreground">{artefact.name}</p>
-                            <p className="text-xs text-muted-foreground">{artefact.nameTh}</p>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-foreground text-sm sm:text-base truncate">{artefact.name}</p>
+                            <p className="text-xs text-muted-foreground truncate">{artefact.nameTh}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-4">
+                      <td className="hidden md:table-cell px-3 lg:px-4 py-4">
                         <span className="text-sm text-foreground">{typeLabels[artefact.type].th}</span>
                       </td>
-                      <td className="px-4 py-4">
+                      <td className="hidden md:table-cell px-3 lg:px-4 py-4">
                         <span className={cn(
-                          "px-2.5 py-1 text-xs font-medium rounded-full capitalize",
+                          "px-2 py-0.5 sm:px-2.5 sm:py-1 text-xs font-medium rounded-full capitalize",
                           statusColors[artefact.status]
                         )}>
                           {artefact.status}
                         </span>
                       </td>
-                      <td className="px-4 py-4">
+                      <td className="hidden md:table-cell px-3 lg:px-4 py-4">
                         <span className={cn(
-                          "inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full",
+                          "inline-flex items-center gap-1 px-2 py-0.5 sm:py-1 text-xs font-medium rounded-full",
                           riskColors[artefact.riskLevel]
                         )}>
                           {artefact.riskLevel !== 'none' && artefact.riskLevel !== 'low' && (
@@ -245,22 +248,40 @@ export function ArtefactList() {
                           {artefact.riskLevel === 'high' ? 'สูง' : artefact.riskLevel === 'medium' ? 'ปานกลาง' : artefact.riskLevel === 'low' ? 'ต่ำ' : 'ไม่มี'}
                         </span>
                       </td>
-                      <td className="px-4 py-4">
+                      <td className="hidden lg:table-cell px-3 lg:px-4 py-4">
                         <p className="text-sm text-foreground">{artefact.owner}</p>
                         <p className="text-xs text-muted-foreground">{artefact.department}</p>
                       </td>
-                      <td className="px-4 py-4">
+                      <td className="hidden lg:table-cell px-3 lg:px-4 py-4">
                         <span className="text-sm text-muted-foreground">{artefact.lastUpdated}</span>
                       </td>
-                      <td className="px-4 py-4">
-                        <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                          <button className="p-2 hover:bg-muted rounded-lg transition-colors">
+                      {/* Mobile: inline badges */}
+                      <td className="md:hidden py-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className={cn(
+                            "px-2 py-0.5 text-xs font-medium rounded-full capitalize",
+                            statusColors[artefact.status]
+                          )}>
+                            {artefact.status}
+                          </span>
+                          <span className={cn(
+                            "inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full",
+                            riskColors[artefact.riskLevel]
+                          )}>
+                            {artefact.riskLevel === 'high' ? 'สูง' : artefact.riskLevel === 'medium' ? 'ปานกลาง' : artefact.riskLevel === 'low' ? 'ต่ำ' : '-'}
+                          </span>
+                          <span className="text-xs text-muted-foreground">{typeLabels[artefact.type].th}</span>
+                        </div>
+                      </td>
+                      <td className="px-0 md:px-3 lg:px-4 py-2 md:py-4">
+                        <div className="flex items-center justify-end gap-0.5 sm:gap-1" onClick={(e) => e.stopPropagation()}>
+                          <button className="p-1.5 sm:p-2 hover:bg-muted rounded-lg transition-colors">
                             <Eye className="w-4 h-4 text-muted-foreground" />
                           </button>
-                          <button className="p-2 hover:bg-muted rounded-lg transition-colors">
+                          <button className="p-1.5 sm:p-2 hover:bg-muted rounded-lg transition-colors">
                             <Edit className="w-4 h-4 text-muted-foreground" />
                           </button>
-                          <button className="p-2 hover:bg-destructive/10 rounded-lg transition-colors">
+                          <button className="p-1.5 sm:p-2 hover:bg-destructive/10 rounded-lg transition-colors">
                             <Trash2 className="w-4 h-4 text-destructive" />
                           </button>
                         </div>
@@ -285,9 +306,9 @@ export function ArtefactList() {
       </div>
 
       {/* Detail Modal */}
-      <ArtefactDetailModal 
-        artefact={selectedArtefact} 
-        onClose={() => setSelectedArtefact(null)} 
+      <ArtefactDetailModal
+        artefact={selectedArtefact}
+        onClose={() => setSelectedArtefact(null)}
       />
     </div>
   );

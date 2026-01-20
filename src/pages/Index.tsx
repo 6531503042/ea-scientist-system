@@ -85,18 +85,6 @@ const Index = () => {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-          <span>ระบบสถาปัตยกรรมองค์กร</span>
-          <span>›</span>
-          <span>Dashboard</span>
-        </div>
-        <h1 className="text-2xl font-bold text-foreground">ภาพรวมสถาปัตยกรรมองค์กร</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          กรมวิทยาศาสตร์บริการ - Enterprise Architecture Dashboard
-        </p>
-      </div>
 
       {/* Quick Stats - 3 cards only */}
       <div className="grid grid-cols-3 gap-4 mb-6">
