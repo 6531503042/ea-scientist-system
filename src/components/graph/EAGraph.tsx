@@ -298,15 +298,35 @@ interface FloatingInsightPanelProps {
   artefact: Artefact;
   onClose: () => void;
   onImpactAnalysis: () => void;
+  // Impact Analysis Props
+  impactMode: boolean;
+  impactStats: { affected: number; critical: number; upstream: number };
+  upstreamList: Artefact[];
+  downstreamList: Artefact[];
+  simulationAction: 'none' | 'delete' | 'modify';
+  setSimulationAction: (action: 'none' | 'delete' | 'modify') => void;
+  setImpactMode: (mode: boolean) => void;
 }
 
-function FloatingInsightPanel({ artefact, onClose, onImpactAnalysis }: FloatingInsightPanelProps) {
-  // Find related artefacts
+function FloatingInsightPanel({
+  artefact,
+  onClose,
+  onImpactAnalysis,
+  impactMode,
+  impactStats,
+  upstreamList: impactUpstream,
+  downstreamList: impactDownstream,
+  simulationAction,
+  setSimulationAction,
+  setImpactMode
+}: FloatingInsightPanelProps) {
+  // Find related artefacts (for normal mode)
   const upstreamRels = relationships.filter((r) => r.target === artefact.id);
   const downstreamRels = relationships.filter((r) => r.source === artefact.id);
 
   const upstream = upstreamRels.map(r => artefacts.find(a => a.id === r.source)).filter(Boolean) as Artefact[];
   const downstream = downstreamRels.map(r => artefacts.find(a => a.id === r.target)).filter(Boolean) as Artefact[];
+
 
   return (
     <motion.div
@@ -341,104 +361,217 @@ function FloatingInsightPanel({ artefact, onClose, onImpactAnalysis }: FloatingI
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-3 space-y-4">
-        {/* Description */}
-        <div>
-          <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-1.5">รายละเอียด</h4>
-          <p className="text-sm text-foreground leading-relaxed">{artefact.description}</p>
-        </div>
-
-        {/* Metadata Grid */}
-        <div className="grid grid-cols-2 gap-2">
-          <div className="p-2 bg-muted/50 rounded-lg">
-            <p className="text-[10px] text-muted-foreground">ผู้รับผิดชอบ</p>
-            <p className="text-xs font-medium text-foreground truncate">{artefact.owner}</p>
-          </div>
-          <div className="p-2 bg-muted/50 rounded-lg">
-            <p className="text-[10px] text-muted-foreground">หน่วยงาน</p>
-            <p className="text-xs font-medium text-foreground truncate">{artefact.department}</p>
-          </div>
-          <div className="p-2 bg-muted/50 rounded-lg">
-            <p className="text-[10px] text-muted-foreground">เวอร์ชัน</p>
-            <p className="text-xs font-medium text-foreground">{artefact.version}</p>
-          </div>
-          <div className="p-2 bg-muted/50 rounded-lg">
-            <p className="text-[10px] text-muted-foreground">อัพเดต</p>
-            <p className="text-xs font-medium text-foreground">{artefact.lastUpdated}</p>
-          </div>
-        </div>
-
-        {/* Upstream Section */}
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-5 h-5 rounded-full bg-blue-500/10 flex items-center justify-center">
-              <ArrowDownToLine className="w-3 h-3 text-blue-500" />
+        {impactMode ? (
+          <>
+            {/* Impact Stats Cards */}
+            <div className="grid grid-cols-3 gap-2">
+              <div className="flex flex-col items-center p-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                <ArrowDownToLine className="w-4 h-4 text-blue-500 mb-1" />
+                <span className="text-lg font-bold text-blue-600">{impactStats.upstream}</span>
+                <span className="text-[9px] text-muted-foreground">Upstream</span>
+              </div>
+              <div className="flex flex-col items-center p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                <ArrowUpFromLine className="w-4 h-4 text-amber-500 mb-1" />
+                <span className="text-lg font-bold text-amber-600">{impactStats.affected}</span>
+                <span className="text-[9px] text-muted-foreground">Downstream</span>
+              </div>
+              <div className="flex flex-col items-center p-2 rounded-lg bg-red-500/10 border border-red-500/20">
+                <AlertTriangle className="w-4 h-4 text-red-500 mb-1" />
+                <span className="text-lg font-bold text-red-600">{impactStats.critical}</span>
+                <span className="text-[9px] text-muted-foreground">Critical</span>
+              </div>
             </div>
-            <h4 className="text-xs font-semibold text-foreground">Upstream</h4>
-            <span className="text-[10px] text-muted-foreground">({upstream.length})</span>
-          </div>
-          <p className="text-[10px] text-muted-foreground mb-2">ระบบที่ส่งข้อมูลเข้ามา</p>
-          {upstream.length > 0 ? (
-            <div className="space-y-1">
-              {upstream.slice(0, 4).map(item => (
-                <div key={item.id} className="flex items-center gap-2 p-2 bg-blue-500/5 border border-blue-500/10 rounded-lg">
-                  <div className={cn("w-2 h-2 rounded-full", typeColors[item.type])} />
-                  <span className="text-xs font-medium flex-1 truncate">{item.name}</span>
-                  <span className="text-[9px] text-muted-foreground">{typeLabels[item.type]?.th}</span>
+
+            {/* Upstream Section (Impact Mode) */}
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-5 h-5 rounded-full bg-blue-500/10 flex items-center justify-center">
+                  <ArrowDownToLine className="w-3 h-3 text-blue-500" />
                 </div>
-              ))}
-              {upstream.length > 4 && (
-                <p className="text-[10px] text-muted-foreground text-center">+{upstream.length - 4} more</p>
+                <h4 className="text-xs font-semibold text-foreground">Upstream (ระบบที่ส่งข้อมูล)</h4>
+              </div>
+              {impactUpstream.length > 0 ? (
+                <div className="space-y-1">
+                  {impactUpstream.slice(0, 5).map(item => (
+                    <div key={item.id} className="flex items-center gap-2 p-2 bg-blue-500/5 border border-blue-500/10 rounded-lg">
+                      <div className={cn("w-2 h-2 rounded-full", typeColors[item.type])} />
+                      <span className="text-xs font-medium flex-1 truncate">{item.name}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-2 border border-dashed border-border rounded-lg text-center">
+                  <p className="text-[10px] text-muted-foreground">ไม่มี</p>
+                </div>
               )}
             </div>
-          ) : (
-            <div className="p-2 border border-dashed border-border rounded-lg text-center">
-              <p className="text-[10px] text-muted-foreground">ไม่มีระบบที่ส่งข้อมูลเข้ามา</p>
-            </div>
-          )}
-        </div>
 
-        {/* Downstream Section */}
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-5 h-5 rounded-full bg-amber-500/10 flex items-center justify-center">
-              <ArrowUpFromLine className="w-3 h-3 text-amber-500" />
-            </div>
-            <h4 className="text-xs font-semibold text-foreground">Downstream</h4>
-            <span className="text-[10px] text-muted-foreground">({downstream.length})</span>
-          </div>
-          <p className="text-[10px] text-muted-foreground mb-2">ระบบที่รับข้อมูลไป</p>
-          {downstream.length > 0 ? (
-            <div className="space-y-1">
-              {downstream.slice(0, 4).map(item => (
-                <div key={item.id} className="flex items-center gap-2 p-2 bg-amber-500/5 border border-amber-500/10 rounded-lg">
-                  <div className={cn("w-2 h-2 rounded-full", typeColors[item.type])} />
-                  <span className="text-xs font-medium flex-1 truncate">{item.name}</span>
-                  <span className="text-[9px] text-muted-foreground">{typeLabels[item.type]?.th}</span>
+            {/* Downstream Section (Impact Mode) */}
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-5 h-5 rounded-full bg-amber-500/10 flex items-center justify-center">
+                  <ArrowUpFromLine className="w-3 h-3 text-amber-500" />
                 </div>
-              ))}
-              {downstream.length > 4 && (
-                <p className="text-[10px] text-muted-foreground text-center">+{downstream.length - 4} more</p>
+                <h4 className="text-xs font-semibold text-foreground">Downstream (ได้รับผลกระทบ)</h4>
+              </div>
+              {impactDownstream.length > 0 ? (
+                <div className="space-y-1">
+                  {impactDownstream.slice(0, 5).map(item => (
+                    <div key={item.id} className="flex items-center gap-2 p-2 bg-amber-500/5 border border-amber-500/10 rounded-lg">
+                      <div className={cn("w-2 h-2 rounded-full", typeColors[item.type])} />
+                      <span className="text-xs font-medium flex-1 truncate">{item.name}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-2 border border-dashed border-border rounded-lg text-center">
+                  <p className="text-[10px] text-muted-foreground">ไม่มี</p>
+                </div>
               )}
             </div>
-          ) : (
-            <div className="p-2 border border-dashed border-border rounded-lg text-center">
-              <p className="text-[10px] text-muted-foreground">ไม่มีระบบที่รับข้อมูลไป</p>
+
+            {/* Simulation Actions */}
+            <div className="border-t pt-3">
+              <p className="text-[10px] font-semibold uppercase text-muted-foreground mb-2">จำลองสถานการณ์</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setSimulationAction(simulationAction === 'modify' ? 'none' : 'modify')}
+                  className={cn(
+                    "flex-1 py-2 px-2 rounded-lg border-2 transition-all flex items-center justify-center gap-1 text-xs font-medium",
+                    simulationAction === 'modify' ? 'border-warning bg-warning/10 text-warning' : 'border-border hover:bg-muted'
+                  )}
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  ปรับแก้
+                </button>
+                <button
+                  onClick={() => setSimulationAction(simulationAction === 'delete' ? 'none' : 'delete')}
+                  className={cn(
+                    "flex-1 py-2 px-2 rounded-lg border-2 transition-all flex items-center justify-center gap-1 text-xs font-medium",
+                    simulationAction === 'delete' ? 'border-destructive bg-destructive/10 text-destructive' : 'border-border hover:bg-muted'
+                  )}
+                >
+                  <Trash2 className="w-3 h-3" />
+                  ลบ
+                </button>
+              </div>
+              {simulationAction !== 'none' && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-2 text-xs p-2 rounded-lg border">
+                  {simulationAction === 'delete' ? (
+                    <p className="text-destructive">⚠️ {impactStats.affected} ระบบจะไม่ทำงาน</p>
+                  ) : (
+                    <p className="text-warning">📋 ต้องทดสอบ {impactStats.affected} ระบบ</p>
+                  )}
+                </motion.div>
+              )}
             </div>
-          )}
-        </div>
+          </>
+        ) : (
+          <>
+            {/* Normal Mode - Description */}
+            <div>
+              <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-1.5">รายละเอียด</h4>
+              <p className="text-sm text-foreground leading-relaxed">{artefact.description}</p>
+            </div>
+
+            {/* Metadata Grid */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="p-2 bg-muted/50 rounded-lg">
+                <p className="text-[10px] text-muted-foreground">ผู้รับผิดชอบ</p>
+                <p className="text-xs font-medium text-foreground truncate">{artefact.owner}</p>
+              </div>
+              <div className="p-2 bg-muted/50 rounded-lg">
+                <p className="text-[10px] text-muted-foreground">หน่วยงาน</p>
+                <p className="text-xs font-medium text-foreground truncate">{artefact.department}</p>
+              </div>
+              <div className="p-2 bg-muted/50 rounded-lg">
+                <p className="text-[10px] text-muted-foreground">เวอร์ชัน</p>
+                <p className="text-xs font-medium text-foreground">{artefact.version}</p>
+              </div>
+              <div className="p-2 bg-muted/50 rounded-lg">
+                <p className="text-[10px] text-muted-foreground">อัพเดต</p>
+                <p className="text-xs font-medium text-foreground">{artefact.lastUpdated}</p>
+              </div>
+            </div>
+
+            {/* Upstream Section */}
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-5 h-5 rounded-full bg-blue-500/10 flex items-center justify-center">
+                  <ArrowDownToLine className="w-3 h-3 text-blue-500" />
+                </div>
+                <h4 className="text-xs font-semibold text-foreground">Upstream</h4>
+                <span className="text-[10px] text-muted-foreground">({upstream.length})</span>
+              </div>
+              <p className="text-[10px] text-muted-foreground mb-2">ระบบที่ส่งข้อมูลเข้ามา</p>
+              {upstream.length > 0 ? (
+                <div className="space-y-1">
+                  {upstream.slice(0, 4).map(item => (
+                    <div key={item.id} className="flex items-center gap-2 p-2 bg-blue-500/5 border border-blue-500/10 rounded-lg">
+                      <div className={cn("w-2 h-2 rounded-full", typeColors[item.type])} />
+                      <span className="text-xs font-medium flex-1 truncate">{item.name}</span>
+                      <span className="text-[9px] text-muted-foreground">{typeLabels[item.type]?.th}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-2 border border-dashed border-border rounded-lg text-center">
+                  <p className="text-[10px] text-muted-foreground">ไม่มีระบบที่ส่งข้อมูลเข้ามา</p>
+                </div>
+              )}
+            </div>
+
+            {/* Downstream Section */}
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-5 h-5 rounded-full bg-amber-500/10 flex items-center justify-center">
+                  <ArrowUpFromLine className="w-3 h-3 text-amber-500" />
+                </div>
+                <h4 className="text-xs font-semibold text-foreground">Downstream</h4>
+                <span className="text-[10px] text-muted-foreground">({downstream.length})</span>
+              </div>
+              <p className="text-[10px] text-muted-foreground mb-2">ระบบที่รับข้อมูลไป</p>
+              {downstream.length > 0 ? (
+                <div className="space-y-1">
+                  {downstream.slice(0, 4).map(item => (
+                    <div key={item.id} className="flex items-center gap-2 p-2 bg-amber-500/5 border border-amber-500/10 rounded-lg">
+                      <div className={cn("w-2 h-2 rounded-full", typeColors[item.type])} />
+                      <span className="text-xs font-medium flex-1 truncate">{item.name}</span>
+                      <span className="text-[9px] text-muted-foreground">{typeLabels[item.type]?.th}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-2 border border-dashed border-border rounded-lg text-center">
+                  <p className="text-[10px] text-muted-foreground">ไม่มีระบบที่รับข้อมูลไป</p>
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
-      {/* Impact Analysis Button */}
+      {/* Footer Button */}
       <div className="p-3 border-t bg-muted/30">
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={onImpactAnalysis}
-          className="w-full px-4 py-2.5 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 text-sm"
-        >
-          <AlertTriangle className="w-4 h-4" />
-          วิเคราะห์ผลกระทบ
-        </motion.button>
+        {impactMode ? (
+          <button
+            onClick={() => setImpactMode(false)}
+            className="w-full px-4 py-2.5 bg-muted text-foreground font-medium rounded-lg hover:bg-muted/80 transition-colors flex items-center justify-center gap-2 text-sm"
+          >
+            <X className="w-4 h-4" />
+            ปิดโหมดวิเคราะห์
+          </button>
+        ) : (
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={onImpactAnalysis}
+            className="w-full px-4 py-2.5 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 text-sm"
+          >
+            <AlertTriangle className="w-4 h-4" />
+            วิเคราะห์ผลกระทบ
+          </motion.button>
+        )}
       </div>
     </motion.div>
   );
@@ -922,163 +1055,7 @@ function EAGraphInner() {
                 </motion.div>
               </Panel>
 
-              {/* Impact Analysis Control Panel */}
-              {impactMode && selectedNode && (
-                <Panel position="bottom-center" className="mb-4 mx-2 w-[calc(100%-1rem)] sm:w-auto sm:max-w-[600px]">
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-card/98 backdrop-blur-xl border border-border rounded-xl shadow-2xl overflow-hidden"
-                  >
-                    {/* Header */}
-                    <div className="flex items-center justify-between p-3 border-b bg-gradient-to-r from-primary/5 to-transparent">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
-                          <Zap className="w-5 h-5 text-primary" />
-                        </div>
-                        <div className="min-w-0">
-                          <h3 className="text-sm font-bold truncate">{selectedNode.name}</h3>
-                          <p className="text-[10px] text-muted-foreground">{selectedNode.nameTh}</p>
-                        </div>
-                      </div>
-                      <button onClick={() => setImpactMode(false)} className="p-2 hover:bg-muted rounded-lg transition-colors">
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
 
-                    {/* Stats Cards */}
-                    <div className="grid grid-cols-3 gap-2 p-3 border-b">
-                      <div className="flex flex-col items-center p-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                        <ArrowDownToLine className="w-4 h-4 text-blue-500 mb-1" />
-                        <span className="text-lg font-bold text-blue-600">{impactStats.upstream}</span>
-                        <span className="text-[9px] text-muted-foreground">Upstream</span>
-                      </div>
-                      <div className="flex flex-col items-center p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                        <ArrowUpFromLine className="w-4 h-4 text-amber-500 mb-1" />
-                        <span className="text-lg font-bold text-amber-600">{impactStats.affected}</span>
-                        <span className="text-[9px] text-muted-foreground">Downstream</span>
-                      </div>
-                      <div className="flex flex-col items-center p-2 rounded-lg bg-red-500/10 border border-red-500/20">
-                        <AlertTriangle className="w-4 h-4 text-red-500 mb-1" />
-                        <span className="text-lg font-bold text-red-600">{impactStats.critical}</span>
-                        <span className="text-[9px] text-muted-foreground">Critical</span>
-                      </div>
-                    </div>
-
-                    {/* Upstream/Downstream Lists */}
-                    <div className="max-h-48 overflow-y-auto">
-                      {upstreamList.length > 0 && (
-                        <div className="p-2 border-b">
-                          <div className="flex items-center gap-1.5 mb-2">
-                            <ArrowDownToLine className="w-3 h-3 text-blue-500" />
-                            <span className="text-[10px] font-semibold text-blue-600 uppercase">Upstream (ระบบที่ส่งข้อมูลเข้ามา)</span>
-                          </div>
-                          <div className="space-y-1">
-                            {upstreamList.slice(0, 4).map(item => (
-                              <div key={item.id} className="flex items-center gap-2 p-1.5 rounded bg-blue-500/5 border border-blue-500/10">
-                                <div className={cn("w-2 h-2 rounded-full", typeColors[item.type])} />
-                                <span className="text-xs font-medium flex-1 truncate">{item.name}</span>
-                                <span className="text-[9px] text-muted-foreground">{item.type}</span>
-                              </div>
-                            ))}
-                            {upstreamList.length > 4 && (
-                              <p className="text-[10px] text-muted-foreground text-center">+{upstreamList.length - 4} more</p>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {downstreamList.length > 0 && (
-                        <div className="p-2">
-                          <div className="flex items-center gap-1.5 mb-2">
-                            <ArrowUpFromLine className="w-3 h-3 text-amber-500" />
-                            <span className="text-[10px] font-semibold text-amber-600 uppercase">Downstream (ระบบที่ได้รับผลกระทบ)</span>
-                          </div>
-                          <div className="space-y-1">
-                            {downstreamList.slice(0, 4).map(item => (
-                              <div key={item.id} className="flex items-center gap-2 p-1.5 rounded bg-amber-500/5 border border-amber-500/10">
-                                <div className={cn("w-2 h-2 rounded-full", typeColors[item.type])} />
-                                <span className="text-xs font-medium flex-1 truncate">{item.name}</span>
-                                <span className="text-[9px] text-muted-foreground">{item.type}</span>
-                              </div>
-                            ))}
-                            {downstreamList.length > 4 && (
-                              <p className="text-[10px] text-muted-foreground text-center">+{downstreamList.length - 4} more</p>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {upstreamList.length === 0 && downstreamList.length === 0 && (
-                        <div className="p-4 text-center text-muted-foreground text-xs">
-                          ไม่พบความสัมพันธ์กับระบบอื่น
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Simulation Actions */}
-                    <div className="p-3 border-t bg-muted/30">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-[10px] font-semibold uppercase text-muted-foreground">จำลองสถานการณ์</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => setSimulationAction(curr => curr === 'modify' ? 'none' : 'modify')}
-                          className={cn(
-                            "flex-1 py-2 px-3 rounded-lg border-2 transition-all flex items-center justify-center gap-2 text-xs font-medium",
-                            simulationAction === 'modify' ? 'border-warning bg-warning/10 text-warning' : 'border-border hover:bg-muted hover:border-muted-foreground/30'
-                          )}
-                        >
-                          <RotateCcw className="w-3.5 h-3.5" />
-                          ปรับแก้ระบบ
-                        </button>
-                        <button
-                          onClick={() => setSimulationAction(curr => curr === 'delete' ? 'none' : 'delete')}
-                          className={cn(
-                            "flex-1 py-2 px-3 rounded-lg border-2 transition-all flex items-center justify-center gap-2 text-xs font-medium",
-                            simulationAction === 'delete' ? 'border-destructive bg-destructive/10 text-destructive' : 'border-border hover:bg-muted hover:border-muted-foreground/30'
-                          )}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                          ลบระบบ
-                        </button>
-                      </div>
-
-                      {simulationAction !== 'none' && (
-                        <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="mt-2 text-xs p-2 rounded-lg border">
-                          {simulationAction === 'delete' ? (
-                            <p className="flex items-center gap-2 text-destructive">
-                              <AlertTriangle className="w-4 h-4" />
-                              <span>⚠️ จะทำให้ <strong>{impactStats.affected}</strong> ระบบไม่สามารถทำงานได้</span>
-                            </p>
-                          ) : (
-                            <p className="flex items-center gap-2 text-warning">
-                              <Info className="w-4 h-4" />
-                              <span>📋 ต้องทดสอบ <strong>{impactStats.affected}</strong> ระบบที่เกี่ยวข้อง</span>
-                            </p>
-                          )}
-                        </motion.div>
-                      )}
-                    </div>
-
-                    {/* Legend */}
-                    <div className="flex items-center justify-center gap-4 p-2 border-t bg-muted/20 text-[9px] text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <div className="w-3 h-3 rounded border-2 border-primary bg-primary/20" />
-                        <span>เลือก</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div className="w-3 h-3 rounded border-2 border-blue-500 bg-blue-500/20" />
-                        <span>Upstream</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div className="w-3 h-3 rounded border-2 border-amber-500 bg-amber-500/20" />
-                        <span>Downstream</span>
-                      </div>
-                    </div>
-                  </motion.div>
-                </Panel>
-              )}
             </ReactFlow>
           )}
         </div>
@@ -1101,6 +1078,13 @@ function EAGraphInner() {
               artefact={selectedNode}
               onClose={() => setSelectedNode(null)}
               onImpactAnalysis={handleTriggerImpact}
+              impactMode={impactMode}
+              impactStats={impactStats}
+              upstreamList={upstreamList}
+              downstreamList={downstreamList}
+              simulationAction={simulationAction}
+              setSimulationAction={setSimulationAction}
+              setImpactMode={setImpactMode}
             />
           )}
         </AnimatePresence>
