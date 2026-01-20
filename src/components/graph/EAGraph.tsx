@@ -17,15 +17,14 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { motion, AnimatePresence } from 'framer-motion';
-import { History, Briefcase, User, Network, X, RotateCcw, Trash2, AlertTriangle, Info, FolderTree, ArrowDownToLine, ArrowUpFromLine, Zap, Search, PanelRightOpen, PanelRightClose } from 'lucide-react';
+import { History, Briefcase, User, Network, X, RotateCcw, Trash2, AlertTriangle, Info, FolderTree, ArrowDownToLine, ArrowUpFromLine, Zap, Search, PanelRightOpen, PanelRightClose, ChevronDown, ChevronRight, Expand, Shrink } from 'lucide-react';
 import { ArtefactNode } from './ArtefactNode';
 import { FilterPanel } from './FilterPanel';
-import { InsightPanel } from './InsightPanel';
 import { ImpactAnalysisModal } from './ImpactAnalysisModal';
 import { TransactionHistory } from './TransactionHistory';
-import { TreeView } from './TreeView';
-import { artefacts, relationships, type Artefact, type ArtefactType } from '@/data/mockData';
+import { artefacts, relationships, type Artefact, type ArtefactType, typeLabels } from '@/data/mockData';
 import { useAuth } from '@/context/AuthContext';
+import { cn } from '@/lib/utils';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AppNode = Node<any, string>;
@@ -92,6 +91,359 @@ function createEdges(): Edge[] {
   }));
 }
 
+// Type colors matching ArtefactListEnhanced
+const typeColors: Record<ArtefactType, string> = {
+  business: 'bg-violet-500',
+  application: 'bg-sky-500',
+  data: 'bg-teal-500',
+  technology: 'bg-indigo-500',
+  security: 'bg-amber-500',
+  integration: 'bg-pink-500',
+};
+
+const typeIcons: Record<ArtefactType, React.ReactNode> = {
+  business: '📋',
+  application: '💻',
+  data: '🗃️',
+  technology: '⚙️',
+  security: '🔒',
+  integration: '🔗',
+};
+
+// Hierarchy View Component (uses same mockData as Graph)
+interface HierarchyViewProps {
+  onNodeClick?: (artefact: Artefact) => void;
+  searchQuery?: string;
+}
+
+function HierarchyView({ onNodeClick, searchQuery = '' }: HierarchyViewProps) {
+  const [expandedTypes, setExpandedTypes] = useState<Set<ArtefactType>>(new Set(['business', 'application']));
+
+  // Group artefacts by type (using same mockData)
+  const groupedArtefacts = useMemo(() => {
+    const groups: Record<ArtefactType, Artefact[]> = {
+      business: [],
+      application: [],
+      data: [],
+      technology: [],
+      security: [],
+      integration: [],
+    };
+
+    artefacts.forEach(a => {
+      if (!searchQuery ||
+        a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        a.nameTh.toLowerCase().includes(searchQuery.toLowerCase())) {
+        groups[a.type].push(a);
+      }
+    });
+
+    return groups;
+  }, [searchQuery]);
+
+  const toggleType = (type: ArtefactType) => {
+    setExpandedTypes(prev => {
+      const next = new Set(prev);
+      if (next.has(type)) {
+        next.delete(type);
+      } else {
+        next.add(type);
+      }
+      return next;
+    });
+  };
+
+  const expandAll = () => {
+    setExpandedTypes(new Set(['business', 'application', 'data', 'technology', 'security', 'integration']));
+  };
+
+  const collapseAll = () => {
+    setExpandedTypes(new Set());
+  };
+
+  const typeOrder: ArtefactType[] = ['business', 'application', 'data', 'technology', 'security', 'integration'];
+  const totalArtefacts = artefacts.filter(a =>
+    !searchQuery ||
+    a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    a.nameTh.toLowerCase().includes(searchQuery.toLowerCase())
+  ).length;
+
+  return (
+    <div className="h-full flex flex-col bg-card">
+      {/* Header */}
+      <div className="p-3 sm:p-4 border-b border-border">
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <h3 className="font-semibold text-foreground text-sm sm:text-base">โครงสร้างลำดับชั้น</h3>
+            <p className="text-xs text-muted-foreground">{totalArtefacts} Artefacts</p>
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={expandAll}
+              className="p-1.5 rounded hover:bg-muted transition-colors"
+              title="ขยายทั้งหมด"
+            >
+              <Expand className="w-4 h-4 text-muted-foreground" />
+            </button>
+            <button
+              onClick={collapseAll}
+              className="p-1.5 rounded hover:bg-muted transition-colors"
+              title="ยุบทั้งหมด"
+            >
+              <Shrink className="w-4 h-4 text-muted-foreground" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Tree Content */}
+      <div className="flex-1 overflow-y-auto p-2 sm:p-3">
+        <div className="space-y-1">
+          {typeOrder.map((type) => {
+            const items = groupedArtefacts[type];
+            const isExpanded = expandedTypes.has(type);
+
+            return (
+              <div key={type}>
+                <motion.button
+                  onClick={() => toggleType(type)}
+                  className={cn(
+                    "w-full flex items-center gap-2 py-2 px-3 rounded-lg transition-all",
+                    "hover:bg-muted",
+                    isExpanded && "bg-muted/50"
+                  )}
+                >
+                  <div className="w-5 h-5 flex items-center justify-center">
+                    {isExpanded ? (
+                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className={cn("w-6 h-6 rounded flex items-center justify-center text-sm", typeColors[type])}>
+                    <span className="text-white text-xs">{typeIcons[type]}</span>
+                  </div>
+                  <div className="flex-1 text-left">
+                    <span className="text-sm font-medium text-foreground">{typeLabels[type]?.th || type}</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                    {items.length}
+                  </span>
+                </motion.button>
+
+                <AnimatePresence>
+                  {isExpanded && items.length > 0 && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="ml-6 mt-1 space-y-1 border-l-2 border-border pl-3">
+                        {items.map((artefact) => (
+                          <motion.div
+                            key={artefact.id}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className={cn(
+                              "flex items-center gap-2 py-2 px-3 rounded-lg cursor-pointer transition-all",
+                              "hover:bg-muted group"
+                            )}
+                            onClick={() => onNodeClick?.(artefact)}
+                          >
+                            <div className={cn("w-2 h-2 rounded-full", typeColors[type])} />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-foreground truncate">{artefact.name}</p>
+                              <p className="text-xs text-muted-foreground truncate">{artefact.nameTh}</p>
+                            </div>
+                            <span className={cn(
+                              "text-[10px] px-1.5 py-0.5 rounded-full",
+                              artefact.status === 'active' ? "bg-success/10 text-success" :
+                                artefact.status === 'draft' ? "bg-warning/10 text-warning" :
+                                  "bg-muted text-muted-foreground"
+                            )}>
+                              {artefact.status}
+                            </span>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div className="p-2 sm:p-3 border-t border-border bg-muted/30">
+        <p className="text-xs text-muted-foreground mb-2">Legend</p>
+        <div className="flex flex-wrap gap-2">
+          {typeOrder.map((type) => (
+            <div key={type} className="flex items-center gap-1">
+              <div className={cn("w-2 h-2 rounded-full", typeColors[type])} />
+              <span className="text-[10px] text-muted-foreground">{typeLabels[type]?.th}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Floating Insight Panel Component (Right Side - Photoshop style)
+interface FloatingInsightPanelProps {
+  artefact: Artefact;
+  onClose: () => void;
+  onImpactAnalysis: () => void;
+}
+
+function FloatingInsightPanel({ artefact, onClose, onImpactAnalysis }: FloatingInsightPanelProps) {
+  // Find related artefacts
+  const upstreamRels = relationships.filter((r) => r.target === artefact.id);
+  const downstreamRels = relationships.filter((r) => r.source === artefact.id);
+
+  const upstream = upstreamRels.map(r => artefacts.find(a => a.id === r.source)).filter(Boolean) as Artefact[];
+  const downstream = downstreamRels.map(r => artefacts.find(a => a.id === r.target)).filter(Boolean) as Artefact[];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 50 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 50 }}
+      className="absolute right-3 top-3 bottom-3 w-72 lg:w-80 bg-card/98 backdrop-blur-xl border border-border rounded-xl shadow-2xl flex flex-col z-40 overflow-hidden"
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between p-3 border-b bg-gradient-to-r from-primary/5 to-transparent">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <span className={cn(
+              "px-2 py-0.5 text-[10px] font-medium rounded-full",
+              artefact.status === 'active' ? "bg-success/10 text-success" :
+                artefact.status === 'draft' ? "bg-warning/10 text-warning" :
+                  "bg-muted text-muted-foreground"
+            )}>
+              {artefact.status}
+            </span>
+          </div>
+          <h3 className="font-bold text-foreground truncate">{artefact.name}</h3>
+          <p className="text-xs text-muted-foreground truncate">{artefact.nameTh}</p>
+        </div>
+        <button
+          onClick={onClose}
+          className="p-1.5 hover:bg-muted rounded-lg transition-colors flex-shrink-0"
+        >
+          <X className="w-4 h-4 text-muted-foreground" />
+        </button>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto p-3 space-y-4">
+        {/* Description */}
+        <div>
+          <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-1.5">รายละเอียด</h4>
+          <p className="text-sm text-foreground leading-relaxed">{artefact.description}</p>
+        </div>
+
+        {/* Metadata Grid */}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="p-2 bg-muted/50 rounded-lg">
+            <p className="text-[10px] text-muted-foreground">ผู้รับผิดชอบ</p>
+            <p className="text-xs font-medium text-foreground truncate">{artefact.owner}</p>
+          </div>
+          <div className="p-2 bg-muted/50 rounded-lg">
+            <p className="text-[10px] text-muted-foreground">หน่วยงาน</p>
+            <p className="text-xs font-medium text-foreground truncate">{artefact.department}</p>
+          </div>
+          <div className="p-2 bg-muted/50 rounded-lg">
+            <p className="text-[10px] text-muted-foreground">เวอร์ชัน</p>
+            <p className="text-xs font-medium text-foreground">{artefact.version}</p>
+          </div>
+          <div className="p-2 bg-muted/50 rounded-lg">
+            <p className="text-[10px] text-muted-foreground">อัพเดต</p>
+            <p className="text-xs font-medium text-foreground">{artefact.lastUpdated}</p>
+          </div>
+        </div>
+
+        {/* Upstream Section */}
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-5 h-5 rounded-full bg-blue-500/10 flex items-center justify-center">
+              <ArrowDownToLine className="w-3 h-3 text-blue-500" />
+            </div>
+            <h4 className="text-xs font-semibold text-foreground">Upstream</h4>
+            <span className="text-[10px] text-muted-foreground">({upstream.length})</span>
+          </div>
+          <p className="text-[10px] text-muted-foreground mb-2">ระบบที่ส่งข้อมูลเข้ามา</p>
+          {upstream.length > 0 ? (
+            <div className="space-y-1">
+              {upstream.slice(0, 4).map(item => (
+                <div key={item.id} className="flex items-center gap-2 p-2 bg-blue-500/5 border border-blue-500/10 rounded-lg">
+                  <div className={cn("w-2 h-2 rounded-full", typeColors[item.type])} />
+                  <span className="text-xs font-medium flex-1 truncate">{item.name}</span>
+                  <span className="text-[9px] text-muted-foreground">{typeLabels[item.type]?.th}</span>
+                </div>
+              ))}
+              {upstream.length > 4 && (
+                <p className="text-[10px] text-muted-foreground text-center">+{upstream.length - 4} more</p>
+              )}
+            </div>
+          ) : (
+            <div className="p-2 border border-dashed border-border rounded-lg text-center">
+              <p className="text-[10px] text-muted-foreground">ไม่มีระบบที่ส่งข้อมูลเข้ามา</p>
+            </div>
+          )}
+        </div>
+
+        {/* Downstream Section */}
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-5 h-5 rounded-full bg-amber-500/10 flex items-center justify-center">
+              <ArrowUpFromLine className="w-3 h-3 text-amber-500" />
+            </div>
+            <h4 className="text-xs font-semibold text-foreground">Downstream</h4>
+            <span className="text-[10px] text-muted-foreground">({downstream.length})</span>
+          </div>
+          <p className="text-[10px] text-muted-foreground mb-2">ระบบที่รับข้อมูลไป</p>
+          {downstream.length > 0 ? (
+            <div className="space-y-1">
+              {downstream.slice(0, 4).map(item => (
+                <div key={item.id} className="flex items-center gap-2 p-2 bg-amber-500/5 border border-amber-500/10 rounded-lg">
+                  <div className={cn("w-2 h-2 rounded-full", typeColors[item.type])} />
+                  <span className="text-xs font-medium flex-1 truncate">{item.name}</span>
+                  <span className="text-[9px] text-muted-foreground">{typeLabels[item.type]?.th}</span>
+                </div>
+              ))}
+              {downstream.length > 4 && (
+                <p className="text-[10px] text-muted-foreground text-center">+{downstream.length - 4} more</p>
+              )}
+            </div>
+          ) : (
+            <div className="p-2 border border-dashed border-border rounded-lg text-center">
+              <p className="text-[10px] text-muted-foreground">ไม่มีระบบที่รับข้อมูลไป</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Impact Analysis Button */}
+      <div className="p-3 border-t bg-muted/30">
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={onImpactAnalysis}
+          className="w-full px-4 py-2.5 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 text-sm"
+        >
+          <AlertTriangle className="w-4 h-4" />
+          วิเคราะห์ผลกระทบ
+        </motion.button>
+      </div>
+    </motion.div>
+  );
+}
+
 function EAGraphInner() {
   const { role } = useAuth();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -102,7 +454,7 @@ function EAGraphInner() {
   const [showHistory, setShowHistory] = useState(false);
   const [impactArtefact, setImpactArtefact] = useState<Artefact | null>(null);
 
-  // New state for modes
+  // Mode state - only graph and hierarchy
   const [viewMode, setViewMode] = useState<'architect' | 'executive'>(role === 'executive' ? 'executive' : 'architect');
   const [layoutMode, setLayoutMode] = useState<'graph' | 'hierarchy'>('graph');
 
@@ -117,28 +469,17 @@ function EAGraphInner() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
-  // Update view mode if role changes types
+  // Update view mode if role changes
   useEffect(() => {
     if (role === 'executive') setViewMode('executive');
     else if (role === 'architect') setViewMode('architect');
   }, [role]);
 
-  // Track previous layout mode to only apply layout on actual changes
-  const prevLayoutModeRef = useRef(layoutMode);
-
-  // Handle Layout Changes - Graph Layout Only (Block/Row by Type)
+  // Handle Layout Changes - Graph Layout Only
   useEffect(() => {
-    // Only apply layout for graph mode, hierarchy uses TreeView component
     if (layoutMode === 'hierarchy') return;
 
-    // Skip if layout mode hasn't actually changed
-    if (prevLayoutModeRef.current === layoutMode && prevLayoutModeRef.current !== 'graph') {
-      return;
-    }
-    prevLayoutModeRef.current = layoutMode;
-
     setNodes((currentNodes) => {
-      // ========== GRAPH LAYOUT (Block/Row by Type) ==========
       const typeGroups = {
         business: currentNodes.filter(n => n.data.type === 'business'),
         application: currentNodes.filter(n => n.data.type === 'application'),
@@ -185,15 +526,11 @@ function EAGraphInner() {
       });
     });
 
-    // Update edge types
     setEdges((eds) => eds.map(e => ({
       ...e,
       type: 'smoothstep',
       style: { ...e.style, strokeWidth: 2 }
     })));
-
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [layoutMode, setNodes, setEdges]);
 
   // Impact Analysis State
@@ -202,7 +539,6 @@ function EAGraphInner() {
   const [impactStats, setImpactStats] = useState({ affected: 0, critical: 0, upstream: 0 });
   const [upstreamList, setUpstreamList] = useState<Artefact[]>([]);
   const [downstreamList, setDownstreamList] = useState<Artefact[]>([]);
-  const [impactEdges, setImpactEdges] = useState<{ source: string; target: string; label: string; isUpstream: boolean }[]>([]);
 
   // Reset simulation when mode changes
   useEffect(() => {
@@ -218,12 +554,9 @@ function EAGraphInner() {
     if (!impactMode || !selectedNode) return;
 
     const analyzeImpact = () => {
-      // Simple BFS/DFS to find dependencies
-      // This is a simplified version of what was in the modal, now applied to graph state
       const upstream = new Set<string>();
       const downstream = new Set<string>();
       const criticalNodes = new Set<string>();
-      const relatedEdges: { source: string; target: string; label: string; isUpstream: boolean }[] = [];
 
       // Find downstream (Impacts)
       const queueDown = [selectedNode.id];
@@ -235,8 +568,6 @@ function EAGraphInner() {
             visitedDown.add(e.target);
             queueDown.push(e.target);
             downstream.add(e.target);
-            relatedEdges.push({ source: e.source, target: e.target, label: (e.label as string) || 'เชื่อมต่อ', isUpstream: false });
-            // Check risk
             const node = nodes.find(n => n.id === e.target);
             if (node?.data.riskLevel === 'high') criticalNodes.add(e.target);
           }
@@ -253,7 +584,6 @@ function EAGraphInner() {
             visitedUp.add(e.source);
             queueUp.push(e.source);
             upstream.add(e.source);
-            relatedEdges.push({ source: e.source, target: e.target, label: (e.label as string) || 'เชื่อมต่อ', isUpstream: true });
           }
         });
       }
@@ -263,7 +593,6 @@ function EAGraphInner() {
       const downArtefacts = artefacts.filter(a => downstream.has(a.id));
       setUpstreamList(upArtefacts);
       setDownstreamList(downArtefacts);
-      setImpactEdges(relatedEdges);
       setImpactStats({ affected: downstream.size, critical: criticalNodes.size, upstream: upstream.size });
 
       // Update Visuals
@@ -278,10 +607,8 @@ function EAGraphInner() {
         if (isSelected) {
           style = { ...style, border: '3px solid #8b5cf6', boxShadow: '0 0 25px rgba(139, 92, 246, 0.4)' };
         } else if (isUpstream) {
-          // Blue for upstream (data flowing IN)
           style = { ...style, border: '2px solid #3b82f6', boxShadow: '0 0 15px rgba(59, 130, 246, 0.3)' };
         } else if (isDownstream) {
-          // Amber/Orange for downstream (data flowing OUT) with simulation effects
           if (simulationAction === 'delete') {
             style = { ...style, border: '3px solid #ef4444', background: 'rgba(239, 68, 68, 0.15)', boxShadow: '0 0 20px rgba(239, 68, 68, 0.4)' };
           } else if (simulationAction === 'modify') {
@@ -299,14 +626,13 @@ function EAGraphInner() {
         const isDownstream = (downstream.has(edge.source) || edge.source === selectedNode.id) && downstream.has(edge.target);
         const isRelated = isUpstream || isDownstream;
 
-        // Color coding: blue for upstream, amber for downstream
         let strokeColor = 'hsl(var(--muted-foreground))';
         if (isDownstream) {
-          strokeColor = simulationAction === 'delete' ? '#ef4444' : // red
-            simulationAction === 'modify' ? '#f59e0b' : // amber
-              '#f59e0b'; // amber for downstream
+          strokeColor = simulationAction === 'delete' ? '#ef4444' :
+            simulationAction === 'modify' ? '#f59e0b' :
+              '#f59e0b';
         } else if (isUpstream) {
-          strokeColor = '#3b82f6'; // blue for upstream
+          strokeColor = '#3b82f6';
         }
 
         return {
@@ -318,11 +644,6 @@ function EAGraphInner() {
             strokeWidth: isRelated ? 3 : 1
           },
           animated: isRelated,
-          labelStyle: isRelated ? {
-            fill: isUpstream ? '#3b82f6' : '#f59e0b',
-            fontWeight: 600,
-            fontSize: 11
-          } : edge.labelStyle
         };
       }));
     };
@@ -330,8 +651,6 @@ function EAGraphInner() {
     analyzeImpact();
   }, [impactMode, selectedNode, simulationAction, nodes.length, edges.length]);
 
-  // Listen for impact analysis events - triggers mode
-  // Removed window event listener in favor of direct prop passing to InsightPanel
   const handleTriggerImpact = useCallback(() => {
     if (selectedNode) {
       setImpactMode(true);
@@ -341,10 +660,8 @@ function EAGraphInner() {
   const filteredNodes = useMemo(() => {
     let result = nodes;
 
-    // View Mode Filter (Executive sees simplified view)
+    // View Mode Filter
     if (viewMode === 'executive') {
-      // Executive focuses on Business and Application layers mainly, and higher level items
-      // For mock, let's filter out Technology and Integration types unless crucial
       result = result.filter(n =>
         n.data.type === 'business' ||
         n.data.type === 'application' ||
@@ -357,8 +674,16 @@ function EAGraphInner() {
       result = result.filter((node) => filters.includes(node.data.type as ArtefactType));
     }
 
+    // Search Filter
+    if (searchQuery) {
+      result = result.filter((node) =>
+        node.data.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        node.data.nameTh.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
     return result;
-  }, [nodes, filters, viewMode]);
+  }, [nodes, filters, viewMode, searchQuery]);
 
   const filteredEdges = useMemo(() => {
     const nodeIds = new Set(filteredNodes.map(n => n.id));
@@ -381,7 +706,7 @@ function EAGraphInner() {
         id: `edge-${connection.source}-${connection.target}-${Date.now()}`,
         source: connection.source!,
         target: connection.target!,
-        type: layoutMode === 'tree' ? 'default' : 'smoothstep',
+        type: 'smoothstep',
         label: 'new relationship',
         style: {
           stroke: 'hsl(var(--muted-foreground))',
@@ -394,12 +719,11 @@ function EAGraphInner() {
       };
       setEdges((eds) => addEdge(newEdge, eds));
     },
-    [setEdges, layoutMode]
+    [setEdges]
   );
 
   const handleImpactSave = (action: 'break' | 'modify', affectedIds: string[]) => {
     console.log('Impact action:', action, 'Affected:', affectedIds);
-    // In real app, this would update the database
   };
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -416,17 +740,14 @@ function EAGraphInner() {
 
       const artefact = JSON.parse(data) as Artefact;
 
-      // Use screenToFlowPosition to properly convert screen coordinates to flow coordinates
       const position = screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
       });
 
-      // Check if node already exists - if so, create a copy with a unique ID
       let nodeId = artefact.id;
       let nodeName = artefact.name;
       if (nodes.find((n) => n.id === artefact.id)) {
-        // Create a unique ID for the copy
         const timestamp = Date.now();
         nodeId = `${artefact.id}-copy-${timestamp}`;
         nodeName = `${artefact.name} (Copy)`;
@@ -456,107 +777,101 @@ function EAGraphInner() {
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-1.5 flex-wrap">
             {/* View Mode Toggle */}
-            <div className="flex items-center h-7 p-0.5 bg-muted rounded-md">
+            <div className="flex items-center h-8 p-0.5 bg-muted rounded-lg">
               <button
                 onClick={() => setViewMode('architect')}
-                className={`flex items-center gap-1 px-2 h-6 rounded text-[11px] font-medium transition-all ${viewMode === 'architect'
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-                  }`}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 h-7 rounded-md text-xs font-medium transition-all",
+                  viewMode === 'architect'
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
               >
-                <Briefcase className="w-3 h-3" />
-                <span className="hidden xs:inline">Architect</span>
+                <Briefcase className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Architect</span>
               </button>
               <button
                 onClick={() => setViewMode('executive')}
-                className={`flex items-center gap-1 px-2 h-6 rounded text-[11px] font-medium transition-all ${viewMode === 'executive'
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-                  }`}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 h-7 rounded-md text-xs font-medium transition-all",
+                  viewMode === 'executive'
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
               >
-                <User className="w-3 h-3" />
-                <span className="hidden xs:inline">Executive</span>
+                <User className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Executive</span>
               </button>
             </div>
 
             {/* Layout Toggle - Only Graph and Hierarchy */}
-            <div className="flex items-center h-7 p-0.5 bg-muted rounded-md">
+            <div className="flex items-center h-8 p-0.5 bg-muted rounded-lg">
               <button
                 onClick={() => setLayoutMode('graph')}
-                className={`flex items-center gap-1 px-2 h-6 rounded text-[11px] font-medium transition-all ${layoutMode === 'graph'
-                  ? 'bg-card text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-                  }`}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 h-7 rounded-md text-xs font-medium transition-all",
+                  layoutMode === 'graph'
+                    ? 'bg-card text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
                 title="Graph View"
               >
-                <Network className="w-3 h-3" />
+                <Network className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Graph</span>
               </button>
               <button
                 onClick={() => setLayoutMode('hierarchy')}
-                className={`flex items-center gap-1 px-2 h-6 rounded text-[11px] font-medium transition-all ${layoutMode === 'hierarchy'
-                  ? 'bg-card text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-                  }`}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 h-7 rounded-md text-xs font-medium transition-all",
+                  layoutMode === 'hierarchy'
+                    ? 'bg-card text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
                 title="Hierarchy View"
               >
-                <FolderTree className="w-3 h-3" />
+                <FolderTree className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Hierarchy</span>
               </button>
             </div>
           </div>
 
-          {/* Right side buttons - Desktop only */}
-          <div className="hidden md:flex items-center gap-2">
-            {/* Floating Panel Toggle */}
-            <button
-              onClick={() => setShowFloatingPanel(!showFloatingPanel)}
-              className="flex items-center gap-1 px-2 h-7 rounded-md bg-muted hover:bg-muted/80 text-xs font-medium transition-all"
-              title={showFloatingPanel ? "ซ่อน Artefact Library" : "แสดง Artefact Library"}
-            >
-              {showFloatingPanel ? <PanelRightClose className="w-3.5 h-3.5" /> : <PanelRightOpen className="w-3.5 h-3.5" />}
-              <span className="hidden lg:inline">{showFloatingPanel ? 'ซ่อน' : 'แสดง'}</span>
-            </button>
+          {/* Right side buttons */}
+          <div className="flex items-center gap-2">
+            {layoutMode === 'graph' && (
+              <button
+                onClick={() => setShowFloatingPanel(!showFloatingPanel)}
+                className="flex items-center gap-1.5 px-2 sm:px-3 h-8 rounded-lg bg-muted hover:bg-muted/80 text-xs font-medium transition-all"
+                title={showFloatingPanel ? "ซ่อน Artefact Library" : "แสดง Artefact Library"}
+              >
+                {showFloatingPanel ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
+                <span className="hidden lg:inline">{showFloatingPanel ? 'ซ่อน' : 'แสดง'}</span>
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Second Row: Search - full width on mobile */}
+        {/* Second Row: Search */}
         <div className="flex items-center gap-2">
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               type="text"
               placeholder="ค้นหา Artefact..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-8 pl-8 pr-3 text-xs bg-muted border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/60"
+              className="w-full h-9 pl-9 pr-3 text-sm bg-muted border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/60"
             />
           </div>
-
-          {/* Mobile filter toggle - shown on tablet and smaller */}
-          <button
-            onClick={() => setShowFloatingPanel(!showFloatingPanel)}
-            className="md:hidden flex items-center gap-1 px-2 h-8 rounded-lg bg-muted hover:bg-muted/80 text-xs font-medium transition-all"
-          >
-            {showFloatingPanel ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
-          </button>
         </div>
       </div>
 
-      {/* Sidebar and Canvas */}
+      {/* Main Content Area */}
       <div className="flex-1 relative flex overflow-hidden">
-        {/* Graph Canvas Wrapper - Now takes full width */}
+        {/* Graph/Hierarchy Canvas */}
         <div ref={reactFlowWrapper} className="flex-1 relative h-full">
           {layoutMode === 'hierarchy' ? (
-            <TreeView
-              onNodeClick={(node) => {
-                if (node.artefactId) {
-                  const artefact = artefacts.find(a => a.id === node.artefactId);
-                  if (artefact) {
-                    setSelectedNode(artefact);
-                  }
-                }
-              }}
+            <HierarchyView
+              onNodeClick={(artefact) => setSelectedNode(artefact)}
               searchQuery={searchQuery}
             />
           ) : (
@@ -602,11 +917,12 @@ function EAGraphInner() {
                     className="flex items-center gap-2 px-3 py-2 bg-card/90 backdrop-blur border border-border rounded-lg shadow-card hover:bg-muted transition-colors"
                   >
                     <History className="w-4 h-4" />
-                    <span className="text-sm">ประวัติ</span>
+                    <span className="text-sm hidden sm:inline">ประวัติ</span>
                   </button>
                 </motion.div>
               </Panel>
-              {/* Impact Analysis Control Panel - Enhanced with Upstream/Downstream */}
+
+              {/* Impact Analysis Control Panel */}
               {impactMode && selectedNode && (
                 <Panel position="bottom-center" className="mb-4 mx-2 w-[calc(100%-1rem)] sm:w-auto sm:max-w-[600px]">
                   <motion.div
@@ -651,7 +967,6 @@ function EAGraphInner() {
 
                     {/* Upstream/Downstream Lists */}
                     <div className="max-h-48 overflow-y-auto">
-                      {/* Upstream Section */}
                       {upstreamList.length > 0 && (
                         <div className="p-2 border-b">
                           <div className="flex items-center gap-1.5 mb-2">
@@ -661,7 +976,7 @@ function EAGraphInner() {
                           <div className="space-y-1">
                             {upstreamList.slice(0, 4).map(item => (
                               <div key={item.id} className="flex items-center gap-2 p-1.5 rounded bg-blue-500/5 border border-blue-500/10">
-                                <div className={`w-2 h-2 rounded-full bg-ea-${item.type}`} />
+                                <div className={cn("w-2 h-2 rounded-full", typeColors[item.type])} />
                                 <span className="text-xs font-medium flex-1 truncate">{item.name}</span>
                                 <span className="text-[9px] text-muted-foreground">{item.type}</span>
                               </div>
@@ -673,7 +988,6 @@ function EAGraphInner() {
                         </div>
                       )}
 
-                      {/* Downstream Section */}
                       {downstreamList.length > 0 && (
                         <div className="p-2">
                           <div className="flex items-center gap-1.5 mb-2">
@@ -683,7 +997,7 @@ function EAGraphInner() {
                           <div className="space-y-1">
                             {downstreamList.slice(0, 4).map(item => (
                               <div key={item.id} className="flex items-center gap-2 p-1.5 rounded bg-amber-500/5 border border-amber-500/10">
-                                <div className={`w-2 h-2 rounded-full bg-ea-${item.type}`} />
+                                <div className={cn("w-2 h-2 rounded-full", typeColors[item.type])} />
                                 <span className="text-xs font-medium flex-1 truncate">{item.name}</span>
                                 <span className="text-[9px] text-muted-foreground">{item.type}</span>
                               </div>
@@ -710,14 +1024,20 @@ function EAGraphInner() {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => setSimulationAction(curr => curr === 'modify' ? 'none' : 'modify')}
-                          className={`flex-1 py-2 px-3 rounded-lg border-2 transition-all flex items-center justify-center gap-2 text-xs font-medium ${simulationAction === 'modify' ? 'border-warning bg-warning/10 text-warning' : 'border-border hover:bg-muted hover:border-muted-foreground/30'}`}
+                          className={cn(
+                            "flex-1 py-2 px-3 rounded-lg border-2 transition-all flex items-center justify-center gap-2 text-xs font-medium",
+                            simulationAction === 'modify' ? 'border-warning bg-warning/10 text-warning' : 'border-border hover:bg-muted hover:border-muted-foreground/30'
+                          )}
                         >
                           <RotateCcw className="w-3.5 h-3.5" />
                           ปรับแก้ระบบ
                         </button>
                         <button
                           onClick={() => setSimulationAction(curr => curr === 'delete' ? 'none' : 'delete')}
-                          className={`flex-1 py-2 px-3 rounded-lg border-2 transition-all flex items-center justify-center gap-2 text-xs font-medium ${simulationAction === 'delete' ? 'border-destructive bg-destructive/10 text-destructive' : 'border-border hover:bg-muted hover:border-muted-foreground/30'}`}
+                          className={cn(
+                            "flex-1 py-2 px-3 rounded-lg border-2 transition-all flex items-center justify-center gap-2 text-xs font-medium",
+                            simulationAction === 'delete' ? 'border-destructive bg-destructive/10 text-destructive' : 'border-border hover:bg-muted hover:border-muted-foreground/30'
+                          )}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                           ลบระบบ
@@ -759,22 +1079,13 @@ function EAGraphInner() {
                   </motion.div>
                 </Panel>
               )}
-
             </ReactFlow>
           )}
         </div>
 
-        {/* Right Side: FilterPanel or InsightPanel */}
-        {selectedNode ? (
-          <AnimatePresence>
-            <InsightPanel
-              artefact={selectedNode}
-              onClose={() => setSelectedNode(null)}
-              onImpactAnalysis={handleTriggerImpact}
-            />
-          </AnimatePresence>
-        ) : (
-          <div className="border-l border-border bg-card">
+        {/* Right Side Filter Panel (when no node selected) */}
+        {!selectedNode && layoutMode === 'graph' && (
+          <div className="hidden lg:block border-l border-border bg-card w-64">
             <FilterPanel
               selectedTypes={filters}
               onFilterChange={setFilters}
@@ -783,6 +1094,17 @@ function EAGraphInner() {
           </div>
         )}
 
+        {/* Floating Insight Panel - RIGHT Side (Photoshop-style) */}
+        <AnimatePresence>
+          {selectedNode && (
+            <FloatingInsightPanel
+              artefact={selectedNode}
+              onClose={() => setSelectedNode(null)}
+              onImpactAnalysis={handleTriggerImpact}
+            />
+          )}
+        </AnimatePresence>
+
         {/* Floating Artefact Library Panel - LEFT Side (Photoshop-style) */}
         <AnimatePresence>
           {showFloatingPanel && layoutMode === 'graph' && (
@@ -790,7 +1112,7 @@ function EAGraphInner() {
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -50 }}
-              className="absolute left-4 top-4 bottom-4 w-48 lg:w-52 bg-card/95 backdrop-blur-sm border border-border rounded-xl shadow-2xl flex-col z-30 hidden md:flex"
+              className="absolute left-3 top-3 bottom-3 w-48 lg:w-52 bg-card/95 backdrop-blur-sm border border-border rounded-xl shadow-2xl flex-col z-30 hidden md:flex"
             >
               <div className="px-3 py-2 border-b flex items-center justify-between">
                 <div>
@@ -810,20 +1132,11 @@ function EAGraphInner() {
                     const typeArtefacts = artefacts.filter(a => a.type === type);
                     if (typeArtefacts.length === 0) return null;
 
-                    const typeColors: Record<string, string> = {
-                      business: 'bg-violet-500',
-                      application: 'bg-sky-500',
-                      data: 'bg-teal-500',
-                      technology: 'bg-indigo-500',
-                      security: 'bg-amber-500',
-                      integration: 'bg-pink-500',
-                    };
-
                     return (
                       <div key={type} className="space-y-1">
                         <h4 className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1.5">
-                          <span className={`w-1.5 h-1.5 rounded-full ${typeColors[type]}`}></span>
-                          {type}
+                          <span className={cn("w-1.5 h-1.5 rounded-full", typeColors[type])}></span>
+                          {typeLabels[type]?.th || type}
                         </h4>
                         <div className="space-y-1">
                           {typeArtefacts.map(artefact => (
@@ -836,8 +1149,8 @@ function EAGraphInner() {
                                 event.dataTransfer.effectAllowed = 'move';
                               }}
                             >
-                              <div className={`p-1 ${typeColors[type]}/20 rounded shadow-sm`}>
-                                <Briefcase className="w-2.5 h-2.5 text-muted-foreground" />
+                              <div className={cn("p-1 rounded shadow-sm", typeColors[type])}>
+                                <Briefcase className="w-2.5 h-2.5 text-white" />
                               </div>
                               <div className="min-w-0 flex-1">
                                 <span className="text-xs font-medium block truncate">{artefact.name}</span>
@@ -853,7 +1166,6 @@ function EAGraphInner() {
             </motion.div>
           )}
         </AnimatePresence>
-
 
         {/* Impact Analysis Modal */}
         {showImpactAnalysis && impactArtefact && (
@@ -872,8 +1184,6 @@ function EAGraphInner() {
           isOpen={showHistory}
           onClose={() => setShowHistory(false)}
         />
-
-
       </div>
     </div>
   );
