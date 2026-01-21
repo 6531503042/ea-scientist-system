@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Search, HelpCircle, Globe, ChevronRight, LayoutDashboard, Network, Layers, Users, Wifi, Activity, Settings } from 'lucide-react';
+import { Search, HelpCircle, Globe, ChevronRight, LayoutDashboard, Network, Layers, Users, Wifi, Activity, Settings, BookOpen } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { NotificationDropdown } from './NotificationDropdown';
 import { cn } from '@/lib/utils';

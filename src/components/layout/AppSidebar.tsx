@@ -12,7 +12,8 @@ import {
   ChevronRight,
   Shield,
   LogOut,
-  Wifi
+  Wifi,
+  BookOpen
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';

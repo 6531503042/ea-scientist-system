@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, Layers, Database, Cpu, Link, Shield, Briefcase, Check, FileText } from 'lucide-react';
+import { X, Save, Layers, Database, Cpu, Link, Shield, Briefcase, Check, FileText, Eye, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { ArtefactType } from '@/data/mockData';
 import { mockUsers, mockDepartments } from '@/data/mockUserManagement';
+import { bestPracticeExamples } from '@/data/bestPractices';
 
 interface CreateArtefactModalProps {
   isOpen: boolean;
@@ -428,6 +430,7 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
   const [loading, setLoading] = useState(false);
   const [selectedType, setSelectedType] = useState<ArtefactType>('business');
   const [selectedTemplateIndex, setSelectedTemplateIndex] = useState<number | null>(null);
+  const [showExamples, setShowExamples] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     nameTh: '',
@@ -451,6 +454,7 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
   const resetForm = () => {
     setSelectedType('business');
     setSelectedTemplateIndex(null);
+    setShowExamples(false);
     setFormData({
       name: '', nameTh: '', type: 'business', description: '', owner: '', department: '', version: '1.0', status: 'draft'
     });
@@ -705,6 +709,74 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
                         </SelectContent>
                       </Select>
                     </div>
+                  </div>
+
+                  {/* Best Practice Examples - Expandable */}
+                  <div className="pt-3 mt-3 border-t">
+                    <button
+                      type="button"
+                      onClick={() => setShowExamples(!showExamples)}
+                      className="w-full flex items-center justify-between p-2.5 rounded-lg bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 text-sm font-medium hover:from-amber-500/20 hover:to-orange-500/20 transition-all"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Star className="w-4 h-4 text-amber-500" />
+                        <span>ดูตัวอย่าง {togafLabels[selectedType].short} ที่ดี</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className={cn("text-[9px]", typeColors[selectedType], "text-white")}>
+                          {togafLabels[selectedType].short}
+                        </Badge>
+                        <Eye className={cn("w-4 h-4 transition-transform", showExamples && "rotate-180")} />
+                      </div>
+                    </button>
+
+                    <AnimatePresence>
+                      {showExamples && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="mt-3 space-y-2 overflow-hidden"
+                        >
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className={cn("w-2 h-2 rounded-full", typeColors[selectedType])} />
+                            <span className="text-xs font-medium">{togafLabels[selectedType].full}</span>
+                          </div>
+                          {bestPracticeExamples[selectedType]?.slice(0, 2).map((example) => (
+                            <div
+                              key={example.id}
+                              className="p-3 rounded-lg border bg-card hover:shadow-sm transition-shadow"
+                            >
+                              <div className="flex items-start justify-between mb-2">
+                                <div>
+                                  <h4 className="text-xs font-semibold">{example.nameTh}</h4>
+                                  <p className="text-[10px] text-muted-foreground">{example.name}</p>
+                                </div>
+                                <Badge variant="secondary" className="text-[9px]">
+                                  v{example.version}
+                                </Badge>
+                              </div>
+                              <p className="text-[10px] text-muted-foreground line-clamp-2 mb-2">
+                                {example.description}
+                              </p>
+                              <div className="flex items-center gap-2 text-[9px] text-muted-foreground">
+                                <span className="font-medium">Owner:</span> {example.owner}
+                              </div>
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {example.highlights.slice(0, 2).map((h, i) => (
+                                  <Badge key={i} variant="outline" className="text-[9px] px-1.5 py-0">
+                                    ✓ {h}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                          <p className="text-[10px] text-muted-foreground text-center py-1">
+                            💡 ศึกษาตัวอย่างเหล่านี้เพื่อสร้าง {togafLabels[selectedType].short} Artefact ที่มีคุณภาพ
+                          </p>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 </div>
 
