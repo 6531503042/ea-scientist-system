@@ -135,7 +135,7 @@ export function AppSidebar() {
       {/* Collapse Toggle */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="absolute -right-3 top-20 flex items-center justify-center w-6 h-6 rounded-full bg-card border border-border shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors z-10"
+        className="absolute -right-3 top-20 flex items-center justify-center w-6 h-6 rounded-full bg-card border border-border shadow-sm text-foreground hover:bg-accent hover:text-accent-foreground transition-colors z-10"
       >
         {collapsed ? (
           <ChevronRight className="w-3.5 h-3.5" />
