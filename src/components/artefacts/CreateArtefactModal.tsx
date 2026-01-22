@@ -36,51 +36,76 @@ const typeColors: Record<ArtefactType, string> = {
   integration: 'bg-ea-integration',
 };
 
-// Enhanced Templates for each EA type with detailed defaults
-const templates: Record<ArtefactType, { name: string; description: string; fields: Record<string, string> }[]> = {
+// Enhanced Templates for each EA type with detailed defaults and type-specific fields
+const templates: Record<ArtefactType, Array<{ 
+  name: string; 
+  description: string; 
+  fields: Record<string, string>;
+  typeSpecificFields?: Record<string, string>; // Field template values
+}>> = {
   business: [
     {
       name: 'กระบวนการหลัก (Core Process)',
       description: 'กระบวนการทำงานหลักที่สร้างมูลค่าให้องค์กร',
       fields: {
-        name: 'Core Business Process',
-        nameTh: 'กระบวนการหลัก',
-        description: 'กระบวนการทำงานหลักที่สนับสนุนพันธกิจขององค์กร ประกอบด้วยขั้นตอน...',
-        owner: 'ผู้อำนวยการกอง',
-        department: 'กองบริหารงาน'
+        name: 'Water Quality Testing Process',
+        nameTh: 'กระบวนการตรวจคุณภาพน้ำ',
+        description: 'กระบวนการตรวจสอบและวิเคราะห์คุณภาพน้ำตามมาตรฐานสากล ครอบคลุมการเก็บตัวอย่าง การทดสอบในห้องปฏิบัติการ และการออกใบรับรองผลการตรวจ',
+        owner: 'ดร.สมชาย วิทยาการ',
+        department: 'กองตรวจวิเคราะห์'
+      },
+      typeSpecificFields: {
+        businessCapability: 'การตรวจสอบและรับรองคุณภาพน้ำเพื่อความปลอดภัยของประชาชน',
+        kpis: 'จำนวนตัวอย่างที่ตรวจต่อเดือน (≥500 ตัวอย่าง), เวลาเฉลี่ยในการตรวจ (≤7 วัน), ความถูกต้องของผลการตรวจ (≥99%), ความพึงพอใจของลูกค้า (≥4.5/5)',
+        actors: 'นักวิทยาศาสตร์, นักเทคนิคการแพทย์, เจ้าหน้าที่เก็บตัวอย่าง, ผู้รับบริการ (หน่วยงานรัฐ/เอกชน)'
       }
     },
     {
       name: 'กระบวนการสนับสนุน (Support Process)',
       description: 'กระบวนการที่ช่วยสนับสนุนกระบวนการหลัก',
       fields: {
-        name: 'Support Process',
-        nameTh: 'กระบวนการสนับสนุน',
-        description: 'กระบวนการสนับสนุนการทำงานภายในองค์กร เช่น การจัดการเอกสาร การติดต่อประสานงาน...',
-        owner: 'หัวหน้าฝ่าย',
-        department: 'ฝ่ายสนับสนุน'
+        name: 'Lab Sample Management Process',
+        nameTh: 'กระบวนการจัดการตัวอย่างห้องปฏิบัติการ',
+        description: 'กระบวนการจัดการตัวอย่างตั้งแต่การรับตัวอย่าง การติดตามสถานะ การจัดเก็บ และการทำลายตัวอย่าง ครอบคลุมการบันทึกข้อมูล การแจ้งเตือน และการรายงานผล',
+        owner: 'คุณวิภา สุขใจ',
+        department: 'ศูนย์วิทยาศาสตร์การแพทย์'
+      },
+      typeSpecificFields: {
+        businessCapability: 'การจัดการตัวอย่างห้องปฏิบัติการแบบครบวงจรเพื่อเพิ่มประสิทธิภาพและลดข้อผิดพลาด',
+        kpis: 'เวลาเฉลี่ยในการรับตัวอย่าง (≤30 นาที), อัตราความผิดพลาดในการติดตาม (≤0.1%), จำนวนตัวอย่างที่จัดการต่อวัน (≥200 ตัวอย่าง), ความพึงพอใจของเจ้าหน้าที่ (≥4.0/5)',
+        actors: 'เจ้าหน้าที่รับตัวอย่าง, เจ้าหน้าที่ห้องปฏิบัติการ, ผู้ส่งตัวอย่าง, ผู้จัดการระบบ'
       }
     },
     {
       name: 'บริการภายนอก (External Service)',
       description: 'บริการที่ให้กับหน่วยงานหรือบุคคลภายนอก',
       fields: {
-        name: 'External Service',
-        nameTh: 'บริการภายนอก',
-        description: 'บริการที่เปิดให้หน่วยงานภายนอกหรือประชาชนใช้งาน รวมถึง...',
-        owner: 'ผู้จัดการบริการ',
+        name: 'Public Water Testing Service',
+        nameTh: 'บริการตรวจคุณภาพน้ำสำหรับประชาชน',
+        description: 'บริการตรวจสอบคุณภาพน้ำดื่มและน้ำใช้สำหรับประชาชนทั่วไป รับตัวอย่างน้ำจากประชาชน ตรวจวิเคราะห์ตามมาตรฐาน และออกใบรับรองผลการตรวจ พร้อมคำแนะนำการปรับปรุงคุณภาพน้ำ',
+        owner: 'คุณสมเกียรติ บริการดี',
         department: 'กองบริการประชาชน'
+      },
+      typeSpecificFields: {
+        businessCapability: 'การให้บริการตรวจสอบคุณภาพน้ำแก่ประชาชนเพื่อส่งเสริมสุขภาพและความปลอดภัย',
+        kpis: 'จำนวนผู้ใช้บริการต่อเดือน (≥300 ราย), เวลาเฉลี่ยในการให้บริการ (≤5 วันทำการ), ความพึงพอใจของลูกค้า (≥4.5/5), อัตราการกลับมาใช้บริการ (≥60%)',
+        actors: 'ประชาชนทั่วไป, ผู้ประกอบการ, หน่วยงานราชการ, เจ้าหน้าที่ให้บริการ, นักวิทยาศาสตร์ผู้ตรวจสอบ'
       }
     },
     {
       name: 'บริการภายใน (Internal Service)',
       description: 'บริการที่ให้กับหน่วยงานภายในองค์กร',
       fields: {
-        name: 'Internal Service',
-        nameTh: 'บริการภายใน',
-        description: 'บริการสำหรับบุคลากรและหน่วยงานภายในองค์กร...',
-        owner: 'หัวหน้าแผนก',
-        department: 'แผนกสนับสนุน'
+        name: 'Internal IT Support Service',
+        nameTh: 'บริการสนับสนุนเทคโนโลยีสารสนเทศภายใน',
+        description: 'บริการสนับสนุนด้าน IT สำหรับบุคลากรภายในองค์กร ครอบคลุมการแก้ไขปัญหาเครื่องคอมพิวเตอร์ การติดตั้งซอฟต์แวร์ การจัดการบัญชีผู้ใช้ และการให้คำปรึกษาด้านเทคโนโลยี',
+        owner: 'คุณกิตติพงษ์ เทคโนโลยี',
+        department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      },
+      typeSpecificFields: {
+        businessCapability: 'การให้บริการสนับสนุนเทคโนโลยีสารสนเทศภายในองค์กรเพื่อเพิ่มประสิทธิภาพการทำงาน',
+        kpis: 'เวลาเฉลี่ยในการตอบสนอง (≤2 ชั่วโมง), อัตราการแก้ไขปัญหาได้ในครั้งแรก (≥85%), ความพึงพอใจของบุคลากร (≥4.2/5), จำนวน Ticket ที่จัดการต่อวัน (≥50 tickets)',
+        actors: 'บุคลากรภายในองค์กร, เจ้าหน้าที่ IT Support, ผู้จัดการระบบ, หัวหน้าแผนก'
       }
     }
   ],
@@ -89,66 +114,102 @@ const templates: Record<ArtefactType, { name: string; description: string; field
       name: 'Web Application',
       description: 'ระบบเว็บแอปพลิเคชันที่ใช้งานผ่านเบราว์เซอร์',
       fields: {
-        name: 'Web Application Name',
-        nameTh: 'ระบบเว็บแอปพลิเคชัน',
-        description: 'ระบบเว็บแอปพลิเคชันสำหรับ... รองรับการใช้งานผ่าน Browser ทุกประเภท',
-        owner: 'นักพัฒนาระบบ',
+        name: 'EA Management System',
+        nameTh: 'ระบบจัดการสถาปัตยกรรมองค์กร',
+        description: 'ระบบเว็บแอปพลิเคชันสำหรับจัดการและจัดทำสถาปัตยกรรมองค์กร (Enterprise Architecture) ตามมาตรฐาน TOGAF รองรับการจัดการ Artefacts, Relationships, และการสร้างรายงาน',
+        owner: 'คุณประเสริฐ พัฒนาระบบ',
         department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      },
+      typeSpecificFields: {
+        appType: 'web',
+        techStack: 'React 18, TypeScript, Vite, Node.js, Express, PostgreSQL, Tailwind CSS',
+        deployment: 'cloud',
+        sla: '99.9% uptime (8:00-18:00 น.), 99.5% uptime (24/7)'
       }
     },
     {
       name: 'Mobile Application',
       description: 'แอปพลิเคชันมือถือสำหรับ iOS และ Android',
       fields: {
-        name: 'Mobile App',
-        nameTh: 'แอปพลิเคชันมือถือ',
-        description: 'แอปพลิเคชันมือถือสำหรับ... รองรับ iOS และ Android',
-        owner: 'นักพัฒนาแอป',
+        name: 'DSS Mobile Lab',
+        nameTh: 'แอปพลิเคชันห้องปฏิบัติการเคลื่อนที่',
+        description: 'แอปพลิเคชันมือถือสำหรับเจ้าหน้าที่ห้องปฏิบัติการในการบันทึกข้อมูลตัวอย่าง ตรวจสอบสถานะการตรวจ และรายงานผลการตรวจสอบ รองรับการทำงานแบบ Offline และ Sync เมื่อมีอินเทอร์เน็ต',
+        owner: 'คุณสุรชัย พัฒนาแอป',
         department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      },
+      typeSpecificFields: {
+        appType: 'mobile',
+        techStack: 'React Native, TypeScript, Redux Toolkit, SQLite (Local DB), Firebase (Backend)',
+        deployment: 'cloud',
+        sla: '99.5% uptime, รองรับการทำงาน Offline ได้ 100%'
       }
     },
     {
       name: 'Desktop Application',
       description: 'โปรแกรมที่ติดตั้งบนเครื่องคอมพิวเตอร์',
       fields: {
-        name: 'Desktop App',
-        nameTh: 'โปรแกรม Desktop',
-        description: 'โปรแกรมที่ติดตั้งบนเครื่องคอมพิวเตอร์สำหรับ... รองรับ Windows/macOS',
-        owner: 'นักพัฒนาระบบ',
+        name: 'Lab Data Analyzer',
+        nameTh: 'โปรแกรมวิเคราะห์ข้อมูลห้องปฏิบัติการ',
+        description: 'โปรแกรม Desktop สำหรับวิเคราะห์และสร้างรายงานข้อมูลห้องปฏิบัติการ รองรับการ Import ข้อมูลจาก Excel, การสร้างกราฟและสถิติ, และการ Export รายงานเป็น PDF/Excel',
+        owner: 'คุณนพดล พัฒนาโปรแกรม',
         department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      },
+      typeSpecificFields: {
+        appType: 'desktop',
+        techStack: 'Electron, React, Python (Data Analysis), Pandas, Matplotlib',
+        deployment: 'onprem',
+        sla: '99.0% uptime (เฉพาะเวลาทำการ), รองรับ Windows 10/11 และ macOS 12+'
       }
     },
     {
       name: 'Microservice',
       description: 'บริการย่อยที่ทำหน้าที่เฉพาะด้าน',
       fields: {
-        name: 'Microservice Name',
-        nameTh: 'ไมโครเซอร์วิส',
-        description: 'Microservice สำหรับจัดการ... ทำงานแบบ Stateless และสื่อสารผ่าน REST API',
-        owner: 'DevOps Engineer',
+        name: 'Sample Tracking Service',
+        nameTh: 'บริการติดตามตัวอย่าง',
+        description: 'Microservice สำหรับจัดการและติดตามสถานะตัวอย่างห้องปฏิบัติการ ทำงานแบบ Stateless สื่อสารผ่าน REST API และ GraphQL รองรับการแจ้งเตือนแบบ Real-time',
+        owner: 'คุณอรรถพล DevOps',
         department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      },
+      typeSpecificFields: {
+        appType: 'api',
+        techStack: 'Node.js, Express, TypeScript, Docker, Kubernetes, Redis (Cache), PostgreSQL',
+        deployment: 'cloud',
+        sla: '99.95% uptime, Response Time < 200ms (P95)'
       }
     },
     {
       name: 'Legacy System',
       description: 'ระบบเดิมที่ยังใช้งานอยู่',
       fields: {
-        name: 'Legacy System',
-        nameTh: 'ระบบเดิม',
-        description: 'ระบบเดิมที่พัฒนาตั้งแต่ปี... ยังคงใช้งานสำหรับ... มีแผนปรับปรุง/ทดแทนภายใน...',
-        owner: 'ผู้ดูแลระบบ',
+        name: 'Legacy Lab Management System',
+        nameTh: 'ระบบจัดการห้องปฏิบัติการเดิม',
+        description: 'ระบบเดิมที่พัฒนาด้วย ASP.NET Web Forms เมื่อปี 2010 ยังคงใช้งานสำหรับการจัดการข้อมูลห้องปฏิบัติการบางส่วน มีแผนปรับปรุงเป็นระบบใหม่ภายในปี 2025',
+        owner: 'คุณสมศักดิ์ ดูแลระบบ',
         department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      },
+      typeSpecificFields: {
+        appType: 'web',
+        techStack: 'ASP.NET Web Forms, SQL Server 2008, IIS, Windows Server 2012',
+        deployment: 'onprem',
+        sla: '95.0% uptime (เวลาทำการ), มีแผน Migration ไปยังระบบใหม่ Q2 2025'
       }
     },
     {
       name: 'Backend API',
       description: 'ระบบ Backend ให้บริการ API',
       fields: {
-        name: 'Backend API Service',
-        nameTh: 'ระบบ API หลังบ้าน',
-        description: 'Backend API สำหรับ... ให้บริการข้อมูลแก่ระบบ Frontend และ Mobile',
-        owner: 'Backend Developer',
+        name: 'DSS Core API',
+        nameTh: 'API หลักของกรมวิทยาศาสตร์บริการ',
+        description: 'Backend API หลักที่ให้บริการข้อมูลแก่ระบบ Frontend และ Mobile Applications ครอบคลุม API สำหรับจัดการ Artefacts, Users, Reports, และ Authentication',
+        owner: 'คุณธนพล Backend Lead',
         department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      },
+      typeSpecificFields: {
+        appType: 'api',
+        techStack: 'Node.js, Express, TypeScript, GraphQL, PostgreSQL, Redis, JWT Authentication',
+        deployment: 'cloud',
+        sla: '99.9% uptime, API Response Time < 300ms (P95), Rate Limiting: 1000 requests/minute'
       }
     }
   ],
@@ -157,55 +218,85 @@ const templates: Record<ArtefactType, { name: string; description: string; field
       name: 'Master Data',
       description: 'ข้อมูลหลักที่ใช้อ้างอิงทั่วทั้งองค์กร',
       fields: {
-        name: 'Master Data',
-        nameTh: 'ข้อมูลหลัก (Master Data)',
-        description: 'ข้อมูลหลักที่ใช้อ้างอิงทั่วทั้งองค์กร เช่น รหัสหน่วยงาน รายชื่อบุคลากร...',
-        owner: 'เจ้าหน้าที่ข้อมูล',
+        name: 'Organization Master Data',
+        nameTh: 'ข้อมูลหลักขององค์กร',
+        description: 'ข้อมูลหลักที่ใช้อ้างอิงทั่วทั้งองค์กร ประกอบด้วย รหัสหน่วยงาน, รายชื่อบุคลากร, โครงสร้างองค์กร, ตำแหน่งงาน, และข้อมูลอ้างอิงอื่นๆ ที่ใช้ร่วมกัน',
+        owner: 'คุณกัญญา ข้อมูลหลัก',
         department: 'กองข้อมูลและสถิติ'
+      },
+      typeSpecificFields: {
+        dataClassification: 'internal',
+        dataFormat: 'PostgreSQL (Relational Database), JSON Schema',
+        retentionPolicy: 'ตลอดชีพ (Permanent Retention), Backup ทุกวัน, Archive ทุกปี',
+        isMasterData: 'yes'
       }
     },
     {
       name: 'Transaction Data',
       description: 'ข้อมูลธุรกรรมที่เกิดขึ้นจากการทำงาน',
       fields: {
-        name: 'Transaction Data',
-        nameTh: 'ข้อมูลธุรกรรม',
-        description: 'ข้อมูลธุรกรรมที่บันทึกจากกระบวนการ... มีการสร้างข้อมูลใหม่ประมาณ... รายการต่อวัน',
-        owner: 'นักวิเคราะห์ข้อมูล',
+        name: 'Lab Test Transaction Data',
+        nameTh: 'ข้อมูลธุรกรรมการตรวจสอบห้องปฏิบัติการ',
+        description: 'ข้อมูลธุรกรรมที่บันทึกจากการตรวจสอบตัวอย่างในห้องปฏิบัติการ ประกอบด้วย ข้อมูลตัวอย่าง, ผลการตรวจ, วันที่และเวลา, ผู้ตรวจสอบ มีการสร้างข้อมูลใหม่ประมาณ 500-800 รายการต่อวัน',
+        owner: 'คุณปิยะ นักวิเคราะห์',
         department: 'กองข้อมูลและสถิติ'
+      },
+      typeSpecificFields: {
+        dataClassification: 'internal',
+        dataFormat: 'PostgreSQL (Transaction Table), JSON (Metadata), CSV (Export Format)',
+        retentionPolicy: '5 ปี (Active), Archive หลัง 5 ปี, Delete หลัง 10 ปี (ตาม PDPA)',
+        isMasterData: 'no'
       }
     },
     {
       name: 'Reference Data',
       description: 'ข้อมูลอ้างอิงที่ใช้ร่วมกัน',
       fields: {
-        name: 'Reference Data',
-        nameTh: 'ข้อมูลอ้างอิง',
-        description: 'ข้อมูลอ้างอิงสำหรับ... เช่น รหัสจังหวัด รหัสประเภท ค่า Lookup ต่างๆ',
-        owner: 'ผู้ดูแลข้อมูล',
+        name: 'Standard Reference Data',
+        nameTh: 'ข้อมูลอ้างอิงมาตรฐาน',
+        description: 'ข้อมูลอ้างอิงที่ใช้ร่วมกันทั่วทั้งองค์กร เช่น รหัสจังหวัด, รหัสอำเภอ, รหัสประเภทตัวอย่าง, มาตรฐานการตรวจสอบ, ค่า Lookup ต่างๆ ที่ใช้ในระบบ',
+        owner: 'คุณสุรีย์ ผู้ดูแลข้อมูล',
         department: 'กองข้อมูลและสถิติ'
+      },
+      typeSpecificFields: {
+        dataClassification: 'public',
+        dataFormat: 'JSON (API Response), XML (Legacy Systems), PostgreSQL (Source)',
+        retentionPolicy: 'ตลอดชีพ (Permanent), Version Control สำหรับการเปลี่ยนแปลง, Backup ทุกสัปดาห์',
+        isMasterData: 'yes'
       }
     },
     {
       name: 'API Data Schema',
       description: 'โครงสร้างข้อมูลที่ใช้แลกเปลี่ยนผ่าน API',
       fields: {
-        name: 'API Schema',
-        nameTh: 'โครงสร้างข้อมูล API',
-        description: 'โครงสร้างข้อมูล (Schema) สำหรับการแลกเปลี่ยนข้อมูลผ่าน API รองรับ JSON/XML',
-        owner: 'Solution Architect',
+        name: 'EA API Schema',
+        nameTh: 'โครงสร้างข้อมูล API สำหรับ EA',
+        description: 'โครงสร้างข้อมูล (Schema) สำหรับการแลกเปลี่ยนข้อมูล Artefact, Relationship, และ Metadata ผ่าน REST API และ GraphQL รองรับ JSON และ XML format',
+        owner: 'คุณอรรถพล Solution Architect',
         department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      },
+      typeSpecificFields: {
+        dataClassification: 'internal',
+        dataFormat: 'JSON Schema (Primary), XML Schema (Legacy), GraphQL Schema, OpenAPI 3.0 Specification',
+        retentionPolicy: 'ตามความจำเป็น (Versioned), เก็บ Schema ทุกเวอร์ชัน, Deprecate หลัง 2 ปี',
+        isMasterData: 'no'
       }
     },
     {
       name: 'Data Warehouse',
       description: 'คลังข้อมูลสำหรับวิเคราะห์และรายงาน',
       fields: {
-        name: 'Data Warehouse',
-        nameTh: 'คลังข้อมูล (Data Warehouse)',
-        description: 'คลังข้อมูลรวมศูนย์สำหรับการวิเคราะห์และจัดทำรายงาน BI Dashboard',
-        owner: 'Data Engineer',
+        name: 'DSS Analytics Data Warehouse',
+        nameTh: 'คลังข้อมูลวิเคราะห์ของกรมวิทยาศาสตร์บริการ',
+        description: 'คลังข้อมูลรวมศูนย์สำหรับการวิเคราะห์และจัดทำรายงาน BI Dashboard ประกอบด้วยข้อมูลจากระบบต่างๆ ที่ผ่านกระบวนการ ETL และจัดเก็บในรูปแบบ Columnar Storage',
+        owner: 'คุณกิตติพงษ์ Data Engineer',
         department: 'กองข้อมูลและสถิติ'
+      },
+      typeSpecificFields: {
+        dataClassification: 'confidential',
+        dataFormat: 'Parquet (Columnar Storage), ORC (Hive), PostgreSQL (Staging), CSV (Export)',
+        retentionPolicy: '10 ปี (Active Data), Archive หลัง 10 ปี, Delete หลัง 15 ปี (ตามกฎหมาย)',
+        isMasterData: 'no'
       }
     }
   ],
@@ -214,66 +305,102 @@ const templates: Record<ArtefactType, { name: string; description: string; field
       name: 'Physical Server',
       description: 'เซิร์ฟเวอร์ฮาร์ดแวร์ภายในองค์กร',
       fields: {
-        name: 'Physical Server',
-        nameTh: 'เซิร์ฟเวอร์กายภาพ',
-        description: 'เซิร์ฟเวอร์ฮาร์ดแวร์ติดตั้งที่... สเปค CPU/RAM/Storage...',
-        owner: 'System Administrator',
+        name: 'DSS Production Server Cluster',
+        nameTh: 'คลัสเตอร์เซิร์ฟเวอร์ผลิตภัณฑ์',
+        description: 'เซิร์ฟเวอร์ฮาร์ดแวร์สำหรับรันระบบผลิตภัณฑ์หลัก ติดตั้งที่ Data Center กรมวิทยาศาสตร์บริการ ประกอบด้วย 3 nodes สำหรับ High Availability',
+        owner: 'คุณสมชาย System Admin',
         department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      },
+      typeSpecificFields: {
+        componentType: 'server',
+        vendor: 'Dell PowerEdge R740, HP ProLiant DL380',
+        location: 'Data Center 1, ชั้น 3 อาคารสำนักงาน, กรมวิทยาศาสตร์บริการ',
+        capacity: 'CPU: Intel Xeon Gold 6248R (48 cores), RAM: 256GB DDR4, Storage: 4TB NVMe SSD (RAID 10)'
       }
     },
     {
       name: 'Virtual Machine',
       description: 'เครื่องเสมือนที่ทำงานบน Hypervisor',
       fields: {
-        name: 'Virtual Machine',
-        nameTh: 'เครื่องเสมือน (VM)',
-        description: 'Virtual Machine ที่ทำงานบน VMware/Hyper-V สำหรับรัน...',
-        owner: 'System Administrator',
+        name: 'EA System VM Cluster',
+        nameTh: 'คลัสเตอร์ VM สำหรับระบบ EA',
+        description: 'Virtual Machine ที่ทำงานบน VMware vSphere สำหรับรันระบบ EA Management System และ Backend Services ประกอบด้วย 4 VMs สำหรับ Load Balancing',
+        owner: 'คุณประเสริฐ System Admin',
         department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      },
+      typeSpecificFields: {
+        componentType: 'server',
+        vendor: 'VMware vSphere 7.0, ESXi Hosts',
+        location: 'Virtual Infrastructure, Data Center 1, Hosted on Dell PowerEdge R740',
+        capacity: 'CPU: 8 vCPUs per VM, RAM: 32GB per VM, Storage: 500GB SSD per VM (Thin Provisioning)'
       }
     },
     {
       name: 'Cloud Service (IaaS/PaaS/SaaS)',
       description: 'บริการ Cloud Computing',
       fields: {
-        name: 'Cloud Service',
-        nameTh: 'บริการ Cloud',
-        description: 'บริการ Cloud จาก AWS/Azure/GCP ประเภท IaaS/PaaS/SaaS สำหรับ...',
-        owner: 'Cloud Engineer',
+        name: 'DSS Cloud Infrastructure',
+        nameTh: 'โครงสร้างพื้นฐาน Cloud ของกรมวิทยาศาสตร์บริการ',
+        description: 'บริการ Cloud จาก AWS สำหรับ Hosting ระบบ Web Applications และ APIs ใช้บริการ EC2, RDS, S3, CloudFront และ Route 53',
+        owner: 'คุณกิตติพงษ์ Cloud Engineer',
         department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      },
+      typeSpecificFields: {
+        componentType: 'cloud',
+        vendor: 'Amazon Web Services (AWS)',
+        location: 'AWS ap-southeast-1 (Singapore), Multi-AZ Deployment',
+        capacity: 'Auto-scaling: 2-10 instances, RDS: db.t3.large (2 vCPU, 8GB RAM), S3: Unlimited Storage'
       }
     },
     {
       name: 'Network Device',
       description: 'อุปกรณ์เครือข่าย เช่น Switch, Router, Firewall',
       fields: {
-        name: 'Network Device',
-        nameTh: 'อุปกรณ์เครือข่าย',
-        description: 'อุปกรณ์เครือข่ายประเภท Switch/Router/Firewall ยี่ห้อ... รุ่น...',
-        owner: 'Network Administrator',
+        name: 'Core Network Switch',
+        nameTh: 'สวิตช์เครือข่ายหลัก',
+        description: 'สวิตช์เครือข่ายหลักสำหรับเชื่อมต่อเซิร์ฟเวอร์และอุปกรณ์ภายใน Data Center รองรับ VLAN, Link Aggregation, และ QoS',
+        owner: 'คุณสมเกียรติ Network Admin',
         department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      },
+      typeSpecificFields: {
+        componentType: 'network',
+        vendor: 'Cisco Catalyst 9300 Series',
+        location: 'Network Rack 1, Data Center 1, ชั้น 3',
+        capacity: '48 Ports Gigabit Ethernet, 4 Ports 10Gbps SFP+, Stacking Support, PoE+'
       }
     },
     {
       name: 'Storage System',
       description: 'ระบบจัดเก็บข้อมูล SAN/NAS/Object Storage',
       fields: {
-        name: 'Storage System',
-        nameTh: 'ระบบจัดเก็บข้อมูล',
-        description: 'ระบบจัดเก็บข้อมูลประเภท SAN/NAS/Object Storage ความจุ... TB สำหรับ...',
-        owner: 'Storage Administrator',
+        name: 'DSS SAN Storage System',
+        nameTh: 'ระบบจัดเก็บข้อมูล SAN',
+        description: 'ระบบจัดเก็บข้อมูล SAN สำหรับ Database และ Application Data ใช้สำหรับเก็บข้อมูลสำคัญขององค์กร รองรับการ Backup และ Replication',
+        owner: 'คุณวิภา Storage Admin',
         department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      },
+      typeSpecificFields: {
+        componentType: 'storage',
+        vendor: 'Dell EMC Unity XT 480',
+        location: 'Storage Area, Data Center 1, ชั้น 3',
+        capacity: 'Raw Capacity: 200TB, Usable: 150TB (RAID 6), SSD Cache: 2TB, Backup Capacity: 300TB'
       }
     },
     {
       name: 'Container Platform',
       description: 'แพลตฟอร์ม Container เช่น Docker, Kubernetes',
       fields: {
-        name: 'Container Platform',
-        nameTh: 'แพลตฟอร์ม Container',
-        description: 'Container Platform (Docker/Kubernetes) สำหรับ deploy และจัดการ containerized applications',
-        owner: 'DevOps Engineer',
+        name: 'DSS Kubernetes Cluster',
+        nameTh: 'คลัสเตอร์ Kubernetes',
+        description: 'Container Platform สำหรับ deploy และจัดการ Microservices และ Containerized Applications ใช้ Kubernetes สำหรับ Orchestration และ Docker สำหรับ Container Runtime',
+        owner: 'คุณอรรถพล DevOps Lead',
         department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      },
+      typeSpecificFields: {
+        componentType: 'cloud',
+        vendor: 'Kubernetes 1.28, Docker 24.x, Rancher (Management)',
+        location: 'Container Cluster, Data Center 1, On-Premise + Cloud Hybrid',
+        capacity: '3 Master Nodes, 5 Worker Nodes, Auto-scaling: 2-20 Pods per Service, Resource Limits: CPU 4 cores, RAM 8GB per Pod'
       }
     }
   ],
@@ -282,66 +409,96 @@ const templates: Record<ArtefactType, { name: string; description: string; field
       name: 'Authentication System',
       description: 'ระบบยืนยันตัวตนผู้ใช้งาน',
       fields: {
-        name: 'Authentication System',
-        nameTh: 'ระบบยืนยันตัวตน',
-        description: 'ระบบยืนยันตัวตนผู้ใช้งาน (Authentication) รองรับ Username/Password, MFA, SSO',
-        owner: 'Security Engineer',
+        name: 'DSS Identity Provider',
+        nameTh: 'ระบบยืนยันตัวตนของกรมวิทยาศาสตร์บริการ',
+        description: 'ระบบยืนยันตัวตนผู้ใช้งาน (Identity Provider) รองรับ Username/Password, Multi-Factor Authentication (MFA), Single Sign-On (SSO), และการเชื่อมต่อกับ Active Directory',
+        owner: 'คุณสมชาย Security Engineer',
         department: 'ศูนย์รักษาความปลอดภัย'
+      },
+      typeSpecificFields: {
+        securityDomain: 'auth',
+        compliance: 'ISO 27001:2022, PDPA, NIST Cybersecurity Framework, OAuth 2.0, SAML 2.0',
+        riskLevel: 'medium'
       }
     },
     {
       name: 'Authorization/RBAC',
       description: 'ระบบจัดการสิทธิ์และบทบาท',
       fields: {
-        name: 'Authorization System',
-        nameTh: 'ระบบจัดการสิทธิ์ (RBAC)',
-        description: 'ระบบจัดการสิทธิ์ตามบทบาท (Role-Based Access Control) สำหรับควบคุมการเข้าถึง...',
-        owner: 'Security Engineer',
+        name: 'DSS RBAC System',
+        nameTh: 'ระบบจัดการสิทธิ์ตามบทบาท',
+        description: 'ระบบจัดการสิทธิ์ตามบทบาท (Role-Based Access Control) สำหรับควบคุมการเข้าถึงระบบและข้อมูล ประกอบด้วย Roles: Admin, Architect, Executive, Viewer และการกำหนด Permissions แบบละเอียด',
+        owner: 'คุณกัญญา Security Engineer',
         department: 'ศูนย์รักษาความปลอดภัย'
+      },
+      typeSpecificFields: {
+        securityDomain: 'authz',
+        compliance: 'ISO 27001:2022, RBAC Standards (NIST), Principle of Least Privilege, Audit Logging',
+        riskLevel: 'high'
       }
     },
     {
       name: 'Encryption Service',
       description: 'ระบบเข้ารหัสข้อมูล',
       fields: {
-        name: 'Encryption Service',
-        nameTh: 'ระบบเข้ารหัสข้อมูล',
-        description: 'ระบบเข้ารหัสข้อมูล (Encryption) ทั้ง Data at Rest และ Data in Transit ใช้มาตรฐาน AES-256',
-        owner: 'Security Engineer',
+        name: 'DSS Encryption Service',
+        nameTh: 'บริการเข้ารหัสข้อมูล',
+        description: 'ระบบเข้ารหัสข้อมูล (Encryption Service) สำหรับเข้ารหัสข้อมูลทั้ง Data at Rest (Database, Files) และ Data in Transit (HTTPS, VPN) ใช้มาตรฐาน AES-256 และ TLS 1.3',
+        owner: 'คุณปิยะ Security Engineer',
         department: 'ศูนย์รักษาความปลอดภัย'
+      },
+      typeSpecificFields: {
+        securityDomain: 'encryption',
+        compliance: 'AES-256-GCM (Data at Rest), TLS 1.3 (Data in Transit), FIPS 140-2 Level 2, Key Management: AWS KMS',
+        riskLevel: 'low'
       }
     },
     {
       name: 'Firewall/WAF',
       description: 'ระบบ Firewall และ Web Application Firewall',
       fields: {
-        name: 'Firewall/WAF',
-        nameTh: 'ไฟร์วอลล์',
-        description: 'ระบบ Firewall/WAF สำหรับป้องกันการโจมตีจากภายนอก ยี่ห้อ... รุ่น...',
-        owner: 'Network Security',
+        name: 'DSS Network Firewall & WAF',
+        nameTh: 'ไฟร์วอลล์และ WAF',
+        description: 'ระบบ Firewall และ Web Application Firewall สำหรับป้องกันการโจมตีจากภายนอก ครอบคลุม Network Firewall สำหรับป้องกัน Layer 3-4 และ WAF สำหรับป้องกัน Layer 7 (SQL Injection, XSS, etc.)',
+        owner: 'คุณสุรีย์ Network Security',
         department: 'ศูนย์รักษาความปลอดภัย'
+      },
+      typeSpecificFields: {
+        securityDomain: 'network',
+        compliance: 'ISO 27001:2022, NIST Cybersecurity Framework, PCI-DSS (ถ้ามี), OWASP Top 10 Protection',
+        riskLevel: 'high'
       }
     },
     {
       name: 'VPN/Remote Access',
       description: 'ระบบเข้าถึงระยะไกลอย่างปลอดภัย',
       fields: {
-        name: 'VPN Service',
-        nameTh: 'ระบบ VPN',
-        description: 'ระบบ VPN สำหรับการเข้าถึงเครือข่ายภายในจากภายนอกอย่างปลอดภัย รองรับผู้ใช้... คน',
-        owner: 'Network Security',
+        name: 'DSS Remote Access VPN',
+        nameTh: 'ระบบ VPN สำหรับการเข้าถึงระยะไกล',
+        description: 'ระบบ VPN สำหรับการเข้าถึงเครือข่ายภายในจากภายนอกอย่างปลอดภัย รองรับทั้ง IPSec VPN และ SSL VPN สำหรับผู้ใช้ที่ทำงานจากบ้านหรือนอกสถานที่',
+        owner: 'คุณสุรชัย Network Security',
         department: 'ศูนย์รักษาความปลอดภัย'
+      },
+      typeSpecificFields: {
+        securityDomain: 'network',
+        compliance: 'IPSec VPN (Site-to-Site), SSL VPN (Remote Access), MFA Required, Certificate-based Authentication',
+        riskLevel: 'medium'
       }
     },
     {
       name: 'SIEM/Log Management',
       description: 'ระบบรวบรวมและวิเคราะห์ Log',
       fields: {
-        name: 'SIEM System',
-        nameTh: 'ระบบ SIEM',
-        description: 'ระบบ Security Information and Event Management สำหรับรวบรวมและวิเคราะห์ Log ความปลอดภัย',
-        owner: 'SOC Analyst',
+        name: 'DSS SIEM Platform',
+        nameTh: 'แพลตฟอร์ม SIEM',
+        description: 'ระบบ Security Information and Event Management สำหรับรวบรวมและวิเคราะห์ Log ความปลอดภัยจากระบบต่างๆ ครอบคลุมการตรวจจับภัยคุกคาม, การแจ้งเตือน, และการรายงานความปลอดภัย',
+        owner: 'คุณนพดล SOC Analyst',
         department: 'ศูนย์รักษาความปลอดภัย'
+      },
+      typeSpecificFields: {
+        securityDomain: 'network',
+        compliance: 'ISO 27001:2022, SOC 2 Type II, Log Retention: 1 ปี (Active), 7 ปี (Archive), Real-time Threat Detection',
+        riskLevel: 'medium'
       }
     }
   ],
@@ -350,66 +507,102 @@ const templates: Record<ArtefactType, { name: string; description: string; field
       name: 'REST API',
       description: 'การเชื่อมต่อแบบ RESTful API',
       fields: {
-        name: 'REST API Integration',
-        nameTh: 'การเชื่อมต่อ REST API',
-        description: 'การเชื่อมต่อระบบผ่าน RESTful API รองรับ JSON format สำหรับแลกเปลี่ยนข้อมูล...',
-        owner: 'Integration Developer',
+        name: 'EA System REST API Integration',
+        nameTh: 'การเชื่อมต่อ REST API ของระบบ EA',
+        description: 'การเชื่อมต่อระบบ EA Management System กับระบบภายนอกผ่าน RESTful API รองรับ JSON format สำหรับแลกเปลี่ยนข้อมูล Artefacts, Relationships, และ Metadata',
+        owner: 'คุณกิตติพงษ์ Integration Developer',
         department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      },
+      typeSpecificFields: {
+        integrationPattern: 'rest',
+        protocol: 'HTTPS (TLS 1.3), OAuth 2.0 Bearer Token Authentication',
+        sourceSystem: 'EA Management System',
+        targetSystem: 'External Systems (HR System, Lab Management System, Reporting System)'
       }
     },
     {
       name: 'SOAP Web Service',
       description: 'การเชื่อมต่อแบบ SOAP',
       fields: {
-        name: 'SOAP Integration',
-        nameTh: 'การเชื่อมต่อ SOAP',
-        description: 'การเชื่อมต่อระบบผ่าน SOAP Web Service รองรับ XML format ตาม WSDL...',
-        owner: 'Integration Developer',
+        name: 'Legacy System SOAP Integration',
+        nameTh: 'การเชื่อมต่อ SOAP กับระบบเดิม',
+        description: 'การเชื่อมต่อระบบ EA กับระบบเดิม (Legacy Systems) ผ่าน SOAP Web Service รองรับ XML format ตาม WSDL specification สำหรับการแลกเปลี่ยนข้อมูลกับระบบที่ยังใช้ SOAP',
+        owner: 'คุณประเสริฐ Integration Developer',
         department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      },
+      typeSpecificFields: {
+        integrationPattern: 'soap',
+        protocol: 'HTTPS/SOAP 1.2, WS-Security (UsernameToken), WSDL 2.0',
+        sourceSystem: 'EA Management System',
+        targetSystem: 'Legacy Lab Management System, Legacy HR System'
       }
     },
     {
       name: 'Message Queue',
       description: 'การสื่อสารแบบ Asynchronous ผ่าน Queue',
       fields: {
-        name: 'Message Queue',
-        nameTh: 'คิวข้อความ (Message Queue)',
-        description: 'ระบบ Message Queue (RabbitMQ/Kafka) สำหรับการสื่อสารแบบ Async ระหว่างระบบ...',
-        owner: 'Integration Developer',
+        name: 'DSS Event Queue',
+        nameTh: 'คิวเหตุการณ์ของกรมวิทยาศาสตร์บริการ',
+        description: 'ระบบ Message Queue สำหรับการสื่อสารแบบ Asynchronous ระหว่างระบบ ใช้สำหรับ Event-driven Architecture เช่น การแจ้งเตือนเมื่อมีการอัพเดท Artefact, การ Sync ข้อมูลระหว่างระบบ',
+        owner: 'คุณอรรถพล Integration Developer',
         department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      },
+      typeSpecificFields: {
+        integrationPattern: 'mq',
+        protocol: 'AMQP 0.9.1 (RabbitMQ), Apache Kafka Protocol, Message Format: JSON',
+        sourceSystem: 'EA Management System (Producer), Notification Service (Producer)',
+        targetSystem: 'Reporting System (Consumer), Audit Log System (Consumer), Email Service (Consumer)'
       }
     },
     {
       name: 'File Transfer (SFTP/FTP)',
       description: 'การแลกเปลี่ยนข้อมูลผ่านไฟล์',
       fields: {
-        name: 'File Transfer',
-        nameTh: 'การแลกเปลี่ยนไฟล์ (SFTP)',
-        description: 'การแลกเปลี่ยนข้อมูลผ่านไฟล์ SFTP/FTP รูปแบบไฟล์ CSV/Excel/XML สำหรับ...',
-        owner: 'Data Integration',
+        name: 'DSS Data Exchange Service',
+        nameTh: 'บริการแลกเปลี่ยนข้อมูลผ่านไฟล์',
+        description: 'การแลกเปลี่ยนข้อมูลระหว่างระบบผ่านไฟล์ SFTP/FTP รูปแบบไฟล์ CSV/Excel/XML สำหรับการ Import/Export ข้อมูล Artefacts, Reports, และ Master Data',
+        owner: 'คุณกัญญา Data Integration',
         department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      },
+      typeSpecificFields: {
+        integrationPattern: 'file',
+        protocol: 'SFTP (SSH File Transfer Protocol), FTPS (FTP over SSL), Key-based Authentication',
+        sourceSystem: 'EA Management System, External Partner Systems',
+        targetSystem: 'Data Warehouse, Reporting System, External Systems'
       }
     },
     {
       name: 'ETL/Data Pipeline',
       description: 'กระบวนการดึง แปลง โหลดข้อมูล',
       fields: {
-        name: 'ETL Pipeline',
-        nameTh: 'ETL Pipeline',
-        description: 'กระบวนการ Extract-Transform-Load สำหรับนำข้อมูลจาก... ไปยัง... ทำงาน...',
-        owner: 'Data Engineer',
+        name: 'DSS ETL Data Pipeline',
+        nameTh: 'Pipeline ETL ของกรมวิทยาศาสตร์บริการ',
+        description: 'กระบวนการ Extract-Transform-Load สำหรับนำข้อมูลจากระบบต่างๆ (EA System, Lab System, HR System) ไปยัง Data Warehouse สำหรับการวิเคราะห์และรายงาน ทำงานแบบ Scheduled (Daily)',
+        owner: 'คุณปิยะ Data Engineer',
         department: 'กองข้อมูลและสถิติ'
+      },
+      typeSpecificFields: {
+        integrationPattern: 'file',
+        protocol: 'ETL Process (Apache Airflow), Database Connection (JDBC), File Transfer (SFTP)',
+        sourceSystem: 'PostgreSQL (EA Database), MySQL (Lab System), SQL Server (HR System)',
+        targetSystem: 'Data Warehouse (PostgreSQL), Analytics Database, BI Tools'
       }
     },
     {
       name: 'API Gateway',
       description: 'จุดเข้าถึง API รวมศูนย์',
       fields: {
-        name: 'API Gateway',
-        nameTh: 'API Gateway',
-        description: 'API Gateway สำหรับจัดการ API ทั้งหมดขององค์กร รองรับ Rate Limiting, Authentication, Logging',
-        owner: 'API Manager',
+        name: 'DSS API Gateway',
+        nameTh: 'API Gateway ของกรมวิทยาศาสตร์บริการ',
+        description: 'API Gateway สำหรับจัดการ API ทั้งหมดขององค์กรเป็นจุดรวมศูนย์ รองรับ Rate Limiting, Authentication, Request/Response Transformation, Logging, และ Monitoring',
+        owner: 'คุณสุรีย์ API Manager',
         department: 'ศูนย์เทคโนโลยีสารสนเทศ'
+      },
+      typeSpecificFields: {
+        integrationPattern: 'rest',
+        protocol: 'HTTPS (TLS 1.3), OAuth 2.0, API Key Authentication, JWT Token Validation',
+        sourceSystem: 'Multiple Systems (EA System, Lab System, HR System, External Partners)',
+        targetSystem: 'API Gateway (Kong/AWS API Gateway) → Backend Services'
       }
     }
   ]
@@ -583,7 +776,9 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
       nameTh: template.fields.nameTh,
       description: template.fields.description,
       owner: template.fields.owner || '',
-      department: template.fields.department || ''
+      department: template.fields.department || '',
+      // Populate type-specific fields from template
+      typeSpecificFields: template.typeSpecificFields || {}
     }));
   };
 
@@ -669,23 +864,40 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
                       key={index}
                       onClick={() => selectTemplate(index)}
                       className={cn(
-                        "w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-left transition-all",
+                        "w-full flex items-start gap-2 px-2.5 py-2 rounded-lg text-left transition-all group",
                         selectedTemplateIndex === index
                           ? "bg-accent text-accent-foreground"
                           : "hover:bg-muted text-foreground"
                       )}
                     >
-                      <FileText className="w-3.5 h-3.5 flex-shrink-0 text-muted-foreground" />
-                      <div className="min-w-0">
+                      <FileText className={cn(
+                        "w-3.5 h-3.5 flex-shrink-0 mt-0.5",
+                        selectedTemplateIndex === index ? "text-accent-foreground" : "text-muted-foreground"
+                      )} />
+                      <div className="min-w-0 flex-1">
                         <p className="text-xs font-medium truncate">{template.name}</p>
+                        {template.typeSpecificFields && Object.keys(template.typeSpecificFields).length > 0 && (
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4">
+                              <Layers className="w-2.5 h-2.5 mr-0.5" />
+                              Fields
+                            </Badge>
                       </div>
-                      {selectedTemplateIndex === index && <Check className="w-3 h-3 ml-auto flex-shrink-0" />}
+                        )}
+                      </div>
+                      {selectedTemplateIndex === index && <Check className="w-3 h-3 mt-0.5 flex-shrink-0" />}
                     </button>
                   ))}
                   <button
                     onClick={() => {
                       setSelectedTemplateIndex(null);
-                      setFormData(prev => ({ ...prev, name: '', nameTh: '', description: '' }));
+                      setFormData(prev => ({ 
+                        ...prev, 
+                        name: '', 
+                        nameTh: '', 
+                        description: '',
+                        typeSpecificFields: {} // Clear type-specific fields when creating from scratch
+                      }));
                     }}
                     className={cn(
                       "w-full px-2.5 py-2 rounded-lg text-xs text-left border border-dashed transition-all",
@@ -795,6 +1007,14 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
                           {togafLabels[selectedType].short} Fields
                         </span>
                         <Badge variant="outline" className="text-[9px] px-1.5">TOGAF</Badge>
+                        {selectedTemplateIndex !== null && 
+                         templates[selectedType][selectedTemplateIndex]?.typeSpecificFields &&
+                         Object.keys(templates[selectedType][selectedTemplateIndex].typeSpecificFields || {}).length > 0 && (
+                          <Badge variant="secondary" className="text-[9px] px-1.5 bg-green-500/10 text-green-600 border-green-500/20">
+                            <Check className="w-2.5 h-2.5 mr-0.5" />
+                            จาก Template
+                          </Badge>
+                        )}
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         {togafTypeFields[selectedType].map((field) => (
