@@ -23,6 +23,7 @@ import { FilterPanel } from './FilterPanel';
 import { ImpactAnalysisModal } from './ImpactAnalysisModal';
 import { TransactionHistory } from './TransactionHistory';
 import { artefacts, relationships, type Artefact, type ArtefactType, typeLabels } from '@/data/mockData';
+import { TreeView } from './TreeView';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
 
@@ -247,24 +248,52 @@ function HierarchyView({ onNodeClick, searchQuery = '' }: HierarchyViewProps) {
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             className={cn(
-                              "flex items-center gap-2 py-2 px-3 rounded-lg cursor-pointer transition-all",
-                              "hover:bg-muted group"
+                              "flex flex-col p-3 rounded-lg cursor-pointer transition-all",
+                              "hover:bg-muted border border-transparent hover:border-border group"
                             )}
                             onClick={() => onNodeClick?.(artefact)}
                           >
-                            <div className={cn("w-2 h-2 rounded-full", typeColors[type])} />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-foreground truncate">{artefact.name}</p>
-                              <p className="text-xs text-muted-foreground truncate">{artefact.nameTh}</p>
+                            {/* Top: Name and Status */}
+                            <div className="flex items-start justify-between gap-2 mb-2">
+                              <div className="flex items-start gap-2 min-w-0 flex-1">
+                                <div className={cn("w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0", typeColors[type])} />
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-sm font-medium text-foreground truncate">{artefact.name}</p>
+                                  <p className="text-xs text-muted-foreground truncate">{artefact.nameTh}</p>
+                                </div>
+                              </div>
+                              <span className={cn(
+                                "text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0",
+                                artefact.status === 'active' ? "bg-success/10 text-success" :
+                                  artefact.status === 'draft' ? "bg-warning/10 text-warning" :
+                                    "bg-muted text-muted-foreground"
+                              )}>
+                                {artefact.status}
+                              </span>
                             </div>
-                            <span className={cn(
-                              "text-[10px] px-1.5 py-0.5 rounded-full",
-                              artefact.status === 'active' ? "bg-success/10 text-success" :
-                                artefact.status === 'draft' ? "bg-warning/10 text-warning" :
-                                  "bg-muted text-muted-foreground"
-                            )}>
-                              {artefact.status}
-                            </span>
+
+                            {/* Bottom: Owner, Version, Risk */}
+                            <div className="flex items-center gap-3 text-[10px] text-muted-foreground ml-4">
+                              <span className="flex items-center gap-1">
+                                <span className="opacity-60">👤</span>
+                                <span className="truncate max-w-[100px]">{artefact.owner.split(' ')[0]}</span>
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <span className="opacity-60">v</span>
+                                <span>{artefact.version}</span>
+                              </span>
+                              {artefact.riskLevel !== 'none' && (
+                                <span className={cn(
+                                  "px-1.5 py-0.5 rounded",
+                                  artefact.riskLevel === 'high' ? "bg-destructive/10 text-destructive" :
+                                    artefact.riskLevel === 'medium' ? "bg-warning/10 text-warning" :
+                                      "bg-muted"
+                                )}>
+                                  {artefact.riskLevel === 'high' ? '🔴 High' :
+                                    artefact.riskLevel === 'medium' ? '🟡 Medium' : '🟢 Low'}
+                                </span>
+                              )}
+                            </div>
                           </motion.div>
                         ))}
                       </div>
@@ -738,8 +767,8 @@ function EAGraphInner() {
   const [showHistory, setShowHistory] = useState(false);
   const [impactArtefact, setImpactArtefact] = useState<Artefact | null>(null);
 
-  // Mode state - only graph and hierarchy
-  const [viewMode, setViewMode] = useState<'architect' | 'executive'>(role === 'executive' ? 'executive' : 'architect');
+  // Mode state - Architect is always default
+  const [viewMode, setViewMode] = useState<'architect' | 'executive'>('architect');
   const [layoutMode, setLayoutMode] = useState<'graph' | 'hierarchy'>('graph');
 
   // Search and floating panel state
@@ -1129,10 +1158,8 @@ function EAGraphInner() {
                 <span className="hidden sm:inline">Hierarchy</span>
               </button>
             </div>
-          </div>
 
-          {/* Right side buttons */}
-          <div className="flex items-center gap-2">
+            {/* Artefact Library Toggle - Moved to left side */}
             {layoutMode === 'graph' && (
               <button
                 onClick={() => setShowFloatingPanel(!showFloatingPanel)}
@@ -1143,6 +1170,10 @@ function EAGraphInner() {
                 <span className="hidden lg:inline">{showFloatingPanel ? 'ซ่อน' : 'แสดง'}</span>
               </button>
             )}
+          </div>
+
+          {/* Right side - empty for now */}
+          <div className="flex items-center gap-2">
           </div>
         </div>
 
@@ -1166,8 +1197,16 @@ function EAGraphInner() {
         {/* Graph/Hierarchy Canvas */}
         <div ref={reactFlowWrapper} className="flex-1 relative h-full">
           {layoutMode === 'hierarchy' ? (
-            <HierarchyView
-              onNodeClick={(artefact) => setSelectedNode(artefact)}
+            <TreeView
+              onNodeClick={(node) => {
+                // If node has artefactId, select that artefact
+                if (node.artefactId) {
+                  const artefact = artefacts.find(a => a.id === node.artefactId);
+                  if (artefact) {
+                    setSelectedNode(artefact);
+                  }
+                }
+              }}
               searchQuery={searchQuery}
             />
           ) : (

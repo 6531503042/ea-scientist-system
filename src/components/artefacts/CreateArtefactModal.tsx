@@ -424,6 +424,96 @@ const togafLabels: Record<ArtefactType, { short: string; full: string }> = {
   integration: { short: 'Integration', full: 'Integration Architecture' },
 };
 
+// TOGAF Type-Specific Fields Configuration
+const togafTypeFields: Record<ArtefactType, { key: string; label: string; labelTh: string; type: 'text' | 'select' | 'textarea'; options?: { value: string; label: string }[]; placeholder?: string }[]> = {
+  business: [
+    { key: 'businessCapability', label: 'Business Capability', labelTh: 'ความสามารถทางธุรกิจ', type: 'text', placeholder: 'เช่น การบริหารทรัพยากรบุคคล' },
+    { key: 'kpis', label: 'KPIs', labelTh: 'ตัวชี้วัด', type: 'textarea', placeholder: 'ตัวชี้วัดความสำเร็จ แยกด้วย comma' },
+    { key: 'actors', label: 'Actors/Roles', labelTh: 'ผู้เกี่ยวข้อง', type: 'text', placeholder: 'ผู้ใช้งาน/บทบาทที่เกี่ยวข้อง' },
+  ],
+  application: [
+    {
+      key: 'appType', label: 'Application Type', labelTh: 'ประเภทแอป', type: 'select', options: [
+        { value: 'web', label: 'Web Application' },
+        { value: 'mobile', label: 'Mobile Application' },
+        { value: 'desktop', label: 'Desktop Application' },
+        { value: 'api', label: 'API/Service' },
+      ]
+    },
+    { key: 'techStack', label: 'Technology Stack', labelTh: 'เทคโนโลยีที่ใช้', type: 'text', placeholder: 'เช่น React, Node.js, PostgreSQL' },
+    {
+      key: 'deployment', label: 'Deployment', labelTh: 'การ Deploy', type: 'select', options: [
+        { value: 'cloud', label: 'Cloud' },
+        { value: 'onprem', label: 'On-Premise' },
+        { value: 'hybrid', label: 'Hybrid' },
+      ]
+    },
+    { key: 'sla', label: 'SLA', labelTh: 'SLA', type: 'text', placeholder: 'เช่น 99.9% uptime' },
+  ],
+  data: [
+    {
+      key: 'dataClassification', label: 'Data Classification', labelTh: 'ชั้นความลับข้อมูล', type: 'select', options: [
+        { value: 'public', label: 'Public - เปิดเผย' },
+        { value: 'internal', label: 'Internal - ภายใน' },
+        { value: 'confidential', label: 'Confidential - ลับ' },
+        { value: 'restricted', label: 'Restricted - สูงสุด' },
+      ]
+    },
+    { key: 'dataFormat', label: 'Data Format', labelTh: 'รูปแบบข้อมูล', type: 'text', placeholder: 'เช่น JSON, XML, CSV' },
+    { key: 'retentionPolicy', label: 'Retention Policy', labelTh: 'นโยบายเก็บรักษา', type: 'text', placeholder: 'เช่น 5 ปี, ตลอดชีพ' },
+    {
+      key: 'isMasterData', label: 'Master Data', labelTh: 'Master Data', type: 'select', options: [
+        { value: 'yes', label: 'ใช่' },
+        { value: 'no', label: 'ไม่ใช่' },
+      ]
+    },
+  ],
+  technology: [
+    {
+      key: 'componentType', label: 'Component Type', labelTh: 'ประเภท', type: 'select', options: [
+        { value: 'server', label: 'Server' },
+        { value: 'network', label: 'Network Device' },
+        { value: 'storage', label: 'Storage' },
+        { value: 'cloud', label: 'Cloud Service' },
+      ]
+    },
+    { key: 'vendor', label: 'Vendor', labelTh: 'ผู้ผลิต', type: 'text', placeholder: 'เช่น Dell, HP, AWS' },
+    { key: 'location', label: 'Location', labelTh: 'ที่ตั้ง', type: 'text', placeholder: 'เช่น DC1, Cloud - ap-southeast-1' },
+    { key: 'capacity', label: 'Capacity', labelTh: 'ความจุ', type: 'text', placeholder: 'เช่น 32GB RAM, 1TB SSD' },
+  ],
+  security: [
+    {
+      key: 'securityDomain', label: 'Security Domain', labelTh: 'โดเมน', type: 'select', options: [
+        { value: 'auth', label: 'Authentication' },
+        { value: 'authz', label: 'Authorization' },
+        { value: 'encryption', label: 'Encryption' },
+        { value: 'network', label: 'Network Security' },
+      ]
+    },
+    { key: 'compliance', label: 'Compliance', labelTh: 'มาตรฐานที่ปฏิบัติ', type: 'text', placeholder: 'เช่น ISO 27001, PDPA' },
+    {
+      key: 'riskLevel', label: 'Risk Level', labelTh: 'ระดับความเสี่ยง', type: 'select', options: [
+        { value: 'low', label: 'Low - ต่ำ' },
+        { value: 'medium', label: 'Medium - ปานกลาง' },
+        { value: 'high', label: 'High - สูง' },
+      ]
+    },
+  ],
+  integration: [
+    {
+      key: 'integrationPattern', label: 'Integration Pattern', labelTh: 'รูปแบบการเชื่อมต่อ', type: 'select', options: [
+        { value: 'rest', label: 'REST API' },
+        { value: 'soap', label: 'SOAP' },
+        { value: 'mq', label: 'Message Queue' },
+        { value: 'file', label: 'File Transfer' },
+      ]
+    },
+    { key: 'protocol', label: 'Protocol', labelTh: 'โปรโตคอล', type: 'text', placeholder: 'เช่น HTTPS, SFTP, AMQP' },
+    { key: 'sourceSystem', label: 'Source System', labelTh: 'ระบบต้นทาง', type: 'text', placeholder: 'ชื่อระบบต้นทาง' },
+    { key: 'targetSystem', label: 'Target System', labelTh: 'ระบบปลายทาง', type: 'text', placeholder: 'ชื่อระบบปลายทาง' },
+  ],
+};
+
 const typeOrder: ArtefactType[] = ['business', 'application', 'data', 'technology', 'security', 'integration'];
 
 export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefactModalProps) {
@@ -439,7 +529,9 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
     owner: '',
     department: '',
     version: '1.0',
-    status: 'draft'
+    status: 'draft',
+    // TOGAF type-specific fields
+    typeSpecificFields: {} as Record<string, string>,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -456,7 +548,8 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
     setSelectedTemplateIndex(null);
     setShowExamples(false);
     setFormData({
-      name: '', nameTh: '', type: 'business', description: '', owner: '', department: '', version: '1.0', status: 'draft'
+      name: '', nameTh: '', type: 'business', description: '', owner: '', department: '', version: '1.0', status: 'draft',
+      typeSpecificFields: {},
     });
   };
 
@@ -467,7 +560,18 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
   const selectType = (type: ArtefactType) => {
     setSelectedType(type);
     setSelectedTemplateIndex(null);
-    setFormData(prev => ({ ...prev, type, name: '', nameTh: '', description: '' }));
+    setFormData(prev => ({ ...prev, type, name: '', nameTh: '', description: '', typeSpecificFields: {} }));
+  };
+
+  // Handler for type-specific TOGAF fields
+  const handleTypeSpecificChange = (key: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      typeSpecificFields: {
+        ...prev.typeSpecificFields,
+        [key]: value,
+      },
+    }));
   };
 
   const selectTemplate = (index: number) => {
@@ -681,6 +785,61 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
                       </Select>
                     </div>
                   </div>
+
+                  {/* Type-Specific TOGAF Fields Section */}
+                  {togafTypeFields[selectedType]?.length > 0 && (
+                    <div className="pt-3 mt-2 border-t">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className={cn("w-2 h-2 rounded-full", typeColors[selectedType])} />
+                        <span className="text-xs font-semibold text-muted-foreground uppercase">
+                          {togafLabels[selectedType].short} Fields
+                        </span>
+                        <Badge variant="outline" className="text-[9px] px-1.5">TOGAF</Badge>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        {togafTypeFields[selectedType].map((field) => (
+                          <div key={field.key} className={cn("space-y-1.5", field.type === 'textarea' && "col-span-2")}>
+                            <Label htmlFor={field.key} className="text-xs">
+                              {field.labelTh} <span className="text-muted-foreground text-[10px]">({field.label})</span>
+                            </Label>
+                            {field.type === 'select' ? (
+                              <Select
+                                value={formData.typeSpecificFields[field.key] || ''}
+                                onValueChange={(val) => handleTypeSpecificChange(field.key, val)}
+                              >
+                                <SelectTrigger className="h-9 text-sm" id={field.key}>
+                                  <SelectValue placeholder={`เลือก${field.labelTh}`} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {field.options?.map((opt) => (
+                                    <SelectItem key={opt.value} value={opt.value}>
+                                      {opt.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : field.type === 'textarea' ? (
+                              <Textarea
+                                id={field.key}
+                                placeholder={field.placeholder}
+                                className="h-16 resize-none text-sm"
+                                value={formData.typeSpecificFields[field.key] || ''}
+                                onChange={(e) => handleTypeSpecificChange(field.key, e.target.value)}
+                              />
+                            ) : (
+                              <Input
+                                id={field.key}
+                                placeholder={field.placeholder}
+                                value={formData.typeSpecificFields[field.key] || ''}
+                                onChange={(e) => handleTypeSpecificChange(field.key, e.target.value)}
+                                className="h-9 text-sm"
+                              />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">

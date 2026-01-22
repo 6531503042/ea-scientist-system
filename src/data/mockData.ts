@@ -211,17 +211,32 @@ export const artefacts: Artefact[] = [
 ];
 
 export const relationships: Relationship[] = [
+  // Business uses Applications
   { id: 'r1', source: 'ba-001', target: 'app-001', type: 'uses', label: 'ใช้งาน' },
-  { id: 'r2', source: 'ba-001', target: 'data-001', type: 'manages', label: 'จัดการ' },
-  { id: 'r3', source: 'ba-002', target: 'app-001', type: 'uses', label: 'ใช้งาน' },
+  { id: 'r2', source: 'ba-002', target: 'app-001', type: 'uses', label: 'ใช้งาน' },
+
+  // Business manages Data
+  { id: 'r3', source: 'ba-001', target: 'data-001', type: 'manages', label: 'จัดการ' },
+
+  // Applications depend on Technology (Database)
   { id: 'r4', source: 'app-001', target: 'tech-001', type: 'depends_on', label: 'พึ่งพา' },
-  { id: 'r5', source: 'app-001', target: 'data-001', type: 'manages', label: 'จัดการ' },
+  { id: 'r5', source: 'app-002', target: 'tech-001', type: 'depends_on', label: 'พึ่งพา' },
+
+  // Applications use Security (LDAP) for authentication
   { id: 'r6', source: 'app-001', target: 'sec-001', type: 'uses', label: 'ใช้งาน' },
-  { id: 'r7', source: 'app-002', target: 'app-001', type: 'integrates_with', label: 'เชื่อมต่อ' },
-  { id: 'r8', source: 'app-002', target: 'data-002', type: 'uses', label: 'ใช้งาน' },
-  { id: 'r9', source: 'data-001', target: 'tech-001', type: 'depends_on', label: 'พึ่งพา' },
-  { id: 'r10', source: 'sec-001', target: 'tech-001', type: 'depends_on', label: 'พึ่งพา' },
-  { id: 'r11', source: 'int-001', target: 'app-001', type: 'integrates_with', label: 'เชื่อมต่อ' },
+  { id: 'r7', source: 'app-002', target: 'sec-001', type: 'uses', label: 'ใช้งาน' },
+
+  // Application integrations
+  { id: 'r8', source: 'app-002', target: 'app-001', type: 'integrates_with', label: 'เชื่อมต่อ' },
+  { id: 'r9', source: 'int-001', target: 'app-001', type: 'integrates_with', label: 'เชื่อมต่อ' },
+
+  // Applications manage Data
+  { id: 'r10', source: 'app-001', target: 'data-001', type: 'manages', label: 'จัดการ' },
+  { id: 'r11', source: 'app-002', target: 'data-002', type: 'uses', label: 'ใช้งาน' },
+
+  // Data stored on Technology
+  { id: 'r12', source: 'data-001', target: 'tech-001', type: 'depends_on', label: 'พึ่งพา' },
+  { id: 'r13', source: 'data-002', target: 'tech-001', type: 'depends_on', label: 'พึ่งพา' },
 ];
 
 export const dashboardMetrics: DashboardMetric[] = [

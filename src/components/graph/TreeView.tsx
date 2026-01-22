@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ChevronDown, Search, Expand, Shrink, User, Activity } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { organizationTree, treeNodeIcons, treeNodeColors, type TreeNode } from '@/data/mockOrganization';
+import { organizationTree, treeNodeIcons, treeNodeColors, type TreeNode } from '@/data/organizationTree';
 
 interface TreeViewProps {
     onNodeClick?: (node: TreeNode) => void;

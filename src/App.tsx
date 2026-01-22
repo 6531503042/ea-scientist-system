@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { LanguageProvider } from '@/context/LanguageContext';
 import Login from '@/pages/Login';
 import Index from '@/pages/Index';
 import { Toaster } from "@/components/ui/toaster";
@@ -55,29 +56,31 @@ const Layout = () => {
 }
 
 const App = () => (
-  <AuthProvider>
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<Login />} />
+  <LanguageProvider>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
 
-        <Route element={<ProtectedRoute />}>
-          <Route element={<Layout />}>
-            <Route path="/" element={<Index />} />
-            <Route path="/graph" element={<EAGraph />} />
-            <Route path="/artefacts" element={<ArtefactListEnhanced />} />
+          <Route element={<ProtectedRoute />}>
+            <Route element={<Layout />}>
+              <Route path="/" element={<Index />} />
+              <Route path="/graph" element={<EAGraph />} />
+              <Route path="/artefacts" element={<ArtefactListEnhanced />} />
 
-            <Route path="/users" element={<UsersPageEnhanced />} />
-            <Route path="/wifi" element={<WifiAuthPage />} />
-            <Route path="/audit" element={<AuditLogPageEnhanced />} />
-            <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/users" element={<UsersPageEnhanced />} />
+              <Route path="/wifi" element={<WifiAuthPage />} />
+              <Route path="/audit" element={<AuditLogPageEnhanced />} />
+              <Route path="/settings" element={<SettingsPage />} />
+            </Route>
           </Route>
-        </Route>
 
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-      <Toaster />
-    </BrowserRouter>
-  </AuthProvider>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+        <Toaster />
+      </BrowserRouter>
+    </AuthProvider>
+  </LanguageProvider>
 );
 
 export default App;
