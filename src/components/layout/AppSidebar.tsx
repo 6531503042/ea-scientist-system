@@ -15,7 +15,9 @@ import {
   Wifi,
   BookOpen,
   Menu,
-  X
+  X,
+  PanelLeftClose,
+  PanelLeft
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
@@ -185,7 +187,7 @@ export function AppSidebar() {
       className="relative flex flex-col h-screen bg-sidebar text-sidebar-foreground border-r border-sidebar-border"
     >
       {/* Header */}
-      <div className="flex items-center h-16 px-4 border-b border-sidebar-border">
+      <div className="flex items-center h-16 px-4 border-b border-sidebar-border justify-between">
         <AnimatePresence mode="wait">
           {!collapsed && (
             <motion.div
@@ -194,21 +196,33 @@ export function AppSidebar() {
               exit={{ opacity: 0 }}
               className="flex items-center gap-3"
             >
-              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-accent">
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-accent">
                 <Network className="w-5 h-5 text-accent-foreground" />
               </div>
-              <div>
-                <h1 className="text-sm font-semibold">EA Management</h1>
-                <p className="text-xs text-sidebar-foreground/60">กรมวิทยาศาสตร์บริการ</p>
+              <div className="overflow-hidden">
+                <h1 className="text-sm font-bold truncate">EA Management</h1>
+                <p className="text-[10px] text-muted-foreground truncate">กรมวิทยาศาสตร์บริการ</p>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
-        {collapsed && (
-          <div className="flex items-center justify-center w-9 h-9 mx-auto rounded-lg bg-accent">
-            <Network className="w-5 h-5 text-accent-foreground" />
-          </div>
-        )}
+
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className={cn(
+            "p-1.5 rounded-md hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-sidebar-foreground transition-colors",
+            collapsed && "mx-auto"
+          )}
+          title={collapsed ? "ขยาย Sidebar" : "ย่อ Sidebar"}
+        >
+          {collapsed ? (
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-accent">
+              <Network className="w-5 h-5 text-accent-foreground" />
+            </div>
+          ) : (
+            <PanelLeftClose className="w-4 h-4" />
+          )}
+        </button>
       </div>
 
       {/* Navigation */}
@@ -261,23 +275,15 @@ export function AppSidebar() {
               <p className="text-xs text-sidebar-foreground/60 truncate">{user?.email || 'email@example.com'}</p>
             </div>
           )}
-          <button onClick={logout} className="ml-auto p-1 hover:text-destructive transition-colors" title="ออกจากระบบ">
-            {!collapsed && <LogOut className="w-4 h-4" />}
-          </button>
+          {!collapsed && (
+            <button onClick={logout} className="ml-auto p-1 hover:text-destructive transition-colors" title="ออกจากระบบ">
+              <LogOut className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Collapse Toggle */}
-      <button
-        onClick={() => setCollapsed(!collapsed)}
-        className="absolute -right-3 top-20 flex items-center justify-center w-6 h-6 rounded-full bg-card border border-border shadow-sm text-foreground hover:bg-accent hover:text-accent-foreground transition-colors z-10"
-      >
-        {collapsed ? (
-          <ChevronRight className="w-3.5 h-3.5" />
-        ) : (
-          <ChevronLeft className="w-3.5 h-3.5" />
-        )}
-      </button>
+
     </motion.aside>
   );
 }
