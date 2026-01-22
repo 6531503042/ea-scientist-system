@@ -182,24 +182,28 @@ export function AppSidebar() {
   return (
     <motion.aside
       initial={false}
-      animate={{ width: collapsed ? 72 : 260 }}
-      transition={{ duration: 0.3, ease: 'easeInOut' }}
-      className="relative flex flex-col h-screen bg-sidebar text-sidebar-foreground border-r border-sidebar-border"
+      animate={{ width: collapsed ? 80 : 260 }}
+      transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+      className="relative flex flex-col h-screen bg-sidebar text-sidebar-foreground border-r border-sidebar-border shrink-0"
     >
       {/* Header */}
-      <div className="flex items-center h-16 px-4 border-b border-sidebar-border justify-between">
+      <div className={cn(
+        "flex items-center h-16 border-b border-sidebar-border transition-all duration-250",
+        collapsed ? "px-2 justify-center" : "px-4 justify-between"
+      )}>
         <AnimatePresence mode="wait">
           {!collapsed && (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="flex items-center gap-3"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              transition={{ duration: 0.2 }}
+              className="flex items-center gap-3 flex-1 min-w-0"
             >
-              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-accent">
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-accent shrink-0">
                 <Network className="w-5 h-5 text-accent-foreground" />
               </div>
-              <div className="overflow-hidden">
+              <div className="overflow-hidden min-w-0">
                 <h1 className="text-sm font-bold truncate">EA Management</h1>
                 <p className="text-[10px] text-muted-foreground truncate">กรมวิทยาศาสตร์บริการ</p>
               </div>
@@ -210,15 +214,13 @@ export function AppSidebar() {
         <button
           onClick={() => setCollapsed(!collapsed)}
           className={cn(
-            "p-1.5 rounded-md hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-sidebar-foreground transition-colors",
+            "p-1.5 rounded-md hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-sidebar-foreground transition-all duration-200 shrink-0",
             collapsed && "mx-auto"
           )}
           title={collapsed ? "ขยาย Sidebar" : "ย่อ Sidebar"}
         >
           {collapsed ? (
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-accent">
-              <Network className="w-5 h-5 text-accent-foreground" />
-            </div>
+            <PanelLeft className="w-4 h-4" />
           ) : (
             <PanelLeftClose className="w-4 h-4" />
           )}
@@ -227,13 +229,21 @@ export function AppSidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        <div className="mb-2">
+        <AnimatePresence>
           {!collapsed && (
-            <span className="px-3 text-xs font-medium uppercase tracking-wider text-sidebar-foreground/40">
-              Main
-            </span>
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="mb-2"
+            >
+              <span className="px-3 text-xs font-medium uppercase tracking-wider text-sidebar-foreground/40">
+                Main
+              </span>
+            </motion.div>
           )}
-        </div>
+        </AnimatePresence>
         {navItems.map((item) => (
           <NavButton
             key={item.href}
@@ -243,13 +253,21 @@ export function AppSidebar() {
           />
         ))}
 
-        <div className="pt-4 mt-4 border-t border-sidebar-border">
+        <AnimatePresence>
           {!collapsed && (
-            <span className="px-3 text-xs font-medium uppercase tracking-wider text-sidebar-foreground/40">
-              Admin
-            </span>
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="pt-4 mt-4 border-t border-sidebar-border"
+            >
+              <span className="px-3 text-xs font-medium uppercase tracking-wider text-sidebar-foreground/40">
+                Admin
+              </span>
+            </motion.div>
           )}
-        </div>
+        </AnimatePresence>
         {adminItems.map((item) => (
           <NavButton
             key={item.href}
@@ -261,25 +279,46 @@ export function AppSidebar() {
       </nav>
 
       {/* User Section */}
-      <div className="p-3 border-t border-sidebar-border">
+      <div className={cn(
+        "border-t border-sidebar-border transition-all duration-250",
+        collapsed ? "p-2" : "p-3"
+      )}>
         <div className={cn(
           "flex items-center gap-3 p-2 rounded-lg hover:bg-sidebar-accent transition-colors cursor-pointer",
           collapsed && "justify-center"
         )}>
-          <div className="flex items-center justify-center w-9 h-9 rounded-full bg-accent text-accent-foreground text-sm font-medium">
+          <div className="flex items-center justify-center w-9 h-9 rounded-full bg-accent text-accent-foreground text-sm font-medium shrink-0">
             {user?.name?.substring(0, 2).toUpperCase() || 'EA'}
           </div>
-          {!collapsed && (
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{user?.name || 'User'}</p>
-              <p className="text-xs text-sidebar-foreground/60 truncate">{user?.email || 'email@example.com'}</p>
-            </div>
-          )}
-          {!collapsed && (
-            <button onClick={logout} className="ml-auto p-1 hover:text-destructive transition-colors" title="ออกจากระบบ">
-              <LogOut className="w-4 h-4" />
-            </button>
-          )}
+          <AnimatePresence mode="wait">
+            {!collapsed && (
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.2 }}
+                className="flex-1 min-w-0"
+              >
+                <p className="text-sm font-medium truncate">{user?.name || 'User'}</p>
+                <p className="text-xs text-sidebar-foreground/60 truncate">{user?.email || 'email@example.com'}</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <AnimatePresence>
+            {!collapsed && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.15 }}
+                onClick={logout}
+                className="ml-auto p-1 hover:text-destructive transition-colors shrink-0"
+                title="ออกจากระบบ"
+              >
+                <LogOut className="w-4 h-4" />
+              </motion.button>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
@@ -301,37 +340,54 @@ function NavButton({ item, isActive, collapsed }: NavButtonProps) {
     <Link
       to={item.href}
       className={cn(
-        "relative flex items-center w-full gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+        "relative flex items-center w-full gap-3 rounded-lg text-sm font-medium transition-all duration-200 group",
         isActive
           ? "bg-sidebar-accent text-sidebar-accent-foreground"
           : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50",
-        collapsed && "justify-center px-2"
+        collapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"
       )}
+      title={collapsed ? item.labelTh : undefined}
     >
-      {isActive && (
+      {isActive && !collapsed && (
         <motion.div
           layoutId="activeNav"
           className="absolute left-0 w-1 h-6 rounded-r-full bg-accent"
           transition={{ type: 'spring', stiffness: 500, damping: 30 }}
         />
       )}
-      <Icon className={cn("w-5 h-5 flex-shrink-0", isActive && "text-accent")} />
+      <Icon className={cn(
+        "flex-shrink-0 transition-colors",
+        collapsed ? "w-5 h-5" : "w-5 h-5",
+        isActive && "text-accent"
+      )} />
       <AnimatePresence mode="wait">
         {!collapsed && (
           <motion.span
-            initial={{ opacity: 0, width: 0 }}
-            animate={{ opacity: 1, width: 'auto' }}
-            exit={{ opacity: 0, width: 0 }}
-            className="truncate"
+            initial={{ opacity: 0, width: 0, marginLeft: 0 }}
+            animate={{ opacity: 1, width: 'auto', marginLeft: 'auto' }}
+            exit={{ opacity: 0, width: 0, marginLeft: 0 }}
+            transition={{ duration: 0.2 }}
+            className="truncate flex-1"
           >
             {item.labelTh}
           </motion.span>
         )}
       </AnimatePresence>
       {item.badge && !collapsed && (
-        <span className="ml-auto flex items-center justify-center px-2 py-0.5 text-xs font-medium rounded-full bg-accent text-accent-foreground">
+        <motion.span
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.8 }}
+          className="ml-auto flex items-center justify-center px-2 py-0.5 text-xs font-medium rounded-full bg-accent text-accent-foreground shrink-0"
+        >
           {item.badge}
-        </span>
+        </motion.span>
+      )}
+      {/* Tooltip for collapsed state */}
+      {collapsed && (
+        <div className="absolute left-full ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded-md shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
+          {item.labelTh}
+        </div>
       )}
     </Link>
   );

@@ -1200,10 +1200,13 @@ function EAGraphInner() {
             <TreeView
               onNodeClick={(node) => {
                 // If node has artefactId, select that artefact
+                // But don't show panels in hierarchy mode - just select for reference
                 if (node.artefactId) {
                   const artefact = artefacts.find(a => a.id === node.artefactId);
                   if (artefact) {
-                    setSelectedNode(artefact);
+                    // In hierarchy mode, we don't want to show panels
+                    // Just keep track of selection for potential future use
+                    setSelectedNode(null); // Clear selection to prevent panels from showing
                   }
                 }
               }}
@@ -1273,9 +1276,9 @@ function EAGraphInner() {
           </div>
         )}
 
-        {/* Floating Insight Panel - RIGHT Side (Photoshop-style) */}
+        {/* Floating Insight Panel - RIGHT Side (Photoshop-style) - Only show in graph mode */}
         <AnimatePresence>
-          {selectedNode && (
+          {selectedNode && layoutMode === 'graph' && (
             <FloatingInsightPanel
               artefact={selectedNode}
               onClose={() => setSelectedNode(null)}
@@ -1353,8 +1356,8 @@ function EAGraphInner() {
           )}
         </AnimatePresence>
 
-        {/* Impact Analysis Modal */}
-        {showImpactAnalysis && impactArtefact && (
+        {/* Impact Analysis Modal - Only show in graph mode */}
+        {showImpactAnalysis && impactArtefact && layoutMode === 'graph' && (
           <ImpactAnalysisModal
             artefact={impactArtefact}
             onClose={() => {
