@@ -17,7 +17,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { motion, AnimatePresence } from 'framer-motion';
-import { History, Briefcase, User, Network, X, RotateCcw, Trash2, AlertTriangle, Info, FolderTree, ArrowDownToLine, ArrowUpFromLine, Zap, Search, PanelRightOpen, PanelRightClose, ChevronDown, ChevronRight, Expand, Shrink } from 'lucide-react';
+import { History, Briefcase, User, Network, X, RotateCcw, Trash2, AlertTriangle, Info, FolderTree, ArrowDownToLine, ArrowUpFromLine, Zap, Search, PanelRightOpen, PanelRightClose, ChevronDown, ChevronRight, Expand, Shrink, ArrowRight, Layers } from 'lucide-react';
 import { ArtefactNode } from './ArtefactNode';
 import { FilterPanel } from './FilterPanel';
 import { ImpactAnalysisModal } from './ImpactAnalysisModal';
@@ -402,92 +402,183 @@ function FloatingInsightPanel({
               </motion.div>
             </div>
 
-            {/* Upstream Section - Enhanced */}
-            <div className="bg-gradient-to-br from-blue-500/5 to-transparent rounded-xl p-3 border border-blue-500/20">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-sm">
-                    <ArrowDownToLine className="w-3.5 h-3.5 text-white" />
+            {/* Flow Diagram Header - Visual Impact Overview */}
+            <div className="relative py-4 mb-2">
+              <div className="flex items-center justify-center gap-3">
+                {/* Upstream indicator */}
+                <div className="flex flex-col items-center">
+                  <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center shadow-lg">
+                    <span className="text-sm font-bold text-white">{impactStats.upstream}</span>
                   </div>
-                  <div>
-                    <h4 className="text-sm font-semibold text-foreground">Upstream</h4>
-                    <p className="text-[10px] text-blue-500">ระบบที่ส่งข้อมูลเข้ามา</p>
-                  </div>
+                  <span className="text-[9px] font-medium text-blue-500 mt-1">Inputs</span>
                 </div>
-                <span className="px-2 py-0.5 text-xs font-bold text-blue-600 bg-blue-500/10 rounded-full">{impactUpstream.length}</span>
+
+                {/* Flow arrows to center */}
+                <div className="flex items-center">
+                  <div className="w-6 h-0.5 bg-gradient-to-r from-blue-500 to-blue-400" />
+                  <ArrowRight className="w-4 h-4 text-blue-400" />
+                </div>
+
+                {/* Center - Current Artefact */}
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-xl border-2 border-white">
+                  <Layers className="w-5 h-5 text-white" />
+                </div>
+
+                {/* Flow arrows from center */}
+                <div className="flex items-center">
+                  <ArrowRight className="w-4 h-4 text-amber-400" />
+                  <div className="w-6 h-0.5 bg-gradient-to-r from-amber-400 to-amber-500" />
+                </div>
+
+                {/* Downstream indicator */}
+                <div className="flex flex-col items-center">
+                  <div className="w-10 h-10 rounded-full bg-amber-500 flex items-center justify-center shadow-lg">
+                    <span className="text-sm font-bold text-white">{impactStats.affected}</span>
+                  </div>
+                  <span className="text-[9px] font-medium text-amber-500 mt-1">Outputs</span>
+                </div>
               </div>
-              {impactUpstream.length > 0 ? (
-                <div className="space-y-1.5">
-                  {impactUpstream.slice(0, 5).map((item, index) => (
-                    <motion.div
-                      key={item.id}
-                      initial={{ x: -10, opacity: 0 }}
-                      animate={{ x: 0, opacity: 1 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="flex items-center gap-2.5 p-2.5 bg-card hover:bg-blue-500/10 border border-border hover:border-blue-500/30 rounded-lg transition-all cursor-pointer group"
-                    >
-                      <div className={cn("w-2.5 h-2.5 rounded-full ring-2 ring-offset-1 ring-offset-card", typeColors[item.type], "ring-" + typeColors[item.type].replace('bg-', ''))} />
-                      <div className="flex-1 min-w-0">
-                        <span className="text-xs font-medium text-foreground block truncate group-hover:text-blue-600 transition-colors">{item.name}</span>
-                        <span className="text-[10px] text-muted-foreground">{item.nameTh}</span>
-                      </div>
-                      <ChevronRight className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </motion.div>
-                  ))}
-                  {impactUpstream.length > 5 && (
-                    <p className="text-[10px] text-center text-blue-500 font-medium pt-1">+{impactUpstream.length - 5} รายการเพิ่มเติม</p>
-                  )}
-                </div>
-              ) : (
-                <div className="py-4 border border-dashed border-blue-500/20 rounded-lg text-center bg-blue-500/5">
-                  <ArrowDownToLine className="w-5 h-5 text-blue-400 mx-auto mb-1 opacity-50" />
-                  <p className="text-xs text-muted-foreground">ไม่มีระบบที่ส่งข้อมูลเข้ามา</p>
-                </div>
-              )}
+
+              {/* Labels */}
+              <div className="flex justify-between mt-3 px-2">
+                <span className="text-[10px] text-blue-500 font-medium">← ส่งข้อมูลเข้า</span>
+                <span className="text-[10px] text-amber-500 font-medium">รับข้อมูลออก →</span>
+              </div>
             </div>
 
-            {/* Downstream Section - Enhanced */}
-            <div className="bg-gradient-to-br from-amber-500/5 to-transparent rounded-xl p-3 border border-amber-500/20">
-              <div className="flex items-center justify-between mb-3">
+            {/* Upstream Section - Redesigned */}
+            <div className="rounded-xl overflow-hidden border border-blue-500/20">
+              {/* Header with gradient */}
+              <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-3 py-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-sm">
-                    <ArrowUpFromLine className="w-3.5 h-3.5 text-white" />
+                  <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                    <ArrowDownToLine className="w-3 h-3 text-white" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-semibold text-foreground">Downstream</h4>
-                    <p className="text-[10px] text-amber-500">ได้รับผลกระทบ</p>
+                    <h4 className="text-sm font-semibold text-white">Upstream</h4>
+                    <p className="text-[9px] text-blue-100">ระบบที่ส่งข้อมูลให้ {artefact.name}</p>
                   </div>
                 </div>
-                <span className="px-2 py-0.5 text-xs font-bold text-amber-600 bg-amber-500/10 rounded-full">{impactDownstream.length}</span>
+                <span className="px-2 py-0.5 text-xs font-bold text-blue-600 bg-white rounded-full">{impactUpstream.length}</span>
               </div>
-              {impactDownstream.length > 0 ? (
-                <div className="space-y-1.5">
-                  {impactDownstream.slice(0, 5).map((item, index) => (
-                    <motion.div
-                      key={item.id}
-                      initial={{ x: -10, opacity: 0 }}
-                      animate={{ x: 0, opacity: 1 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="flex items-center gap-2.5 p-2.5 bg-card hover:bg-amber-500/10 border border-border hover:border-amber-500/30 rounded-lg transition-all cursor-pointer group"
-                    >
-                      <div className={cn("w-2.5 h-2.5 rounded-full ring-2 ring-offset-1 ring-offset-card", typeColors[item.type])} />
-                      <div className="flex-1 min-w-0">
-                        <span className="text-xs font-medium text-foreground block truncate group-hover:text-amber-600 transition-colors">{item.name}</span>
-                        <span className="text-[10px] text-muted-foreground">{item.nameTh}</span>
-                      </div>
-                      <ChevronRight className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </motion.div>
-                  ))}
-                  {impactDownstream.length > 5 && (
-                    <p className="text-[10px] text-center text-amber-500 font-medium pt-1">+{impactDownstream.length - 5} รายการเพิ่มเติม</p>
-                  )}
+
+              {/* Content */}
+              <div className="bg-blue-50/50 dark:bg-blue-950/20 p-2">
+                {impactUpstream.length > 0 ? (
+                  <div className="space-y-1.5">
+                    {impactUpstream.slice(0, 5).map((item, index) => (
+                      <motion.div
+                        key={item.id}
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="flex items-center gap-2 p-2 bg-card border border-border rounded-lg hover:border-blue-400 hover:shadow-sm transition-all cursor-pointer group"
+                      >
+                        {/* Type icon with color */}
+                        <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0",
+                          typeColors[item.type].replace('bg-', 'bg-').replace('-500', '-100'),
+                          "dark:bg-opacity-20"
+                        )}>
+                          <div className={cn("w-2 h-2 rounded-full", typeColors[item.type])} />
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <span className="text-xs font-medium text-foreground block truncate">{item.name}</span>
+                          <span className="text-[10px] text-muted-foreground">{item.nameTh}</span>
+                        </div>
+
+                        {/* Arrow showing flow direction */}
+                        <div className="flex items-center text-blue-400 opacity-50 group-hover:opacity-100">
+                          <ArrowRight className="w-3 h-3" />
+                        </div>
+                      </motion.div>
+                    ))}
+                    {impactUpstream.length > 5 && (
+                      <button className="w-full py-1.5 text-[10px] text-blue-500 font-medium hover:bg-blue-500/10 rounded-lg transition-colors">
+                        ดูเพิ่มเติม +{impactUpstream.length - 5} รายการ
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="py-6 text-center">
+                    <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mx-auto mb-2">
+                      <ArrowDownToLine className="w-5 h-5 text-blue-400" />
+                    </div>
+                    <p className="text-xs text-muted-foreground">ไม่มีระบบที่ส่งข้อมูลเข้า</p>
+                    <p className="text-[10px] text-muted-foreground/60 mt-0.5">ระบบนี้ไม่ขึ้นกับ input จากที่อื่น</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Downstream Section - Redesigned */}
+            <div className="rounded-xl overflow-hidden border border-amber-500/20">
+              {/* Header with gradient */}
+              <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-3 py-2 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                    <ArrowUpFromLine className="w-3 h-3 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-white">Downstream</h4>
+                    <p className="text-[9px] text-amber-100">ระบบที่รับข้อมูลจาก {artefact.name}</p>
+                  </div>
                 </div>
-              ) : (
-                <div className="py-4 border border-dashed border-amber-500/20 rounded-lg text-center bg-amber-500/5">
-                  <ArrowUpFromLine className="w-5 h-5 text-amber-400 mx-auto mb-1 opacity-50" />
-                  <p className="text-xs text-muted-foreground">ไม่มีระบบที่ได้รับผลกระทบ</p>
-                </div>
-              )}
+                <span className="px-2 py-0.5 text-xs font-bold text-amber-600 bg-white rounded-full">{impactDownstream.length}</span>
+              </div>
+
+              {/* Content */}
+              <div className="bg-amber-50/50 dark:bg-amber-950/20 p-2">
+                {impactDownstream.length > 0 ? (
+                  <div className="space-y-1.5">
+                    {impactDownstream.slice(0, 5).map((item, index) => (
+                      <motion.div
+                        key={item.id}
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="flex items-center gap-2 p-2 bg-card border border-border rounded-lg hover:border-amber-400 hover:shadow-sm transition-all cursor-pointer group"
+                      >
+                        {/* Arrow showing flow direction */}
+                        <div className="flex items-center text-amber-400 opacity-50 group-hover:opacity-100">
+                          <ArrowRight className="w-3 h-3" />
+                        </div>
+
+                        {/* Type icon with color */}
+                        <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0",
+                          typeColors[item.type].replace('bg-', 'bg-').replace('-500', '-100'),
+                          "dark:bg-opacity-20"
+                        )}>
+                          <div className={cn("w-2 h-2 rounded-full", typeColors[item.type])} />
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <span className="text-xs font-medium text-foreground block truncate">{item.name}</span>
+                          <span className="text-[10px] text-muted-foreground">{item.nameTh}</span>
+                        </div>
+
+                        {/* Warning indicator for impact */}
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                          <AlertTriangle className="w-3 h-3 text-amber-500" />
+                        </div>
+                      </motion.div>
+                    ))}
+                    {impactDownstream.length > 5 && (
+                      <button className="w-full py-1.5 text-[10px] text-amber-500 font-medium hover:bg-amber-500/10 rounded-lg transition-colors">
+                        ดูเพิ่มเติม +{impactDownstream.length - 5} รายการ
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="py-6 text-center">
+                    <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mx-auto mb-2">
+                      <ArrowUpFromLine className="w-5 h-5 text-amber-400" />
+                    </div>
+                    <p className="text-xs text-muted-foreground">ไม่มีระบบที่รับข้อมูลออก</p>
+                    <p className="text-[10px] text-muted-foreground/60 mt-0.5">ไม่มีระบบอื่นที่ขึ้นกับ output นี้</p>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Simulation Actions */}
@@ -654,6 +745,18 @@ function EAGraphInner() {
   // Search and floating panel state
   const [searchQuery, setSearchQuery] = useState('');
   const [showFloatingPanel, setShowFloatingPanel] = useState(true);
+
+  // Mobile state
+  const [isMobile, setIsMobile] = useState(false);
+  const [showMobileLibrary, setShowMobileLibrary] = useState(false);
+
+  // Detect mobile
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Initialize nodes and edges
   const initialNodes = useMemo(() => createNodes(artefacts), []);
@@ -1228,6 +1331,96 @@ function EAGraphInner() {
           isOpen={showHistory}
           onClose={() => setShowHistory(false)}
         />
+
+        {/* Mobile FAB for Artefact Library */}
+        {isMobile && layoutMode === 'graph' && (
+          <button
+            onClick={() => setShowMobileLibrary(true)}
+            className="fixed bottom-20 right-4 z-40 flex items-center justify-center w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg"
+          >
+            <Layers className="w-6 h-6" />
+          </button>
+        )}
+
+        {/* Mobile Bottom Sheet for Artefact Library */}
+        <AnimatePresence>
+          {showMobileLibrary && isMobile && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowMobileLibrary(false)}
+                className="fixed inset-0 bg-black/50 z-40"
+              />
+              <motion.div
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                className="fixed bottom-0 left-0 right-0 h-[70vh] bg-card rounded-t-2xl shadow-2xl z-50 flex flex-col"
+              >
+                {/* Handle bar */}
+                <div className="flex items-center justify-center py-2">
+                  <div className="w-12 h-1 bg-muted rounded-full" />
+                </div>
+
+                {/* Header */}
+                <div className="px-4 py-2 border-b flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold">Artefact Library</h3>
+                    <p className="text-xs text-muted-foreground">เลือก Artefact เพื่อดูรายละเอียด</p>
+                  </div>
+                  <button
+                    onClick={() => setShowMobileLibrary(false)}
+                    className="p-2 hover:bg-muted rounded-lg"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto p-4">
+                  <div className="space-y-4">
+                    {(['business', 'application', 'data', 'technology', 'security', 'integration'] as const).map((type) => {
+                      const typeArtefacts = artefacts.filter(a => a.type === type);
+                      if (typeArtefacts.length === 0) return null;
+
+                      return (
+                        <div key={type} className="space-y-2">
+                          <h4 className="text-xs font-bold uppercase text-muted-foreground flex items-center gap-2">
+                            <span className={cn("w-2 h-2 rounded-full", typeColors[type])}></span>
+                            {typeLabels[type]?.th || type} ({typeArtefacts.length})
+                          </h4>
+                          <div className="grid grid-cols-2 gap-2">
+                            {typeArtefacts.map(artefact => (
+                              <button
+                                key={artefact.id}
+                                onClick={() => {
+                                  setSelectedNode(artefact);
+                                  setShowMobileLibrary(false);
+                                }}
+                                className="p-3 bg-muted/50 border border-border rounded-lg text-left hover:bg-muted transition-colors"
+                              >
+                                <div className="flex items-center gap-2 mb-1">
+                                  <div className={cn("p-1 rounded", typeColors[type])}>
+                                    <Briefcase className="w-3 h-3 text-white" />
+                                  </div>
+                                  <span className="text-xs font-medium truncate flex-1">{artefact.name}</span>
+                                </div>
+                                <p className="text-[10px] text-muted-foreground truncate">{artefact.nameTh}</p>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

@@ -75,44 +75,49 @@ export function UsersPageEnhanced() {
         </motion.button>
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-1 p-1 bg-muted rounded-xl w-fit">
-        <button
-          onClick={() => setActiveTab('users')}
-          className={cn(
-            "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
-            activeTab === 'users'
-              ? "bg-card shadow-sm text-primary"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          <UsersIcon className="w-4 h-4" />
-          ผู้ใช้งานทั้งหมด
-        </button>
-        <button
-          onClick={() => setActiveTab('roles')}
-          className={cn(
-            "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
-            activeTab === 'roles'
-              ? "bg-card shadow-sm text-primary"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          <Lock className="w-4 h-4" />
-          สิทธิการเข้าถึง
-        </button>
-        <button
-          onClick={() => setActiveTab('departments')}
-          className={cn(
-            "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
-            activeTab === 'departments'
-              ? "bg-card shadow-sm text-primary"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          <Briefcase className="w-4 h-4" />
-          หน่วยงาน
-        </button>
+      {/* Tabs - Scrollable on mobile */}
+      <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
+        <div className="flex items-center gap-1 p-1 bg-muted rounded-xl w-fit min-w-max">
+          <button
+            onClick={() => setActiveTab('users')}
+            className={cn(
+              "flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
+              activeTab === 'users'
+                ? "bg-card shadow-sm text-primary"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <UsersIcon className="w-4 h-4" />
+            <span className="hidden xs:inline">ผู้ใช้งานทั้งหมด</span>
+            <span className="xs:hidden">ผู้ใช้</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('roles')}
+            className={cn(
+              "flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
+              activeTab === 'roles'
+                ? "bg-card shadow-sm text-primary"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <Lock className="w-4 h-4" />
+            <span className="hidden xs:inline">สิทธิการเข้าถึง</span>
+            <span className="xs:hidden">สิทธิ</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('departments')}
+            className={cn(
+              "flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
+              activeTab === 'departments'
+                ? "bg-card shadow-sm text-primary"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <Briefcase className="w-4 h-4" />
+            <span className="hidden xs:inline">หน่วยงาน</span>
+            <span className="xs:hidden">หน่วยงาน</span>
+          </button>
+        </div>
       </div>
 
       {activeTab === 'users' ? (

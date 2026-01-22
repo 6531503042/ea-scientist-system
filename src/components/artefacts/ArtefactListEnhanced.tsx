@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
@@ -20,7 +20,8 @@ import {
   Clock,
   History,
   FileSpreadsheet,
-  FileText
+  FileText,
+  Download
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { artefacts, typeLabels, type Artefact, type ArtefactType } from '@/data/mockData';
@@ -104,6 +105,19 @@ export function ArtefactListEnhanced() {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [versionHistoryArtefact, setVersionHistoryArtefact] = useState<Artefact | null>(null);
   const [exportFormat, setExportFormat] = useState<'excel' | 'pdf'>('excel');
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close export menu on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
+        setShowExportMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const filteredArtefacts = useMemo(() => {
     let result = [...artefacts];
@@ -170,28 +184,59 @@ export function ArtefactListEnhanced() {
 
           {/* Action Buttons */}
           <div className="flex items-center gap-2 flex-wrap">
-            <button
-              onClick={() => {
-                setExportFormat('excel');
-                setIsExportModalOpen(true);
-              }}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm border border-border bg-card hover:bg-muted rounded-lg transition-colors"
-              title="ส่งออก Excel"
-            >
-              <FileSpreadsheet className="w-4 h-4 text-green-600" />
-              <span className="hidden sm:inline">Excel</span>
-            </button>
-            <button
-              onClick={() => {
-                setExportFormat('pdf');
-                setIsExportModalOpen(true);
-              }}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm border border-border bg-card hover:bg-muted rounded-lg transition-colors"
-              title="ส่งออก PDF"
-            >
-              <FileText className="w-4 h-4 text-red-600" />
-              <span className="hidden sm:inline">PDF</span>
-            </button>
+            {/* Export Dropdown */}
+            <div ref={exportMenuRef} className="relative">
+              <button
+                onClick={() => setShowExportMenu(!showExportMenu)}
+                className="flex items-center gap-1.5 px-3 py-2 text-sm border border-border bg-card hover:bg-muted rounded-lg transition-colors"
+                title="ส่งออกข้อมูล"
+              >
+                <Download className="w-4 h-4" />
+                <span className="hidden sm:inline">ส่งออก</span>
+                <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", showExportMenu && "rotate-180")} />
+              </button>
+              <AnimatePresence>
+                {showExportMenu && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 mt-1 w-44 bg-card border border-border rounded-lg shadow-lg z-20 overflow-hidden"
+                  >
+                    <button
+                      onClick={() => {
+                        setExportFormat('excel');
+                        setIsExportModalOpen(true);
+                        setShowExportMenu(false);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm hover:bg-muted transition-colors text-left"
+                    >
+                      <FileSpreadsheet className="w-4 h-4 text-green-600" />
+                      <div>
+                        <span className="font-medium">Excel (.xlsx)</span>
+                        <p className="text-xs text-muted-foreground">ส่งออกเป็น Spreadsheet</p>
+                      </div>
+                    </button>
+                    <div className="border-t border-border" />
+                    <button
+                      onClick={() => {
+                        setExportFormat('pdf');
+                        setIsExportModalOpen(true);
+                        setShowExportMenu(false);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm hover:bg-muted transition-colors text-left"
+                    >
+                      <FileText className="w-4 h-4 text-red-600" />
+                      <div>
+                        <span className="font-medium">PDF (.pdf)</span>
+                        <p className="text-xs text-muted-foreground">ส่งออกเป็นเอกสาร</p>
+                      </div>
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
             <button
               onClick={() => setIsImportModalOpen(true)}
               className="flex items-center gap-1.5 px-3 py-2 text-sm border border-border bg-card hover:bg-muted rounded-lg transition-colors"

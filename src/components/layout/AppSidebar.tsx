@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
 import {
@@ -13,7 +13,9 @@ import {
   Shield,
   LogOut,
   Wifi,
-  BookOpen
+  BookOpen,
+  Menu,
+  X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
@@ -40,9 +42,141 @@ const adminItems: NavItem[] = [
 
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const location = useLocation();
   const { user, logout } = useAuth();
 
+  // Auto-collapse on smaller screens and detect mobile
+  useEffect(() => {
+    const checkScreenSize = () => {
+      const mobile = window.innerWidth < 768;
+      const tablet = window.innerWidth < 1024;
+      setIsMobile(mobile);
+      if (mobile) {
+        setMobileOpen(false);
+      }
+      if (tablet && !mobile) {
+        setCollapsed(true);
+      }
+    };
+
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname]);
+
+  // Mobile: Show hamburger button and overlay sidebar
+  if (isMobile) {
+    return (
+      <>
+        {/* Mobile hamburger button */}
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="fixed top-4 left-4 z-40 flex items-center justify-center w-10 h-10 rounded-lg bg-card border border-border shadow-sm md:hidden"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+
+        {/* Mobile overlay */}
+        <AnimatePresence>
+          {mobileOpen && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setMobileOpen(false)}
+                className="fixed inset-0 bg-black/50 z-40 md:hidden"
+              />
+              <motion.aside
+                initial={{ x: -280 }}
+                animate={{ x: 0 }}
+                exit={{ x: -280 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                className="fixed left-0 top-0 h-screen w-[280px] bg-sidebar text-sidebar-foreground border-r border-sidebar-border z-50 flex flex-col"
+              >
+                {/* Close button */}
+                <button
+                  onClick={() => setMobileOpen(false)}
+                  className="absolute top-4 right-4 p-1 rounded-lg hover:bg-sidebar-accent"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+
+                {/* Header */}
+                <div className="flex items-center h-16 px-4 border-b border-sidebar-border">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-accent">
+                      <Network className="w-5 h-5 text-accent-foreground" />
+                    </div>
+                    <div>
+                      <h1 className="text-sm font-semibold">EA Management</h1>
+                      <p className="text-xs text-sidebar-foreground/60">กรมวิทยาศาสตร์บริการ</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Navigation */}
+                <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+                  <div className="mb-2">
+                    <span className="px-3 text-xs font-medium uppercase tracking-wider text-sidebar-foreground/40">
+                      Main
+                    </span>
+                  </div>
+                  {navItems.map((item) => (
+                    <NavButton
+                      key={item.href}
+                      item={item}
+                      isActive={location.pathname === item.href}
+                      collapsed={false}
+                    />
+                  ))}
+
+                  <div className="pt-4 mt-4 border-t border-sidebar-border">
+                    <span className="px-3 text-xs font-medium uppercase tracking-wider text-sidebar-foreground/40">
+                      Admin
+                    </span>
+                  </div>
+                  {adminItems.map((item) => (
+                    <NavButton
+                      key={item.href}
+                      item={item}
+                      isActive={location.pathname === item.href}
+                      collapsed={false}
+                    />
+                  ))}
+                </nav>
+
+                {/* User Section */}
+                <div className="p-3 border-t border-sidebar-border">
+                  <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-sidebar-accent transition-colors cursor-pointer">
+                    <div className="flex items-center justify-center w-9 h-9 rounded-full bg-accent text-accent-foreground text-sm font-medium">
+                      {user?.name?.substring(0, 2).toUpperCase() || 'EA'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{user?.name || 'User'}</p>
+                      <p className="text-xs text-sidebar-foreground/60 truncate">{user?.email || 'email@example.com'}</p>
+                    </div>
+                    <button onClick={logout} className="ml-auto p-1 hover:text-destructive transition-colors" title="ออกจากระบบ">
+                      <LogOut className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </motion.aside>
+            </>
+          )}
+        </AnimatePresence>
+      </>
+    );
+  }
+
+  // Desktop/Tablet: Normal sidebar
   return (
     <motion.aside
       initial={false}
