@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  History, 
-  X, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Link2, 
+import {
+  History,
+  X,
+  Plus,
+  Edit,
+  Trash2,
+  Link2,
   RotateCcw,
   ChevronDown,
   ChevronRight,
@@ -15,6 +15,7 @@ import {
   Filter
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface Transaction {
   id: string;
@@ -80,22 +81,23 @@ const mockTransactions: Transaction[] = [
   },
 ];
 
-const actionConfig: Record<Transaction['action'], { icon: React.ElementType; color: string; label: string }> = {
-  create: { icon: Plus, color: 'bg-success/10 text-success', label: 'สร้าง' },
-  update: { icon: Edit, color: 'bg-info/10 text-info', label: 'แก้ไข' },
-  delete: { icon: Trash2, color: 'bg-destructive/10 text-destructive', label: 'ลบ' },
-  link: { icon: Link2, color: 'bg-primary/10 text-primary', label: 'เชื่อมต่อ' },
-  unlink: { icon: Link2, color: 'bg-warning/10 text-warning', label: 'ตัดการเชื่อมต่อ' },
-};
-
 interface TransactionHistoryProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
 export function TransactionHistory({ isOpen, onClose }: TransactionHistoryProps) {
+  const { t, language } = useLanguage();
   const [filter, setFilter] = useState<Transaction['action'] | 'all'>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const actionConfig: Record<Transaction['action'], { icon: React.ElementType; color: string; label: string }> = {
+    create: { icon: Plus, color: 'bg-success/10 text-success', label: t('history.create') },
+    update: { icon: Edit, color: 'bg-info/10 text-info', label: t('history.update') },
+    delete: { icon: Trash2, color: 'bg-destructive/10 text-destructive', label: t('detail.delete') },
+    link: { icon: Link2, color: 'bg-primary/10 text-primary', label: t('history.link') },
+    unlink: { icon: Link2, color: 'bg-warning/10 text-warning', label: t('history.unlink') },
+  };
 
   const filteredTransactions = mockTransactions.filter(
     t => filter === 'all' || t.action === filter
@@ -119,8 +121,8 @@ export function TransactionHistory({ isOpen, onClose }: TransactionHistoryProps)
                 <History className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h2 className="font-semibold text-foreground">ประวัติการเปลี่ยนแปลง</h2>
-                <p className="text-xs text-muted-foreground">Transaction History</p>
+                <h2 className="font-semibold text-foreground">{t('history.changeHistory')}</h2>
+                <p className="text-xs text-muted-foreground">{t('history.transactionHistory')}</p>
               </div>
             </div>
             <button
@@ -142,7 +144,7 @@ export function TransactionHistory({ isOpen, onClose }: TransactionHistoryProps)
                   : "bg-muted text-muted-foreground hover:bg-muted/80"
               )}
             >
-              ทั้งหมด
+              {t('graph.total')}
             </button>
             {Object.entries(actionConfig).map(([key, config]) => (
               <button
@@ -221,7 +223,7 @@ export function TransactionHistory({ isOpen, onClose }: TransactionHistoryProps)
                         <div className="p-3 space-y-3">
                           <div className="flex items-center gap-2 text-sm">
                             <User className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-muted-foreground">โดย:</span>
+                            <span className="text-muted-foreground">{t('history.by')}:</span>
                             <span className="text-foreground">{transaction.user}</span>
                           </div>
                           {transaction.details && (
@@ -236,7 +238,7 @@ export function TransactionHistory({ isOpen, onClose }: TransactionHistoryProps)
                               className="flex items-center gap-2 px-3 py-2 w-full text-sm font-medium text-warning bg-warning/10 rounded-lg hover:bg-warning/20 transition-colors"
                             >
                               <RotateCcw className="w-4 h-4" />
-                              ย้อนกลับการเปลี่ยนแปลงนี้
+                              {t('history.revert')}
                             </motion.button>
                           )}
                         </div>
@@ -252,7 +254,7 @@ export function TransactionHistory({ isOpen, onClose }: TransactionHistoryProps)
         {/* Footer */}
         <div className="p-4 border-t border-border">
           <p className="text-xs text-muted-foreground text-center">
-            แสดง {filteredTransactions.length} จาก {mockTransactions.length} รายการ
+            {language === 'th' ? `แสดง ${filteredTransactions.length} จาก ${mockTransactions.length} รายการ` : `Showing ${filteredTransactions.length} of ${mockTransactions.length} items`}
           </p>
         </div>
       </motion.div>

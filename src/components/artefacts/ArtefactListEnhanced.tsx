@@ -30,6 +30,7 @@ import { CreateArtefactModal } from './CreateArtefactModal';
 import { EditArtefactModal } from './EditArtefactModal';
 import { ExportImportModal } from './ExportImportModal';
 import { VersionHistoryDrawer } from './VersionHistoryDrawer';
+import { useLanguage } from '@/context/LanguageContext';
 
 const typeIcons: Record<ArtefactType, React.ElementType> = {
   business: Briefcase,
@@ -52,48 +53,56 @@ const typeColors: Record<ArtefactType, { bg: string; text: string; border: strin
   integration: { bg: 'bg-pink-500/10', text: 'text-pink-500', border: 'border-pink-500/30', light: 'bg-pink-50' },
 };
 
-const statusConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
-  active: { label: 'ใช้งาน', color: 'bg-success/10 text-success', icon: Eye },
-  draft: { label: 'ร่าง', color: 'bg-warning/10 text-warning', icon: Edit },
-  deprecated: { label: 'ยกเลิก', color: 'bg-muted text-muted-foreground', icon: Clock },
-  planned: { label: 'วางแผน', color: 'bg-info/10 text-info', icon: Clock },
+// Status config with both languages
+const statusConfigBase = {
+  active: { labelTh: 'ใช้งาน', labelEn: 'Active', color: 'bg-success/10 text-success', icon: Eye },
+  draft: { labelTh: 'ร่าง', labelEn: 'Draft', color: 'bg-warning/10 text-warning', icon: Edit },
+  deprecated: { labelTh: 'ยกเลิก', labelEn: 'Deprecated', color: 'bg-muted text-muted-foreground', icon: Clock },
+  planned: { labelTh: 'วางแผน', labelEn: 'Planned', color: 'bg-info/10 text-info', icon: Clock },
 };
 
 // Full labels following TOGAF
-const togafLabels: Record<ArtefactType, { en: string; th: string; description: string }> = {
+const togafLabels: Record<ArtefactType, { en: string; th: string; descriptionTh: string; descriptionEn: string }> = {
   business: {
     en: 'Business Architecture',
     th: 'สถาปัตยกรรมธุรกิจ',
-    description: 'กระบวนการ, กลยุทธ์, โครงสร้างองค์กร'
+    descriptionTh: 'กระบวนการ, กลยุทธ์, โครงสร้างองค์กร',
+    descriptionEn: 'Processes, Strategy, Organization Structure'
   },
   application: {
     en: 'Application Architecture',
     th: 'สถาปัตยกรรมแอปพลิเคชัน',
-    description: 'ระบบซอฟต์แวร์และแอปพลิเคชัน'
+    descriptionTh: 'ระบบซอฟต์แวร์และแอปพลิเคชัน',
+    descriptionEn: 'Software Systems and Applications'
   },
   data: {
     en: 'Data Architecture',
     th: 'สถาปัตยกรรมข้อมูล',
-    description: 'โครงสร้างข้อมูลและการจัดการ'
+    descriptionTh: 'โครงสร้างข้อมูลและการจัดการ',
+    descriptionEn: 'Data Structure and Management'
   },
   technology: {
     en: 'Technology Architecture',
     th: 'สถาปัตยกรรมเทคโนโลยี',
-    description: 'โครงสร้างพื้นฐาน IT'
+    descriptionTh: 'โครงสร้างพื้นฐาน IT',
+    descriptionEn: 'IT Infrastructure'
   },
   security: {
     en: 'Security Architecture',
     th: 'สถาปัตยกรรมความปลอดภัย',
-    description: 'การรักษาความปลอดภัย'
+    descriptionTh: 'การรักษาความปลอดภัย',
+    descriptionEn: 'Security Management'
   },
   integration: {
     en: 'Integration Architecture',
     th: 'สถาปัตยกรรมการเชื่อมต่อ',
-    description: 'การเชื่อมต่อระบบ API'
+    descriptionTh: 'การเชื่อมต่อระบบ API',
+    descriptionEn: 'System Integration APIs'
   },
 };
 
 export function ArtefactListEnhanced() {
+  const { language, t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState<ArtefactType | null>(null);
   const [sortBy, setSortBy] = useState<'name' | 'type' | 'updated'>('type');
@@ -107,6 +116,12 @@ export function ArtefactListEnhanced() {
   const [exportFormat, setExportFormat] = useState<'excel' | 'pdf'>('excel');
   const [showExportMenu, setShowExportMenu] = useState(false);
   const exportMenuRef = useRef<HTMLDivElement>(null);
+
+  // Helper function to get status label based on language
+  const getStatusLabel = (status: string) => {
+    const config = statusConfigBase[status as keyof typeof statusConfigBase];
+    return language === 'th' ? config?.labelTh : config?.labelEn;
+  };
 
   // Close export menu on outside click
   useEffect(() => {
@@ -175,10 +190,14 @@ export function ArtefactListEnhanced() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 className="text-lg sm:text-xl font-bold text-foreground">
-              {selectedType ? togafLabels[selectedType].th : 'Artefacts ทั้งหมด'}
+              {selectedType
+                ? (language === 'th' ? togafLabels[selectedType].th : togafLabels[selectedType].en)
+                : (language === 'th' ? 'Artefacts ทั้งหมด' : 'All Artefacts')}
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground">
-              {selectedType ? togafLabels[selectedType].description : `แสดง ${filteredArtefacts.length} รายการ`}
+              {selectedType
+                ? (language === 'th' ? togafLabels[selectedType].descriptionTh : togafLabels[selectedType].descriptionEn)
+                : (language === 'th' ? `แสดง ${filteredArtefacts.length} รายการ` : `Showing ${filteredArtefacts.length} items`)}
             </p>
           </div>
 
@@ -189,10 +208,10 @@ export function ArtefactListEnhanced() {
               <button
                 onClick={() => setShowExportMenu(!showExportMenu)}
                 className="flex items-center gap-1.5 px-3 py-2 text-sm border border-border bg-card hover:bg-muted rounded-lg transition-colors"
-                title="ส่งออกข้อมูล"
+                title={t('artefacts.exportData')}
               >
                 <Download className="w-4 h-4" />
-                <span className="hidden sm:inline">ส่งออก</span>
+                <span className="hidden sm:inline">{t('artefacts.export')}</span>
                 <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", showExportMenu && "rotate-180")} />
               </button>
               <AnimatePresence>
@@ -215,7 +234,7 @@ export function ArtefactListEnhanced() {
                       <FileSpreadsheet className="w-4 h-4 text-green-600" />
                       <div>
                         <span className="font-medium">Excel (.xlsx)</span>
-                        <p className="text-xs text-muted-foreground">ส่งออกเป็น Spreadsheet</p>
+                        <p className="text-xs text-muted-foreground">{t('artefacts.exportSpreadsheet')}</p>
                       </div>
                     </button>
                     <div className="border-t border-border" />
@@ -230,7 +249,7 @@ export function ArtefactListEnhanced() {
                       <FileText className="w-4 h-4 text-red-600" />
                       <div>
                         <span className="font-medium">PDF (.pdf)</span>
-                        <p className="text-xs text-muted-foreground">ส่งออกเป็นเอกสาร</p>
+                        <p className="text-xs text-muted-foreground">{t('artefacts.exportDocument')}</p>
                       </div>
                     </button>
                   </motion.div>
@@ -240,10 +259,10 @@ export function ArtefactListEnhanced() {
             <button
               onClick={() => setIsImportModalOpen(true)}
               className="flex items-center gap-1.5 px-3 py-2 text-sm border border-border bg-card hover:bg-muted rounded-lg transition-colors"
-              title="นำเข้า"
+              title={t('artefacts.import')}
             >
               <Upload className="w-4 h-4 text-muted-foreground" />
-              <span className="hidden sm:inline">นำเข้า</span>
+              <span className="hidden sm:inline">{t('artefacts.import')}</span>
             </button>
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -252,8 +271,8 @@ export function ArtefactListEnhanced() {
               className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors"
             >
               <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">เพิ่ม Artefact</span>
-              <span className="sm:hidden">เพิ่ม</span>
+              <span className="hidden sm:inline">{t('artefacts.addArtefact')}</span>
+              <span className="sm:hidden">{t('artefacts.add')}</span>
             </motion.button>
           </div>
         </div>
@@ -271,7 +290,7 @@ export function ArtefactListEnhanced() {
               )}
             >
               <LayoutGrid className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              ทั้งหมด ({artefacts.length})
+              {t('graph.total')} ({artefacts.length})
             </button>
             {togafOrder.map((type) => {
               const Icon = typeIcons[type];
@@ -314,13 +333,13 @@ export function ArtefactListEnhanced() {
             >
               <div className="flex items-center gap-2">
                 <LayoutGrid className="w-4 h-4" />
-                <span>ทั้งหมด</span>
+                <span>{t('graph.total')}</span>
               </div>
               <span>{artefacts.length}</span>
             </button>
             <div className="my-2 border-t border-border/50" />
             <div className="text-xs font-semibold text-muted-foreground px-3 mb-2 uppercase tracking-wider">
-              ประเภท Artefact
+              {t('artefacts.artefactType')}
             </div>
             {togafOrder.map((type) => {
               const Icon = typeIcons[type];
@@ -340,7 +359,9 @@ export function ArtefactListEnhanced() {
                 >
                   <div className="flex items-center gap-2">
                     <Icon className={cn("w-4 h-4", isSelected ? "text-current" : colors.text)} />
-                    <span className="truncate text-left">{typeLabels[type]?.th || type}</span>
+                    <span className="truncate text-left">
+                      {language === 'th' ? (typeLabels[type]?.th || type) : (typeLabels[type]?.en || type)}
+                    </span>
                   </div>
                   <span className={cn("text-xs", isSelected ? "opacity-80" : "text-muted-foreground")}>
                     {count}
@@ -361,7 +382,7 @@ export function ArtefactListEnhanced() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
                   type="text"
-                  placeholder="ค้นหา Artefact..."
+                  placeholder={t('artefacts.search')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full h-10 pl-10 pr-4 text-sm bg-muted/50 border border-transparent focus:bg-background focus:border-primary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
@@ -375,9 +396,9 @@ export function ArtefactListEnhanced() {
                     onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
                     className="w-full h-10 pl-3 pr-8 text-sm bg-muted/50 border border-transparent focus:bg-background focus:border-primary/20 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20"
                   >
-                    <option value="type">เรียงตาม TOGAF</option>
-                    <option value="name">เรียงตามชื่อ</option>
-                    <option value="updated">เรียงตามวันที่</option>
+                    <option value="type">{t('artefacts.sortByTOGAF')}</option>
+                    <option value="name">{t('artefacts.sortByName')}</option>
+                    <option value="updated">{t('artefacts.sortByDate')}</option>
                   </select>
                   <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                 </div>
@@ -408,11 +429,11 @@ export function ArtefactListEnhanced() {
             {/* Status Summary */}
             <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm overflow-x-auto pb-2 sm:pb-0 -mx-3 px-3 sm:mx-0 sm:px-0">
               {Object.entries(statusCounts).map(([status, count]) => {
-                const config = statusConfig[status];
+                const config = statusConfigBase[status as keyof typeof statusConfigBase];
                 return (
                   <div key={status} className="flex items-center gap-1.5 flex-shrink-0">
                     <span className={cn("w-2 h-2 rounded-full", config.color.replace('text-', 'bg-').replace('bg-', 'bg-current '))} />
-                    <span className="text-muted-foreground">{config.label}:</span>
+                    <span className="text-muted-foreground">{getStatusLabel(status)}:</span>
                     <span className="font-medium text-foreground">{count}</span>
                   </div>
                 );
@@ -428,7 +449,7 @@ export function ArtefactListEnhanced() {
                   {filteredArtefacts.map((artefact, index) => {
                     const TypeIcon = typeIcons[artefact.type];
                     const colors = typeColors[artefact.type];
-                    const status = statusConfig[artefact.status];
+                    const status = statusConfigBase[artefact.status as keyof typeof statusConfigBase];
 
                     return (
                       <motion.div
@@ -467,7 +488,7 @@ export function ArtefactListEnhanced() {
 
                         <div className="flex items-center justify-between pt-2 border-t border-border/50">
                           <span className={cn("px-2 py-0.5 text-xs rounded-full bg-muted font-medium", status.color)}>
-                            {status.label}
+                            {language === 'th' ? status.labelTh : status.labelEn}
                           </span>
                           <span className="text-xs text-muted-foreground">{artefact.lastUpdated}</span>
                         </div>
@@ -479,11 +500,11 @@ export function ArtefactListEnhanced() {
             ) : (
               <div className="bg-card rounded-xl border border-border overflow-hidden">
                 <div className="hidden md:grid grid-cols-12 gap-2 sm:gap-4 px-3 sm:px-4 py-2 sm:py-3 bg-muted/50 border-b text-xs sm:text-sm font-medium text-muted-foreground">
-                  <div className="col-span-4">ชื่อ Artefact</div>
-                  <div className="col-span-2">ประเภท</div>
-                  <div className="col-span-2">สถานะ</div>
-                  <div className="col-span-2">ผู้รับผิดชอบ</div>
-                  <div className="col-span-2 text-right">การดำเนินการ</div>
+                  <div className="col-span-4">{t('artefacts.artefactName')}</div>
+                  <div className="col-span-2">{t('artefacts.type')}</div>
+                  <div className="col-span-2">{t('artefacts.status')}</div>
+                  <div className="col-span-2">{t('artefacts.owner')}</div>
+                  <div className="col-span-2 text-right">{t('artefacts.actions')}</div>
                 </div>
 
                 <div className="divide-y divide-border">
@@ -491,7 +512,7 @@ export function ArtefactListEnhanced() {
                     {filteredArtefacts.map((artefact, index) => {
                       const TypeIcon = typeIcons[artefact.type];
                       const colors = typeColors[artefact.type];
-                      const status = statusConfig[artefact.status];
+                      const status = statusConfigBase[artefact.status as keyof typeof statusConfigBase];
 
                       return (
                         <motion.div
@@ -519,7 +540,7 @@ export function ArtefactListEnhanced() {
 
                           <div className="md:col-span-2 flex items-center justify-between md:justify-start">
                             <span className={cn("px-2 py-1 text-xs rounded-full", status.color)}>
-                              {status.label}
+                              {language === 'th' ? status.labelTh : status.labelEn}
                             </span>
                           </div>
 
@@ -560,8 +581,8 @@ export function ArtefactListEnhanced() {
                 <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
                   <Search className="w-8 h-8 text-muted-foreground" />
                 </div>
-                <h3 className="font-semibold text-lg mb-1">ไม่พบข้อมูล</h3>
-                <p className="text-muted-foreground">ลองเปลี่ยนคำค้นหาหรือตัวกรองใหม่</p>
+                <h3 className="font-semibold text-lg mb-1">{t('artefacts.noResults')}</h3>
+                <p className="text-muted-foreground">{t('artefacts.tryDifferent')}</p>
               </div>
             )}
           </div>

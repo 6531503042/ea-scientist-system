@@ -1,10 +1,10 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  X, 
-  User, 
-  Building, 
-  Calendar, 
-  GitBranch, 
+import {
+  X,
+  User,
+  Building,
+  Calendar,
+  GitBranch,
   AlertTriangle,
   ArrowUpRight,
   ArrowDownRight,
@@ -23,6 +23,7 @@ import {
 import { cn } from '@/lib/utils';
 import type { Artefact, ArtefactType, RiskLevel } from '@/data/mockData';
 import { relationships, artefacts } from '@/data/mockData';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface ArtefactDetailModalProps {
   artefact: Artefact | null;
@@ -38,23 +39,25 @@ const typeIcons: Record<ArtefactType, React.ElementType> = {
   security: Shield,
 };
 
-const riskStyles: Record<RiskLevel, { bg: string; text: string; label: string }> = {
-  high: { bg: 'bg-risk-high/10', text: 'text-risk-high', label: 'สูง' },
-  medium: { bg: 'bg-risk-medium/10', text: 'text-risk-medium', label: 'ปานกลาง' },
-  low: { bg: 'bg-risk-low/10', text: 'text-risk-low', label: 'ต่ำ' },
-  none: { bg: 'bg-muted', text: 'text-muted-foreground', label: 'ไม่มี' },
+const riskStylesBase: Record<RiskLevel, { bg: string; text: string; labelTh: string; labelEn: string }> = {
+  high: { bg: 'bg-risk-high/10', text: 'text-risk-high', labelTh: 'สูง', labelEn: 'High' },
+  medium: { bg: 'bg-risk-medium/10', text: 'text-risk-medium', labelTh: 'ปานกลาง', labelEn: 'Medium' },
+  low: { bg: 'bg-risk-low/10', text: 'text-risk-low', labelTh: 'ต่ำ', labelEn: 'Low' },
+  none: { bg: 'bg-muted', text: 'text-muted-foreground', labelTh: 'ไม่มี', labelEn: 'None' },
 };
 
 export function ArtefactDetailModal({ artefact, onClose }: ArtefactDetailModalProps) {
+  const { t, language } = useLanguage();
+
   if (!artefact) return null;
 
   const upstreamRels = relationships.filter((r) => r.target === artefact.id);
   const downstreamRels = relationships.filter((r) => r.source === artefact.id);
-  
+
   const upstream = upstreamRels.map(r => artefacts.find(a => a.id === r.source)!).filter(Boolean);
   const downstream = downstreamRels.map(r => artefacts.find(a => a.id === r.target)!).filter(Boolean);
 
-  const riskStyle = riskStyles[artefact.riskLevel];
+  const riskStyle = riskStylesBase[artefact.riskLevel];
   const TypeIcon = typeIcons[artefact.type];
 
   return (
@@ -69,7 +72,7 @@ export function ArtefactDetailModal({ artefact, onClose }: ArtefactDetailModalPr
             onClick={onClose}
             className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
           />
-          
+
           {/* Modal */}
           <motion.div
             initial={{ opacity: 0, x: '100%' }}
@@ -102,19 +105,19 @@ export function ArtefactDetailModal({ artefact, onClose }: ArtefactDetailModalPr
               <div className="flex items-center gap-2 mt-4">
                 <button className="flex items-center gap-2 px-3 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
                   <Edit className="w-4 h-4" />
-                  แก้ไข
+                  Edit
                 </button>
                 <button className="flex items-center gap-2 px-3 py-2 text-sm bg-muted hover:bg-muted/80 rounded-lg transition-colors">
                   <Share2 className="w-4 h-4" />
-                  แชร์
+                  Share
                 </button>
                 <button className="flex items-center gap-2 px-3 py-2 text-sm bg-muted hover:bg-muted/80 rounded-lg transition-colors">
                   <Download className="w-4 h-4" />
-                  Export
+                  {t('artefacts.export')}
                 </button>
                 <button className="flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 rounded-lg transition-colors ml-auto">
                   <Trash2 className="w-4 h-4" />
-                  ลบ
+                  Delete
                 </button>
               </div>
             </div>
@@ -132,14 +135,14 @@ export function ArtefactDetailModal({ artefact, onClose }: ArtefactDetailModalPr
                   riskStyle.text
                 )}>
                   <AlertTriangle className="w-3 h-3" />
-                  ความเสี่ยง: {riskStyle.label}
+                  Risk: {language === 'th' ? riskStyle.labelTh : riskStyle.labelEn}
                 </span>
               </div>
 
               {/* Description */}
               <div className="p-4 bg-muted/50 rounded-xl">
                 <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">
-                  รายละเอียด
+                  {t('detail.details')}
                 </h4>
                 <p className="text-sm text-foreground leading-relaxed">{artefact.description}</p>
               </div>
@@ -149,28 +152,28 @@ export function ArtefactDetailModal({ artefact, onClose }: ArtefactDetailModalPr
                 <div className="p-4 bg-muted/50 rounded-xl">
                   <div className="flex items-center gap-2 text-muted-foreground mb-1">
                     <User className="w-3.5 h-3.5" />
-                    <span className="text-xs">Owner</span>
+                    <span className="text-xs">{t('detail.owner')}</span>
                   </div>
                   <p className="text-sm font-medium text-foreground">{artefact.owner}</p>
                 </div>
                 <div className="p-4 bg-muted/50 rounded-xl">
                   <div className="flex items-center gap-2 text-muted-foreground mb-1">
                     <Building className="w-3.5 h-3.5" />
-                    <span className="text-xs">หน่วยงาน</span>
+                    <span className="text-xs">{t('detail.department')}</span>
                   </div>
                   <p className="text-sm font-medium text-foreground">{artefact.department}</p>
                 </div>
                 <div className="p-4 bg-muted/50 rounded-xl">
                   <div className="flex items-center gap-2 text-muted-foreground mb-1">
                     <GitBranch className="w-3.5 h-3.5" />
-                    <span className="text-xs">Version</span>
+                    <span className="text-xs">{t('detail.version')}</span>
                   </div>
                   <p className="text-sm font-medium text-foreground">{artefact.version}</p>
                 </div>
                 <div className="p-4 bg-muted/50 rounded-xl">
                   <div className="flex items-center gap-2 text-muted-foreground mb-1">
                     <Calendar className="w-3.5 h-3.5" />
-                    <span className="text-xs">อัปเดตล่าสุด</span>
+                    <span className="text-xs">{t('detail.updated')}</span>
                   </div>
                   <p className="text-sm font-medium text-foreground">{artefact.lastUpdated}</p>
                 </div>
@@ -179,7 +182,7 @@ export function ArtefactDetailModal({ artefact, onClose }: ArtefactDetailModalPr
               {/* Usage Stats */}
               <div className="p-4 bg-muted/50 rounded-xl">
                 <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">
-                  สถิติการใช้งาน
+                  Usage Statistics
                 </h4>
                 <div className="grid grid-cols-3 gap-4">
                   <div className="text-center">
@@ -204,7 +207,7 @@ export function ArtefactDetailModal({ artefact, onClose }: ArtefactDetailModalPr
                   <div className="flex items-center gap-2 mb-3">
                     <ArrowDownRight className="w-4 h-4 text-info" />
                     <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      Upstream ({upstream.length})
+                      {t('detail.upstream')} ({upstream.length})
                     </h4>
                   </div>
                   <div className="space-y-2">
@@ -216,11 +219,13 @@ export function ArtefactDetailModal({ artefact, onClose }: ArtefactDetailModalPr
                           className="flex items-center gap-3 p-2 rounded-lg hover:bg-background cursor-pointer transition-colors"
                         >
                           <ItemIcon className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-sm text-foreground flex-1">{item.name}</span>
+                          <span className="text-sm text-foreground flex-1">
+                            {language === 'th' ? (item.nameTh || item.name) : item.name}
+                          </span>
                         </div>
                       );
                     }) : (
-                      <p className="text-sm text-muted-foreground italic">ไม่มี</p>
+                      <p className="text-sm text-muted-foreground italic">{t('detail.noUpstream')}</p>
                     )}
                   </div>
                 </div>
@@ -230,7 +235,7 @@ export function ArtefactDetailModal({ artefact, onClose }: ArtefactDetailModalPr
                   <div className="flex items-center gap-2 mb-3">
                     <ArrowUpRight className="w-4 h-4 text-accent" />
                     <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      Downstream ({downstream.length})
+                      {t('detail.downstream')} ({downstream.length})
                     </h4>
                   </div>
                   <div className="space-y-2">
@@ -242,11 +247,13 @@ export function ArtefactDetailModal({ artefact, onClose }: ArtefactDetailModalPr
                           className="flex items-center gap-3 p-2 rounded-lg hover:bg-background cursor-pointer transition-colors"
                         >
                           <ItemIcon className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-sm text-foreground flex-1">{item.name}</span>
+                          <span className="text-sm text-foreground flex-1">
+                            {language === 'th' ? (item.nameTh || item.name) : item.name}
+                          </span>
                         </div>
                       );
                     }) : (
-                      <p className="text-sm text-muted-foreground italic">ไม่มี</p>
+                      <p className="text-sm text-muted-foreground italic">{t('detail.noDownstream')}</p>
                     )}
                   </div>
                 </div>
@@ -257,24 +264,24 @@ export function ArtefactDetailModal({ artefact, onClose }: ArtefactDetailModalPr
                 <div className="flex items-center gap-2 mb-3">
                   <History className="w-4 h-4 text-muted-foreground" />
                   <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    ประวัติการเปลี่ยนแปลง
+                    History (Mock)
                   </h4>
                 </div>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 text-sm">
                     <div className="w-2 h-2 rounded-full bg-success" />
-                    <span className="text-muted-foreground">อัปเดต version โดย {artefact.owner}</span>
-                    <span className="text-xs text-muted-foreground ml-auto">2 วันที่แล้ว</span>
+                    <span className="text-muted-foreground">Updated version by {artefact.owner}</span>
+                    <span className="text-xs text-muted-foreground ml-auto">2 days ago</span>
                   </div>
                   <div className="flex items-center gap-3 text-sm">
                     <div className="w-2 h-2 rounded-full bg-info" />
-                    <span className="text-muted-foreground">เพิ่ม relationship ใหม่</span>
-                    <span className="text-xs text-muted-foreground ml-auto">1 สัปดาห์ที่แล้ว</span>
+                    <span className="text-muted-foreground">Added new relationship</span>
+                    <span className="text-xs text-muted-foreground ml-auto">1 week ago</span>
                   </div>
                   <div className="flex items-center gap-3 text-sm">
                     <div className="w-2 h-2 rounded-full bg-warning" />
-                    <span className="text-muted-foreground">เปลี่ยนระดับความเสี่ยง</span>
-                    <span className="text-xs text-muted-foreground ml-auto">2 สัปดาห์ที่แล้ว</span>
+                    <span className="text-muted-foreground">Changed risk level</span>
+                    <span className="text-xs text-muted-foreground ml-auto">2 weeks ago</span>
                   </div>
                 </div>
               </div>
@@ -285,7 +292,7 @@ export function ArtefactDetailModal({ artefact, onClose }: ArtefactDetailModalPr
                 whileTap={{ scale: 0.98 }}
                 className="w-full px-4 py-3 bg-accent text-accent-foreground font-medium rounded-lg hover:bg-accent/90 transition-colors"
               >
-                🔍 วิเคราะห์ผลกระทบ (Impact Analysis)
+                🔍 {t('detail.analyzeImpact')}
               </motion.button>
             </div>
           </motion.div>

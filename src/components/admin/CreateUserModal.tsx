@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useLanguage } from '@/context/LanguageContext';
 
 interface CreateUserModalProps {
     isOpen: boolean;
@@ -14,6 +15,7 @@ interface CreateUserModalProps {
 }
 
 export function CreateUserModal({ isOpen, onClose, onSubmit }: CreateUserModalProps) {
+    const { t, language } = useLanguage();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
@@ -27,7 +29,7 @@ export function CreateUserModal({ isOpen, onClose, onSubmit }: CreateUserModalPr
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (formData.password !== formData.confirmPassword) {
-            alert('รหัสผ่านไม่ตรงกัน');
+            alert(language === 'th' ? 'รหัสผ่านไม่ตรงกัน' : 'Passwords do not match');
             return;
         }
         setLoading(true);
@@ -63,8 +65,8 @@ export function CreateUserModal({ isOpen, onClose, onSubmit }: CreateUserModalPr
                 >
                     <div className="flex items-center justify-between mb-6">
                         <div>
-                            <h2 className="text-xl font-bold">เพิ่มผู้ใช้งานใหม่</h2>
-                            <p className="text-sm text-muted-foreground">กรอกข้อมูลเพื่อสร้างบัญชีผู้ใช้</p>
+                            <h2 className="text-xl font-bold">{t('admin.addNewUser')}</h2>
+                            <p className="text-sm text-muted-foreground">{t('admin.fillUserParams')}</p>
                         </div>
                         <button onClick={onClose} className="p-2 hover:bg-muted rounded-lg transition-colors">
                             <X className="w-5 h-5 text-muted-foreground" />
@@ -73,10 +75,10 @@ export function CreateUserModal({ isOpen, onClose, onSubmit }: CreateUserModalPr
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="name">ชื่อ-นามสกุล</Label>
+                            <Label htmlFor="name">{t('admin.fullName')}</Label>
                             <Input
                                 id="name"
-                                placeholder="e.g. สมชาย ใจดี"
+                                placeholder={language === 'th' ? "e.g. สมชาย ใจดี" : "e.g. John Doe"}
                                 value={formData.name}
                                 onChange={(e) => handleChange('name', e.target.value)}
                                 required
@@ -84,7 +86,7 @@ export function CreateUserModal({ isOpen, onClose, onSubmit }: CreateUserModalPr
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="email">อีเมล</Label>
+                            <Label htmlFor="email">{t('admin.email')}</Label>
                             <Input
                                 id="email"
                                 type="email"
@@ -96,26 +98,26 @@ export function CreateUserModal({ isOpen, onClose, onSubmit }: CreateUserModalPr
                         </div>
 
                         <div className="space-y-2">
-                            <Label>บทบาท</Label>
+                            <Label>{t('admin.role')}</Label>
                             <Select value={formData.role} onValueChange={(val) => handleChange('role', val)}>
                                 <SelectTrigger>
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="admin">ผู้ดูแลระบบ (Admin)</SelectItem>
-                                    <SelectItem value="architect">Enterprise Architect</SelectItem>
-                                    <SelectItem value="business_owner">เจ้าของกระบวนการ</SelectItem>
-                                    <SelectItem value="auditor">ผู้ตรวจสอบ</SelectItem>
-                                    <SelectItem value="viewer">ผู้ดู (Viewer)</SelectItem>
+                                    <SelectItem value="admin">{language === 'th' ? 'ผู้ดูแลระบบ (Admin)' : 'Admin'}</SelectItem>
+                                    <SelectItem value="architect">{language === 'th' ? 'Enterprise Architect' : 'Enterprise Architect'}</SelectItem>
+                                    <SelectItem value="business_owner">{language === 'th' ? 'เจ้าของกระบวนการ' : 'Business Owner'}</SelectItem>
+                                    <SelectItem value="auditor">{language === 'th' ? 'ผู้ตรวจสอบ' : 'Auditor'}</SelectItem>
+                                    <SelectItem value="viewer">{language === 'th' ? 'ผู้ดู (Viewer)' : 'Viewer'}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="department">หน่วยงาน</Label>
+                            <Label htmlFor="department">{t('detail.department')}</Label>
                             <Input
                                 id="department"
-                                placeholder="e.g. ศูนย์เทคโนโลยีสารสนเทศ"
+                                placeholder={language === 'th' ? "e.g. ศูนย์เทคโนโลยีสารสนเทศ" : "e.g. IT Center"}
                                 value={formData.department}
                                 onChange={(e) => handleChange('department', e.target.value)}
                             />
@@ -123,7 +125,7 @@ export function CreateUserModal({ isOpen, onClose, onSubmit }: CreateUserModalPr
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="password">รหัสผ่าน</Label>
+                                <Label htmlFor="password">{t('admin.password')}</Label>
                                 <Input
                                     id="password"
                                     type="password"
@@ -134,7 +136,7 @@ export function CreateUserModal({ isOpen, onClose, onSubmit }: CreateUserModalPr
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="confirmPassword">ยืนยันรหัสผ่าน</Label>
+                                <Label htmlFor="confirmPassword">{t('admin.confirmPassword')}</Label>
                                 <Input
                                     id="confirmPassword"
                                     type="password"
@@ -148,10 +150,10 @@ export function CreateUserModal({ isOpen, onClose, onSubmit }: CreateUserModalPr
 
                         <div className="flex gap-3 pt-4 border-t">
                             <Button type="button" variant="outline" className="flex-1" onClick={onClose}>
-                                ยกเลิก
+                                {t('detail.cancel')}
                             </Button>
                             <Button type="submit" className="flex-1" disabled={loading}>
-                                {loading ? 'กำลังสร้าง...' : 'สร้างบัญชี'}
+                                {loading ? (language === 'th' ? 'กำลังสร้าง...' : 'Creating...') : (language === 'th' ? 'สร้างบัญชี' : 'Create Account')}
                             </Button>
                         </div>
                     </form>

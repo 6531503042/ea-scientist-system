@@ -29,7 +29,10 @@ interface ArtefactNodeProps {
   selected?: boolean;
 }
 
+import { useLanguage } from '@/context/LanguageContext';
+
 function ArtefactNodeComponent({ data, selected }: ArtefactNodeProps) {
+  const { language } = useLanguage();
   const artefact = data;
   const config = typeConfig[artefact.type];
   const Icon = config.icon;
@@ -65,7 +68,9 @@ function ArtefactNodeComponent({ data, selected }: ArtefactNodeProps) {
             {artefact.riskLevel !== 'none' && (
               <div className="flex items-center gap-1 ml-auto">
                 <span className={cn("w-1.5 h-1.5 rounded-full animate-pulse", riskIndicator[artefact.riskLevel])} />
-                <span className="text-[9px] font-medium text-muted-foreground capitalize">{artefact.riskLevel} Risk</span>
+                <span className="text-[9px] font-medium text-muted-foreground capitalize">
+                  {artefact.riskLevel} {language === 'th' ? 'ความเสี่ยง' : 'Risk'}
+                </span>
               </div>
             )}
           </div>

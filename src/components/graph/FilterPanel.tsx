@@ -4,6 +4,7 @@ import { Filter, Layers, Database, Cpu, Link, Shield, Briefcase, X, ArrowRight }
 import { cn } from '@/lib/utils';
 import type { ArtefactType } from '@/data/mockData';
 import type { Edge } from '@xyflow/react';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface FilterPanelProps {
   selectedTypes: ArtefactType[];
@@ -11,16 +12,18 @@ interface FilterPanelProps {
   relationships?: Edge[];
 }
 
-const filterOptions: { type: ArtefactType; label: string; labelTh: string; icon: React.ElementType; color: string }[] = [
-  { type: 'business', label: 'Business', labelTh: 'กระบวนการ', icon: Briefcase, color: 'ea-business' },
-  { type: 'application', label: 'Application', labelTh: 'แอปพลิเคชัน', icon: Layers, color: 'ea-application' },
-  { type: 'data', label: 'Data', labelTh: 'ข้อมูล', icon: Database, color: 'ea-data' },
-  { type: 'technology', label: 'Technology', labelTh: 'เทคโนโลยี', icon: Cpu, color: 'ea-technology' },
-  { type: 'security', label: 'Security', labelTh: 'ความปลอดภัย', icon: Shield, color: 'ea-security' },
-  { type: 'integration', label: 'Integration', labelTh: 'การเชื่อมต่อ', icon: Link, color: 'ea-integration' },
-];
-
 export function FilterPanel({ selectedTypes, onFilterChange, relationships = [] }: FilterPanelProps) {
+  const { t, language } = useLanguage();
+
+  const filterOptions: { type: ArtefactType; labelEn: string; labelTh: string; icon: React.ElementType; color: string }[] = [
+    { type: 'business', labelEn: 'Business', labelTh: 'กระบวนการ', icon: Briefcase, color: 'ea-business' },
+    { type: 'application', labelEn: 'Application', labelTh: 'แอปพลิเคชัน', icon: Layers, color: 'ea-application' },
+    { type: 'data', labelEn: 'Data', labelTh: 'ข้อมูล', icon: Database, color: 'ea-data' },
+    { type: 'technology', labelEn: 'Technology', labelTh: 'เทคโนโลยี', icon: Cpu, color: 'ea-technology' },
+    { type: 'security', labelEn: 'Security', labelTh: 'ความปลอดภัย', icon: Shield, color: 'ea-security' },
+    { type: 'integration', labelEn: 'Integration', labelTh: 'การเชื่อมต่อ', icon: Link, color: 'ea-integration' },
+  ];
+
   const toggleFilter = (type: ArtefactType) => {
     if (selectedTypes.includes(type)) {
       onFilterChange(selectedTypes.filter((t) => t !== type));
@@ -75,7 +78,7 @@ export function FilterPanel({ selectedTypes, onFilterChange, relationships = [] 
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-muted-foreground" />
-          <h3 className="font-semibold text-foreground">Filters</h3>
+          <h3 className="font-semibold text-foreground">{t('graph.filters')}</h3>
         </div>
         {selectedTypes.length > 0 && (
           <button
@@ -83,7 +86,7 @@ export function FilterPanel({ selectedTypes, onFilterChange, relationships = [] 
             className="flex items-center gap-1 text-xs text-muted-foreground hover:text-accent transition-colors"
           >
             <X className="w-3 h-3" />
-            ล้าง
+            {t('detail.close')}
           </button>
         )}
       </div>
@@ -92,7 +95,7 @@ export function FilterPanel({ selectedTypes, onFilterChange, relationships = [] 
         {/* Artefact Type Filter */}
         <div>
           <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">
-            Artefact Type
+            {t('graph.artefactType')}
           </h4>
           <div className="space-y-1">
             {filterOptions.map((option) => {
@@ -117,7 +120,9 @@ export function FilterPanel({ selectedTypes, onFilterChange, relationships = [] 
                   )}>
                     <Icon className="w-4 h-4" />
                   </div>
-                  <span className="flex-1 text-left">{option.labelTh}</span>
+                  <span className="flex-1 text-left">
+                    {language === 'th' ? option.labelTh : option.labelEn}
+                  </span>
                   {relCount > 0 && (
                     <span className={cn(
                       "flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded",
@@ -144,11 +149,11 @@ export function FilterPanel({ selectedTypes, onFilterChange, relationships = [] 
         {relationships.length > 0 && (
           <div className="pt-4 border-t border-border">
             <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">
-              Relationships
+              {t('graph.relationships')}
             </h4>
             <div className="p-3 bg-muted/50 rounded-lg">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">ทั้งหมด</span>
+                <span className="text-muted-foreground">{t('graph.total')}</span>
                 <span className="font-medium">{relationships.length}</span>
               </div>
             </div>

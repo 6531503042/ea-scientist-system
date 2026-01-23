@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface NavItem {
   icon: React.ElementType;
@@ -48,6 +49,7 @@ export function AppSidebar() {
   const [isMobile, setIsMobile] = useState(false);
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { language, t } = useLanguage();
 
   // Auto-collapse on smaller screens and detect mobile
   useEffect(() => {
@@ -119,7 +121,7 @@ export function AppSidebar() {
                     </div>
                     <div>
                       <h1 className="text-sm font-semibold">EA Management</h1>
-                      <p className="text-xs text-sidebar-foreground/60">กรมวิทยาศาสตร์บริการ</p>
+                      <p className="text-xs text-sidebar-foreground/60">{language === 'th' ? 'กรมวิทยาศาสตร์บริการ' : 'Department of Science Service'}</p>
                     </div>
                   </div>
                 </div>
@@ -128,7 +130,7 @@ export function AppSidebar() {
                 <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
                   <div className="mb-2">
                     <span className="px-3 text-xs font-medium uppercase tracking-wider text-sidebar-foreground/40">
-                      Main
+                      {t('nav.main')}
                     </span>
                   </div>
                   {navItems.map((item) => (
@@ -137,12 +139,13 @@ export function AppSidebar() {
                       item={item}
                       isActive={location.pathname === item.href}
                       collapsed={false}
+                      language={language}
                     />
                   ))}
 
                   <div className="pt-4 mt-4 border-t border-sidebar-border">
                     <span className="px-3 text-xs font-medium uppercase tracking-wider text-sidebar-foreground/40">
-                      Admin
+                      {t('nav.admin')}
                     </span>
                   </div>
                   {adminItems.map((item) => (
@@ -151,6 +154,7 @@ export function AppSidebar() {
                       item={item}
                       isActive={location.pathname === item.href}
                       collapsed={false}
+                      language={language}
                     />
                   ))}
                 </nav>
@@ -165,7 +169,7 @@ export function AppSidebar() {
                       <p className="text-sm font-medium truncate">{user?.name || 'User'}</p>
                       <p className="text-xs text-sidebar-foreground/60 truncate">{user?.email || 'email@example.com'}</p>
                     </div>
-                    <button onClick={logout} className="ml-auto p-1 hover:text-destructive transition-colors" title="ออกจากระบบ">
+                    <button onClick={logout} className="ml-auto p-1 hover:text-destructive transition-colors" title={t('nav.signOut')}>
                       <LogOut className="w-4 h-4" />
                     </button>
                   </div>
@@ -205,7 +209,7 @@ export function AppSidebar() {
               </div>
               <div className="overflow-hidden min-w-0">
                 <h1 className="text-sm font-bold truncate">EA Management</h1>
-                <p className="text-[10px] text-muted-foreground truncate">กรมวิทยาศาสตร์บริการ</p>
+                <p className="text-[10px] text-muted-foreground truncate">{language === 'th' ? 'กรมวิทยาศาสตร์บริการ' : 'Department of Science Service'}</p>
               </div>
             </motion.div>
           )}
@@ -217,7 +221,7 @@ export function AppSidebar() {
             "p-1.5 rounded-md hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-sidebar-foreground transition-all duration-200 shrink-0",
             collapsed && "mx-auto"
           )}
-          title={collapsed ? "ขยาย Sidebar" : "ย่อ Sidebar"}
+          title={collapsed ? (language === 'th' ? "ขยาย Sidebar" : "Expand Sidebar") : (language === 'th' ? "ย่อ Sidebar" : "Collapse Sidebar")}
         >
           {collapsed ? (
             <PanelLeft className="w-4 h-4" />
@@ -239,7 +243,7 @@ export function AppSidebar() {
               className="mb-2"
             >
               <span className="px-3 text-xs font-medium uppercase tracking-wider text-sidebar-foreground/40">
-                Main
+                {t('nav.main')}
               </span>
             </motion.div>
           )}
@@ -250,6 +254,7 @@ export function AppSidebar() {
             item={item}
             isActive={location.pathname === item.href}
             collapsed={collapsed}
+            language={language}
           />
         ))}
 
@@ -263,7 +268,7 @@ export function AppSidebar() {
               className="pt-4 mt-4 border-t border-sidebar-border"
             >
               <span className="px-3 text-xs font-medium uppercase tracking-wider text-sidebar-foreground/40">
-                Admin
+                {t('nav.admin')}
               </span>
             </motion.div>
           )}
@@ -274,6 +279,7 @@ export function AppSidebar() {
             item={item}
             isActive={location.pathname === item.href}
             collapsed={collapsed}
+            language={language}
           />
         ))}
       </nav>
@@ -313,7 +319,7 @@ export function AppSidebar() {
                 transition={{ duration: 0.15 }}
                 onClick={logout}
                 className="ml-auto p-1 hover:text-destructive transition-colors shrink-0"
-                title="ออกจากระบบ"
+                title={t('nav.signOut')}
               >
                 <LogOut className="w-4 h-4" />
               </motion.button>
@@ -331,10 +337,12 @@ interface NavButtonProps {
   item: NavItem;
   isActive: boolean;
   collapsed: boolean;
+  language?: 'th' | 'en';
 }
 
-function NavButton({ item, isActive, collapsed }: NavButtonProps) {
+function NavButton({ item, isActive, collapsed, language = 'th' }: NavButtonProps) {
   const Icon = item.icon;
+  const displayLabel = language === 'th' ? item.labelTh : item.label;
 
   return (
     <Link
@@ -346,7 +354,7 @@ function NavButton({ item, isActive, collapsed }: NavButtonProps) {
           : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50",
         collapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"
       )}
-      title={collapsed ? item.labelTh : undefined}
+      title={collapsed ? displayLabel : undefined}
     >
       {isActive && !collapsed && (
         <motion.div
@@ -369,7 +377,7 @@ function NavButton({ item, isActive, collapsed }: NavButtonProps) {
             transition={{ duration: 0.2 }}
             className="truncate flex-1"
           >
-            {item.labelTh}
+            {displayLabel}
           </motion.span>
         )}
       </AnimatePresence>
@@ -386,7 +394,7 @@ function NavButton({ item, isActive, collapsed }: NavButtonProps) {
       {/* Tooltip for collapsed state */}
       {collapsed && (
         <div className="absolute left-full ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded-md shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
-          {item.labelTh}
+          {displayLabel}
         </div>
       )}
     </Link>

@@ -17,6 +17,7 @@ import {
   GitBranch
 } from 'lucide-react';
 import { artefacts, relationships, typeLabels } from '@/data/mockData';
+import { useLanguage } from '@/context/LanguageContext';
 
 // TOGAF ordered types
 const togafOrder = ['business', 'application', 'data', 'technology', 'security', 'integration'] as const;
@@ -50,6 +51,7 @@ const togafLabels = {
 
 const Index = () => {
   const navigate = useNavigate();
+  const { language, t } = useLanguage();
 
   // Calculate real stats from mockData
   const stats = useMemo(() => {
@@ -69,13 +71,14 @@ const Index = () => {
     return { total, byType, totalRelationships, departmentCount: departments.size };
   }, []);
 
-  // Recent activities
+  // Recent activities (with both names for language switching)
   const recentActivities = useMemo(() => {
     return artefacts
       .sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime())
       .slice(0, 5)
       .map(a => ({
-        name: a.nameTh || a.name,
+        name: a.name,
+        nameTh: a.nameTh || a.name,
         type: a.type,
         status: a.status,
         owner: a.owner,
@@ -99,7 +102,7 @@ const Index = () => {
             </div>
             <div>
               <p className="text-2xl font-bold text-foreground">{stats.total}</p>
-              <p className="text-xs text-muted-foreground">Artefacts ทั้งหมด</p>
+              <p className="text-xs text-muted-foreground">{t('dashboard.totalArtefacts')}</p>
             </div>
           </div>
           {/* Tooltip */}
@@ -121,7 +124,7 @@ const Index = () => {
             </div>
             <div>
               <p className="text-2xl font-bold text-foreground">{stats.totalRelationships}</p>
-              <p className="text-xs text-muted-foreground">ความสัมพันธ์</p>
+              <p className="text-xs text-muted-foreground">{t('dashboard.relationships')}</p>
             </div>
           </div>
           {/* Tooltip */}
@@ -143,7 +146,7 @@ const Index = () => {
             </div>
             <div>
               <p className="text-2xl font-bold text-foreground">{stats.departmentCount}</p>
-              <p className="text-xs text-muted-foreground">หน่วยงาน</p>
+              <p className="text-xs text-muted-foreground">{t('dashboard.departments')}</p>
             </div>
           </div>
           {/* Tooltip */}
@@ -166,14 +169,14 @@ const Index = () => {
           >
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-lg font-semibold text-foreground">สถาปัตยกรรมตามมาตรฐาน TOGAF</h2>
-                <p className="text-xs text-muted-foreground">แบ่งตามประเภท Architecture</p>
+                <h2 className="text-lg font-semibold text-foreground">{t('dashboard.togafArchitecture')}</h2>
+                <p className="text-xs text-muted-foreground">{t('dashboard.byArchType')}</p>
               </div>
               <button
                 onClick={() => navigate('/artefacts')}
                 className="flex items-center gap-1 text-sm text-primary hover:underline"
               >
-                ดูทั้งหมด
+                {t('common.viewAll')}
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
@@ -196,8 +199,12 @@ const Index = () => {
                       </div>
                       <span className="text-2xl font-bold text-foreground">{item.count}</span>
                     </div>
-                    <p className="text-sm font-medium text-foreground mb-0.5">{item.label.th}</p>
-                    <p className="text-xs text-muted-foreground">{item.label.en}</p>
+                    <p className="text-sm font-medium text-foreground mb-0.5">
+                      {language === 'th' ? item.label.th : item.label.en}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {language === 'th' ? item.label.en : item.label.th}
+                    </p>
                   </motion.button>
                 );
               })}
@@ -214,7 +221,7 @@ const Index = () => {
             transition={{ delay: 0.25 }}
             className="bg-card border border-border rounded-xl p-4"
           >
-            <h3 className="font-semibold text-foreground mb-3">เมนูด่วน</h3>
+            <h3 className="font-semibold text-foreground mb-3">{t('dashboard.quickActions')}</h3>
             <div className="space-y-2">
               <button
                 onClick={() => navigate('/artefacts')}
@@ -224,8 +231,8 @@ const Index = () => {
                   <Layers className="w-4 h-4 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-foreground">จัดการ Artefacts</p>
-                  <p className="text-xs text-muted-foreground">ดู, เพิ่ม, แก้ไข Artefacts</p>
+                  <p className="text-sm font-medium text-foreground">{t('dashboard.manageArtefacts')}</p>
+                  <p className="text-xs text-muted-foreground">{t('dashboard.manageArtefactsDesc')}</p>
                 </div>
               </button>
 
@@ -237,8 +244,8 @@ const Index = () => {
                   <GitBranch className="w-4 h-4 text-info" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-foreground">แผนผังสถาปัตยกรรม</p>
-                  <p className="text-xs text-muted-foreground">ดูความสัมพันธ์แบบ Graph</p>
+                  <p className="text-sm font-medium text-foreground">{t('dashboard.architectureMap')}</p>
+                  <p className="text-xs text-muted-foreground">{t('dashboard.architectureMapDesc')}</p>
                 </div>
               </button>
 
@@ -250,8 +257,8 @@ const Index = () => {
                   <FileText className="w-4 h-4 text-success" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-foreground">รายงาน</p>
-                  <p className="text-xs text-muted-foreground">ดาวน์โหลดรายงาน EA</p>
+                  <p className="text-sm font-medium text-foreground">{t('dashboard.reports')}</p>
+                  <p className="text-xs text-muted-foreground">{t('dashboard.reportsDesc')}</p>
                 </div>
               </button>
 
@@ -263,8 +270,8 @@ const Index = () => {
                   <Users className="w-4 h-4 text-warning" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-foreground">ผู้ใช้งาน</p>
-                  <p className="text-xs text-muted-foreground">จัดการผู้ใช้และสิทธิ์</p>
+                  <p className="text-sm font-medium text-foreground">{t('dashboard.users')}</p>
+                  <p className="text-xs text-muted-foreground">{t('dashboard.usersDesc')}</p>
                 </div>
               </button>
             </div>
@@ -278,8 +285,8 @@ const Index = () => {
             className="bg-card border border-border rounded-xl p-4"
           >
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-foreground">กิจกรรมล่าสุด</h3>
-              <button className="text-xs text-primary hover:underline">ดูทั้งหมด</button>
+              <h3 className="font-semibold text-foreground">{t('dashboard.recentUpdates')}</h3>
+              <button className="text-xs text-primary hover:underline">{t('common.viewAll')}</button>
             </div>
             <div className="space-y-3">
               {recentActivities.map((activity, index) => {
@@ -297,7 +304,9 @@ const Index = () => {
                       <Icon className={`w-4 h-4 ${colors.text}`} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{activity.name}</p>
+                      <p className="text-sm font-medium text-foreground truncate">
+                        {language === 'th' ? activity.nameTh : activity.name}
+                      </p>
                       <p className="text-xs text-muted-foreground">
                         {activity.owner} • {activity.date}
                       </p>
@@ -321,9 +330,9 @@ const Index = () => {
             transition={{ delay: 0.35 }}
             className="bg-gradient-to-br from-primary/10 to-info/10 border border-primary/20 rounded-xl p-4"
           >
-            <h3 className="font-semibold text-foreground mb-2">เกี่ยวกับระบบ</h3>
+            <h3 className="font-semibold text-foreground mb-2">{t('dashboard.aboutSystem')}</h3>
             <p className="text-xs text-muted-foreground mb-3">
-              ระบบจัดการสถาปัตยกรรมองค์กรของกรมวิทยาศาสตร์บริการ พัฒนาตามมาตรฐาน TOGAF Framework
+              {t('dashboard.aboutDesc')}
             </p>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span className="px-2 py-0.5 bg-background/50 rounded">TOGAF 10</span>

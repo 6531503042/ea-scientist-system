@@ -22,6 +22,7 @@ import {
 import { cn } from '@/lib/utils';
 import type { Artefact, ArtefactType, RiskLevel } from '@/data/mockData';
 import { relationships, artefacts } from '@/data/mockData';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface ImpactAnalysisModalProps {
   artefact: Artefact;
@@ -53,6 +54,7 @@ const riskColors: Record<RiskLevel, { bg: string; text: string; border: string }
 };
 
 export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysisModalProps) {
+  const { t, language } = useLanguage();
   const [selectedAction, setSelectedAction] = useState<'break' | 'modify' | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [selectedNodes, setSelectedNodes] = useState<Set<string>>(new Set());
@@ -168,8 +170,8 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
                   <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-warning" />
                 </div>
                 <div>
-                  <h2 className="text-lg sm:text-xl font-bold text-foreground">วิเคราะห์ผลกระทบ</h2>
-                  <p className="text-sm text-muted-foreground">Impact Analysis สำหรับ "{artefact.name}"</p>
+                  <h2 className="text-lg sm:text-xl font-bold text-foreground">{t('detail.analyzeImpact')}</h2>
+                  <p className="text-sm text-muted-foreground">{t('detail.impactAnalysisFor')} "{artefact.name}"</p>
                 </div>
               </div>
             </div>
@@ -185,19 +187,19 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mt-4">
             <div className="p-2 sm:p-3 bg-card rounded-xl border border-border">
               <p className="text-xl sm:text-2xl font-bold text-foreground">{totalAffected}</p>
-              <p className="text-[10px] sm:text-xs text-muted-foreground">ผลกระทบทั้งหมด</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">{t('detail.totalAffected')}</p>
             </div>
             <div className="p-2 sm:p-3 bg-card rounded-xl border border-border">
               <p className="text-xl sm:text-2xl font-bold text-info">{directImpact.length}</p>
-              <p className="text-[10px] sm:text-xs text-muted-foreground">ผลกระทบโดยตรง</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">{t('detail.directImpact')}</p>
             </div>
             <div className="p-2 sm:p-3 bg-card rounded-xl border border-border">
               <p className="text-xl sm:text-2xl font-bold text-warning">{indirectImpact.length}</p>
-              <p className="text-[10px] sm:text-xs text-muted-foreground">ผลกระทบทางอ้อม</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">{t('detail.indirectImpact')}</p>
             </div>
             <div className="p-2 sm:p-3 bg-card rounded-xl border border-destructive/30">
               <p className="text-xl sm:text-2xl font-bold text-destructive">{highRiskCount}</p>
-              <p className="text-[10px] sm:text-xs text-muted-foreground">ความเสี่ยงสูง</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">{t('detail.highRisk')}</p>
             </div>
           </div>
         </div>
@@ -207,13 +209,21 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
           {/* Context Summary */}
           <div className="mb-6 bg-muted/40 p-4 rounded-xl border border-border">
             <p className="text-sm text-foreground">
-              การเปลี่ยนแปลง <span className="font-semibold">{artefact.name}</span> จะส่งผลโดยตรงต่อ <span className="font-semibold text-foreground">{directImpact.length} รายการ</span> และส่งผลต่อเนื่องไปยังอีก <span className="font-semibold text-muted-foreground">{indirectImpact.length} รายการ</span>
+              {language === 'th' ? (
+                <>
+                  การเปลี่ยนแปลง <span className="font-semibold">{artefact.name}</span> จะส่งผลโดยตรงต่อ <span className="font-semibold text-foreground">{directImpact.length} รายการ</span> และส่งผลต่อเนื่องไปยังอีก <span className="font-semibold text-muted-foreground">{indirectImpact.length} รายการ</span>
+                </>
+              ) : (
+                <>
+                  Changing <span className="font-semibold">{artefact.name}</span> will directly affect <span className="font-semibold text-foreground">{directImpact.length} items</span> and indirectly affect <span className="font-semibold text-muted-foreground">{indirectImpact.length} items</span>
+                </>
+              )}
             </p>
           </div>
 
           {/* Action Selection */}
           <div className="mb-8">
-            <h3 className="font-semibold text-foreground mb-3 text-sm uppercase tracking-wider text-muted-foreground">เลือกเป้าหมายการวิเคราะห์</h3>
+            <h3 className="font-semibold text-foreground mb-3 text-sm uppercase tracking-wider text-muted-foreground">{t('detail.selectAnalysisTarget')}</h3>
             <div className="flex p-1 bg-muted rounded-xl mb-4">
               <button
                 onClick={() => setSelectedAction('modify')}
@@ -224,7 +234,7 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                Simulation Modication
+                Simulation Modification
               </button>
               <button
                 onClick={() => setSelectedAction('break')}
@@ -248,8 +258,8 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
                 <div className="flex items-center gap-2 mb-4 pb-2 border-b border-border">
                   <ArrowDown className="w-4 h-4 text-primary" />
                   <div>
-                    <h3 className="font-semibold text-foreground">สิ่งที่ต้องใช้ (Inputs)</h3>
-                    <p className="text-xs text-muted-foreground">ระบบ/ข้อมูลที่จำเป็นต้องมี</p>
+                    <h3 className="font-semibold text-foreground">{t('detail.upstream')}</h3>
+                    <p className="text-xs text-muted-foreground">{t('detail.systemsSendingData')}</p>
                   </div>
                 </div>
 
@@ -297,7 +307,7 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
                     );
                   }) : (
                     <div className="text-center py-8 bg-muted/20 rounded-xl border border-dashed">
-                      <p className="text-sm text-muted-foreground">ไม่มีสิ่งที่ต้องใช้ (Independent)</p>
+                      <p className="text-sm text-muted-foreground">{t('detail.noUpstream')}</p>
                     </div>
                   )}
                 </div>
@@ -308,8 +318,8 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
                 <div className="flex items-center gap-2 mb-4 pb-2 border-b border-border">
                   <ArrowUp className="w-4 h-4 text-destructive" />
                   <div>
-                    <h3 className="font-semibold text-foreground">ผลกระทบ (Impacts)</h3>
-                    <p className="text-xs text-muted-foreground">ระบบที่จะเสียหาย/หยุดชะงัก</p>
+                    <h3 className="font-semibold text-foreground">{t('detail.impacts')}</h3>
+                    <p className="text-xs text-muted-foreground">{t('detail.systemDamage')}</p>
                   </div>
                 </div>
 
@@ -359,7 +369,7 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
                     );
                   }) : (
                     <div className="text-center py-8 bg-muted/20 rounded-xl border border-dashed">
-                      <p className="text-sm text-muted-foreground">ไม่มีผลกระทบ (Safe to change)</p>
+                      <p className="text-sm text-muted-foreground">{t('detail.noDownstream')}</p>
                     </div>
                   )}
                 </div>
@@ -383,8 +393,17 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
                   <div>
                     <h4 className="font-semibold text-destructive mb-1">Critical Warning</h4>
                     <p className="text-sm text-muted-foreground">
-                      การดำเนินการนี้มีความเสี่ยงสูงเนื่องจากส่งผลกระทบต่อ <span className="text-destructive font-medium">{highRiskCount} critical systems</span>.
-                      กรุณาติดต่อผู้อนุมัติหรือตรวจสอบ Impact Assessment Document ก่อนดำเนินการ
+                      {language === 'th' ? (
+                        <>
+                          การดำเนินการนี้มีความเสี่ยงสูงเนื่องจากส่งผลกระทบต่อ <span className="text-destructive font-medium">{highRiskCount} critical systems</span>.
+                          กรุณาติดต่อผู้อนุมัติหรือตรวจสอบ Impact Assessment Document ก่อนดำเนินการ
+                        </>
+                      ) : (
+                        <>
+                          This action is high risk as it affects <span className="text-destructive font-medium">{highRiskCount} critical systems</span>.
+                          Please contact approvers or check Impact Assessment Document before proceeding.
+                        </>
+                      )}
                     </p>
                   </div>
                 </div>
@@ -401,11 +420,11 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
                 onClick={onClose}
                 className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                ยกเลิก
+                {t('detail.cancel')}
               </button>
               <div className="flex items-center justify-between sm:justify-end gap-3">
                 <span className="text-sm text-muted-foreground">
-                  {selectedNodes.size > 0 && `เลือก ${selectedNodes.size} รายการ`}
+                  {selectedNodes.size > 0 && (language === 'th' ? `เลือก ${selectedNodes.size} รายการ` : `Selected ${selectedNodes.size} items`)}
                 </span>
                 <motion.button
                   whileHover={{ scale: 1.02 }}
@@ -420,7 +439,7 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
                   )}
                 >
                   <ArrowRight className="w-4 h-4" />
-                  ดำเนินการต่อ
+                  {t('detail.proceed')}
                 </motion.button>
               </div>
             </div>
@@ -434,10 +453,13 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
                 <div className="flex items-center gap-3">
                   <Info className="w-5 h-5 text-warning" />
                   <div>
-                    <p className="font-medium text-warning">ยืนยันการดำเนินการ</p>
+                    <p className="font-medium text-warning">{t('detail.confirmAction')}</p>
                     <p className="text-sm text-warning/80">
-                      คุณกำลังจะ{selectedAction === 'break' ? 'ลบ' : 'แก้ไข'} "{artefact.name}"
-                      ซึ่งจะส่งผลกระทบต่อ {totalAffected} Artefacts
+                      {language === 'th' ? (
+                        <>คุณกำลังจะ{selectedAction === 'break' ? 'ลบ' : 'แก้ไข'} "{artefact.name}" ซึ่งจะส่งผลกระทบต่อ {totalAffected} Artefacts</>
+                      ) : (
+                        <>You are about to {selectedAction === 'break' ? 'delete' : 'modify'} "{artefact.name}" which will affect {totalAffected} Artefacts</>
+                      )}
                     </p>
                   </div>
                 </div>
@@ -447,7 +469,7 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
                   onClick={() => setShowConfirm(false)}
                   className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  ← กลับ
+                  ← {t('detail.back')}
                 </button>
                 <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3">
                   <button
@@ -455,7 +477,7 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
                     className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg border border-border hover:bg-muted transition-colors"
                   >
                     <XCircle className="w-4 h-4" />
-                    ยกเลิก
+                    {t('detail.cancel')}
                   </button>
                   <motion.button
                     whileHover={{ scale: 1.02 }}
@@ -469,7 +491,9 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
                     )}
                   >
                     <Save className="w-4 h-4" />
-                    {selectedAction === 'break' ? 'ยืนยันการลบ' : 'ยืนยันการแก้ไข'}
+                    {selectedAction === 'break'
+                      ? (language === 'th' ? 'ยืนยันการลบ' : 'Confirm Deletion')
+                      : (language === 'th' ? 'ยืนยันการแก้ไข' : 'Confirm Modification')}
                   </motion.button>
                 </div>
               </div>

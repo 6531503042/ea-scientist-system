@@ -26,6 +26,7 @@ import { artefacts, relationships, type Artefact, type ArtefactType, typeLabels 
 import { TreeView } from './TreeView';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/context/LanguageContext';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AppNode = Node<any, string>;
@@ -118,6 +119,7 @@ interface HierarchyViewProps {
 }
 
 function HierarchyView({ onNodeClick, searchQuery = '' }: HierarchyViewProps) {
+  const { t, language } = useLanguage();
   const [expandedTypes, setExpandedTypes] = useState<Set<ArtefactType>>(new Set(['business', 'application']));
 
   // Group artefacts by type (using same mockData)
@@ -175,21 +177,21 @@ function HierarchyView({ onNodeClick, searchQuery = '' }: HierarchyViewProps) {
       <div className="p-3 sm:p-4 border-b border-border">
         <div className="flex items-center justify-between mb-2">
           <div>
-            <h3 className="font-semibold text-foreground text-sm sm:text-base">โครงสร้างลำดับชั้น</h3>
+            <h3 className="font-semibold text-foreground text-sm sm:text-base">{t('graph.organizationHierarchy')}</h3>
             <p className="text-xs text-muted-foreground">{totalArtefacts} Artefacts</p>
           </div>
           <div className="flex items-center gap-1">
             <button
               onClick={expandAll}
               className="p-1.5 rounded hover:bg-muted transition-colors"
-              title="ขยายทั้งหมด"
+              title={language === 'th' ? "ขยายทั้งหมด" : "Expand All"}
             >
               <Expand className="w-4 h-4 text-muted-foreground" />
             </button>
             <button
               onClick={collapseAll}
               className="p-1.5 rounded hover:bg-muted transition-colors"
-              title="ยุบทั้งหมด"
+              title={language === 'th' ? "ยุบทั้งหมด" : "Collapse All"}
             >
               <Shrink className="w-4 h-4 text-muted-foreground" />
             </button>
@@ -225,7 +227,9 @@ function HierarchyView({ onNodeClick, searchQuery = '' }: HierarchyViewProps) {
                     <span className="text-white text-xs">{typeIcons[type]}</span>
                   </div>
                   <div className="flex-1 text-left">
-                    <span className="text-sm font-medium text-foreground">{typeLabels[type]?.th || type}</span>
+                    <span className="text-sm font-medium text-foreground">
+                      {language === 'th' ? (typeLabels[type]?.th || type) : (typeLabels[type]?.en || type)}
+                    </span>
                   </div>
                   <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
                     {items.length}
@@ -289,8 +293,8 @@ function HierarchyView({ onNodeClick, searchQuery = '' }: HierarchyViewProps) {
                                     artefact.riskLevel === 'medium' ? "bg-warning/10 text-warning" :
                                       "bg-muted"
                                 )}>
-                                  {artefact.riskLevel === 'high' ? '🔴 High' :
-                                    artefact.riskLevel === 'medium' ? '🟡 Medium' : '🟢 Low'}
+                                  {artefact.riskLevel === 'high' ? (language === 'th' ? '🔴 สูง' : '🔴 High') :
+                                    artefact.riskLevel === 'medium' ? (language === 'th' ? '🟡 ปานกลาง' : '🟡 Medium') : (language === 'th' ? '🟢 ต่ำ' : '🟢 Low')}
                                 </span>
                               )}
                             </div>
@@ -313,7 +317,9 @@ function HierarchyView({ onNodeClick, searchQuery = '' }: HierarchyViewProps) {
           {typeOrder.map((type) => (
             <div key={type} className="flex items-center gap-1">
               <div className={cn("w-2 h-2 rounded-full", typeColors[type])} />
-              <span className="text-[10px] text-muted-foreground">{typeLabels[type]?.th}</span>
+              <span className="text-[10px] text-muted-foreground">
+                {language === 'th' ? (typeLabels[type]?.th || type) : (typeLabels[type]?.en || type)}
+              </span>
             </div>
           ))}
         </div>
@@ -349,6 +355,8 @@ function FloatingInsightPanel({
   setSimulationAction,
   setImpactMode
 }: FloatingInsightPanelProps) {
+  const { t, language } = useLanguage();
+
   // Find related artefacts (for normal mode)
   const upstreamRels = relationships.filter((r) => r.target === artefact.id);
   const downstreamRels = relationships.filter((r) => r.source === artefact.id);
@@ -470,8 +478,8 @@ function FloatingInsightPanel({
 
               {/* Labels */}
               <div className="flex justify-between mt-3 px-2">
-                <span className="text-[10px] text-blue-500 font-medium">← ส่งข้อมูลเข้า</span>
-                <span className="text-[10px] text-amber-500 font-medium">รับข้อมูลออก →</span>
+                <span className="text-[10px] text-blue-500 font-medium">← {t('detail.systemsSendingData')}</span>
+                <span className="text-[10px] text-amber-500 font-medium">{t('detail.systemsReceivingData')} →</span>
               </div>
             </div>
 
@@ -484,8 +492,8 @@ function FloatingInsightPanel({
                     <ArrowDownToLine className="w-3 h-3 text-white" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-semibold text-white">Upstream</h4>
-                    <p className="text-[9px] text-blue-100">ระบบที่ส่งข้อมูลให้ {artefact.name}</p>
+                    <h4 className="text-sm font-semibold text-white">{t('detail.upstream')}</h4>
+                    <p className="text-[9px] text-blue-100">{t('detail.systemsSendingData')} {artefact.name}</p>
                   </div>
                 </div>
                 <span className="px-2 py-0.5 text-xs font-bold text-blue-600 bg-white rounded-full">{impactUpstream.length}</span>
@@ -533,8 +541,8 @@ function FloatingInsightPanel({
                     <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mx-auto mb-2">
                       <ArrowDownToLine className="w-5 h-5 text-blue-400" />
                     </div>
-                    <p className="text-xs text-muted-foreground">ไม่มีระบบที่ส่งข้อมูลเข้า</p>
-                    <p className="text-[10px] text-muted-foreground/60 mt-0.5">ระบบนี้ไม่ขึ้นกับ input จากที่อื่น</p>
+                    <p className="text-xs text-muted-foreground">{t('detail.noUpstream')}</p>
+                    <p className="text-[10px] text-muted-foreground/60 mt-0.5">{language === 'th' ? 'ระบบนี้ไม่ขึ้นกับ input จากที่อื่น' : 'This system does not depend on external inputs'}</p>
                   </div>
                 )}
               </div>
@@ -549,8 +557,8 @@ function FloatingInsightPanel({
                     <ArrowUpFromLine className="w-3 h-3 text-white" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-semibold text-white">Downstream</h4>
-                    <p className="text-[9px] text-amber-100">ระบบที่รับข้อมูลจาก {artefact.name}</p>
+                    <h4 className="text-sm font-semibold text-white">{t('detail.downstream')}</h4>
+                    <p className="text-[9px] text-amber-100">{t('detail.systemsReceivingData')} {artefact.name}</p>
                   </div>
                 </div>
                 <span className="px-2 py-0.5 text-xs font-bold text-amber-600 bg-white rounded-full">{impactDownstream.length}</span>
@@ -603,8 +611,8 @@ function FloatingInsightPanel({
                     <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mx-auto mb-2">
                       <ArrowUpFromLine className="w-5 h-5 text-amber-400" />
                     </div>
-                    <p className="text-xs text-muted-foreground">ไม่มีระบบที่รับข้อมูลออก</p>
-                    <p className="text-[10px] text-muted-foreground/60 mt-0.5">ไม่มีระบบอื่นที่ขึ้นกับ output นี้</p>
+                    <p className="text-xs text-muted-foreground">{t('detail.noDownstream')}</p>
+                    <p className="text-[10px] text-muted-foreground/60 mt-0.5">{language === 'th' ? 'ไม่มีระบบอื่นที่ขึ้นกับ output นี้' : 'No other systems depend on this output'}</p>
                   </div>
                 )}
               </div>
@@ -650,26 +658,26 @@ function FloatingInsightPanel({
           <>
             {/* Normal Mode - Description */}
             <div>
-              <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-1.5">รายละเอียด</h4>
+              <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-1.5">{t('detail.details')}</h4>
               <p className="text-sm text-foreground leading-relaxed">{artefact.description}</p>
             </div>
 
             {/* Metadata Grid */}
             <div className="grid grid-cols-2 gap-2">
               <div className="p-2 bg-muted/50 rounded-lg">
-                <p className="text-[10px] text-muted-foreground">ผู้รับผิดชอบ</p>
+                <p className="text-[10px] text-muted-foreground">{t('detail.owner')}</p>
                 <p className="text-xs font-medium text-foreground truncate">{artefact.owner}</p>
               </div>
               <div className="p-2 bg-muted/50 rounded-lg">
-                <p className="text-[10px] text-muted-foreground">หน่วยงาน</p>
+                <p className="text-[10px] text-muted-foreground">{t('detail.department')}</p>
                 <p className="text-xs font-medium text-foreground truncate">{artefact.department}</p>
               </div>
               <div className="p-2 bg-muted/50 rounded-lg">
-                <p className="text-[10px] text-muted-foreground">เวอร์ชัน</p>
+                <p className="text-[10px] text-muted-foreground">{t('detail.version')}</p>
                 <p className="text-xs font-medium text-foreground">{artefact.version}</p>
               </div>
               <div className="p-2 bg-muted/50 rounded-lg">
-                <p className="text-[10px] text-muted-foreground">อัพเดต</p>
+                <p className="text-[10px] text-muted-foreground">{t('detail.updated')}</p>
                 <p className="text-xs font-medium text-foreground">{artefact.lastUpdated}</p>
               </div>
             </div>
@@ -680,10 +688,10 @@ function FloatingInsightPanel({
                 <div className="w-5 h-5 rounded-full bg-blue-500/10 flex items-center justify-center">
                   <ArrowDownToLine className="w-3 h-3 text-blue-500" />
                 </div>
-                <h4 className="text-xs font-semibold text-foreground">Upstream</h4>
+                <h4 className="text-xs font-semibold text-foreground">{t('detail.upstream')}</h4>
                 <span className="text-[10px] text-muted-foreground">({upstream.length})</span>
               </div>
-              <p className="text-[10px] text-muted-foreground mb-2">ระบบที่ส่งข้อมูลเข้ามา</p>
+              <p className="text-[10px] text-muted-foreground mb-2">{t('detail.systemsSendingData')}</p>
               {upstream.length > 0 ? (
                 <div className="space-y-1">
                   {upstream.slice(0, 4).map(item => (
@@ -696,7 +704,7 @@ function FloatingInsightPanel({
                 </div>
               ) : (
                 <div className="p-2 border border-dashed border-border rounded-lg text-center">
-                  <p className="text-[10px] text-muted-foreground">ไม่มีระบบที่ส่งข้อมูลเข้ามา</p>
+                  <p className="text-[10px] text-muted-foreground">{t('detail.noUpstream')}</p>
                 </div>
               )}
             </div>
@@ -707,10 +715,10 @@ function FloatingInsightPanel({
                 <div className="w-5 h-5 rounded-full bg-amber-500/10 flex items-center justify-center">
                   <ArrowUpFromLine className="w-3 h-3 text-amber-500" />
                 </div>
-                <h4 className="text-xs font-semibold text-foreground">Downstream</h4>
+                <h4 className="text-xs font-semibold text-foreground">{t('detail.downstream')}</h4>
                 <span className="text-[10px] text-muted-foreground">({downstream.length})</span>
               </div>
-              <p className="text-[10px] text-muted-foreground mb-2">ระบบที่รับข้อมูลไป</p>
+              <p className="text-[10px] text-muted-foreground mb-2">{t('detail.systemsReceivingData')}</p>
               {downstream.length > 0 ? (
                 <div className="space-y-1">
                   {downstream.slice(0, 4).map(item => (
@@ -723,7 +731,7 @@ function FloatingInsightPanel({
                 </div>
               ) : (
                 <div className="p-2 border border-dashed border-border rounded-lg text-center">
-                  <p className="text-[10px] text-muted-foreground">ไม่มีระบบที่รับข้อมูลไป</p>
+                  <p className="text-[10px] text-muted-foreground">{t('detail.noDownstream')}</p>
                 </div>
               )}
             </div>
@@ -739,7 +747,7 @@ function FloatingInsightPanel({
             className="w-full px-4 py-2.5 bg-muted text-foreground font-medium rounded-lg hover:bg-muted/80 transition-colors flex items-center justify-center gap-2 text-sm"
           >
             <X className="w-4 h-4" />
-            ปิดโหมดวิเคราะห์
+            {t('detail.close')}
           </button>
         ) : (
           <motion.button
@@ -749,7 +757,7 @@ function FloatingInsightPanel({
             className="w-full px-4 py-2.5 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 text-sm"
           >
             <AlertTriangle className="w-4 h-4" />
-            วิเคราะห์ผลกระทบ
+            {t('detail.analyzeImpact')}
           </motion.button>
         )}
       </div>
@@ -758,6 +766,7 @@ function FloatingInsightPanel({
 }
 
 function EAGraphInner() {
+  const { t, language } = useLanguage();
   const { role } = useAuth();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition } = useReactFlow();
@@ -1255,7 +1264,7 @@ function EAGraphInner() {
                     className="flex items-center gap-2 px-3 py-2 bg-card/90 backdrop-blur border border-border rounded-lg shadow-card hover:bg-muted transition-colors"
                   >
                     <History className="w-4 h-4" />
-                    <span className="text-sm hidden sm:inline">ประวัติ</span>
+                    <span className="text-sm hidden sm:inline">{language === 'th' ? 'ประวัติ' : 'History'}</span>
                   </button>
                 </motion.div>
               </Panel>
@@ -1305,8 +1314,8 @@ function EAGraphInner() {
             >
               <div className="px-3 py-2 border-b flex items-center justify-between">
                 <div>
-                  <h3 className="font-semibold text-sm">Artefact Library</h3>
-                  <p className="text-[10px] text-muted-foreground">ลากไปวางบน Canvas</p>
+                  <h3 className="font-semibold text-sm">{t('graph.artefactLibrary')}</h3>
+                  <p className="text-[10px] text-muted-foreground">{language === 'th' ? 'ลากไปวางบน Canvas' : 'Drag to Canvas'}</p>
                 </div>
                 <button
                   onClick={() => setShowFloatingPanel(false)}
@@ -1325,7 +1334,7 @@ function EAGraphInner() {
                       <div key={type} className="space-y-1">
                         <h4 className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1.5">
                           <span className={cn("w-1.5 h-1.5 rounded-full", typeColors[type])}></span>
-                          {typeLabels[type]?.th || type}
+                          {language === 'th' ? (typeLabels[type]?.th || type) : (typeLabels[type]?.en || type)}
                         </h4>
                         <div className="space-y-1">
                           {typeArtefacts.map(artefact => (
@@ -1410,8 +1419,8 @@ function EAGraphInner() {
                 {/* Header */}
                 <div className="px-4 py-2 border-b flex items-center justify-between">
                   <div>
-                    <h3 className="font-semibold">Artefact Library</h3>
-                    <p className="text-xs text-muted-foreground">เลือก Artefact เพื่อดูรายละเอียด</p>
+                    <h3 className="font-semibold">{t('graph.artefactLibrary')}</h3>
+                    <p className="text-xs text-muted-foreground">{language === 'th' ? 'เลือก Artefact เพื่อดูรายละเอียด' : 'Select Artefact to view details'}</p>
                   </div>
                   <button
                     onClick={() => setShowMobileLibrary(false)}
@@ -1432,7 +1441,7 @@ function EAGraphInner() {
                         <div key={type} className="space-y-2">
                           <h4 className="text-xs font-bold uppercase text-muted-foreground flex items-center gap-2">
                             <span className={cn("w-2 h-2 rounded-full", typeColors[type])}></span>
-                            {typeLabels[type]?.th || type} ({typeArtefacts.length})
+                            {language === 'th' ? (typeLabels[type]?.th || type) : (typeLabels[type]?.en || type)} ({typeArtefacts.length})
                           </h4>
                           <div className="grid grid-cols-2 gap-2">
                             {typeArtefacts.map(artefact => (
