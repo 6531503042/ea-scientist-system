@@ -187,7 +187,7 @@ export function AppSidebar() {
               </div>
               <div className="overflow-hidden min-w-0">
                 <h1 className="text-sm font-bold truncate">{siteConfig.shortName}</h1>
-                <p className="text-[10px] text-muted-foreground truncate">
+                <p className="text-[10px] text-muted-foreground truncate" suppressHydrationWarning>
                   {language === 'th' ? siteConfig.organization : 'Department of Science Service'}
                 </p>
               </div>

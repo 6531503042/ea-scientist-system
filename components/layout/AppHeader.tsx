@@ -59,25 +59,22 @@ export function AppHeader({ title, subtitle }: AppHeaderProps) {
       {/* Main Header Row */}
       <div className="flex items-center justify-between h-16 sm:h-[72px] px-4 sm:px-6">
         <div className="min-w-0 flex-1">
-          {/* Breadcrumb with icon */}
-          <div className="flex items-center gap-1.5 text-xs sm:text-sm mb-1">
-            <span className="text-muted-foreground flex-shrink-0">
+          {/* Breadcrumb - simple style, no icons, smaller text */}
+          <nav className="flex items-center space-x-1.5 text-[10px] md:text-xs mb-2.5">
+            <span className="text-muted-foreground/70 hover:text-muted-foreground transition-colors cursor-pointer">
               {language === 'th' ? 'ระบบสถาปัตยกรรมองค์กร' : 'Enterprise Architecture'}
             </span>
             {currentBreadcrumb && (
               <>
-                <ChevronRight className="w-3 h-3 text-muted-foreground/50 flex-shrink-0" />
-                <div className="flex items-center gap-1.5">
-                  {Icon && <Icon className={cn("w-3.5 h-3.5 flex-shrink-0", currentBreadcrumb.color)} />}
-                  <span className={cn("font-medium truncate", currentBreadcrumb.color)}>
-                    {language === 'th' ? currentBreadcrumb.label : currentBreadcrumb.labelEn}
-                  </span>
-                </div>
+                <ChevronRight className="w-2.5 h-2.5 md:w-3 md:h-3 text-muted-foreground/30" />
+                <span className="text-muted-foreground font-medium truncate">
+                  {language === 'th' ? currentBreadcrumb.label : currentBreadcrumb.labelEn}
+                </span>
               </>
             )}
-          </div>
-          {/* Title with gradient */}
-          <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent truncate">
+          </nav>
+          {/* Title */}
+          <h1 className="text-base md:text-lg font-semibold text-foreground tracking-tight truncate">
             {title}
           </h1>
         </div>

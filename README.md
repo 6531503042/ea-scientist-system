@@ -25,7 +25,7 @@ frontend-next/
 ├── app/                    # Next.js App Router
 │   ├── (auth)/            # Auth routes group
 │   │   └── login/         # Login page
-│   ├── (dashboard)/       # Dashboard routes group
+│   ├── (app)/       # Dashboard routes group
 │   │   ├── layout.tsx    # Dashboard layout
 │   │   ├── page.tsx      # Dashboard home
 │   │   ├── artefacts/     # Artefacts page

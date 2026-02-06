@@ -10,29 +10,29 @@ export type AuditAction =
     | 'login'
     | 'logout'
     | 'export'
-    | 'import';
+    | 'import'
+    | 'view'
+    | 'relationship';
+
+export type AuditTargetType = 'artefact' | 'user' | 'relationship' | 'report' | 'system';
 
 export type AuditSeverity = 'info' | 'warning' | 'error' | 'critical';
 
 export type AuditLog = {
-    _id: string;
+    id: string;
     timestamp: string;
-    userId: string;
-    userName: string;
-    userRole?: string;
     action: AuditAction;
-    module: string;
-    resourceType?: string;
-    resourceId?: string;
-    resourceName?: string;
-    description: string;
-    ipAddress?: string;
+    target: string;
+    targetType: AuditTargetType;
+    user: string; // User Name
+    userId?: string;
+    userRole: string;
+    department?: string;
+    details?: string;
+    ipAddress: string;
     userAgent?: string;
-    severity: AuditSeverity;
-    changes?: {
-        before?: Record<string, unknown>;
-        after?: Record<string, unknown>;
-    };
+    sessionId?: string;
+    severity?: AuditSeverity;
     metadata?: Record<string, unknown>;
 };
 

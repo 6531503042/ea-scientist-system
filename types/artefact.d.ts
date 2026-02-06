@@ -11,82 +11,58 @@ export type ArtefactType =
     | 'security'
     | 'integration';
 
-export type ArtefactStatus = 'draft' | 'active' | 'deprecated' | 'archived';
+export type ArtefactStatus = 'active' | 'draft' | 'deprecated' | 'planned' | 'archived';
 
-export type ArtefactClassification = 'public' | 'internal' | 'confidential' | 'restricted';
+export type RiskLevel = 'high' | 'medium' | 'low' | 'none';
 
-export type ArtefactRelation = {
-    _id: string;
-    targetId: string;
-    type: 'uses' | 'depends_on' | 'owns' | 'manages' | 'contains' | 'integrates_with';
-    description?: string;
-};
+export type UsageFrequency = 'high' | 'medium' | 'low';
 
 export type Artefact = {
-    _id: string;
+    id: string;
     name: string;
-    nameTh?: string;
+    nameTh: string; // Required in mockData
     type: ArtefactType;
-    description?: string;
+    description: string;
+    owner: string;
+    department: string;
     status: ArtefactStatus;
-    classification: ArtefactClassification;
-    owner?: string;
-    department?: string;
-    version?: string;
-    relations: ArtefactRelation[];
-    attributes: Record<string, unknown>;
+    riskLevel: RiskLevel;
+    lastUpdated: string; // ISO Date string
+    version: string;
+    usageFrequency: UsageFrequency;
+    dependencies: number;
+    dependents: number;
+
+    // Optional attributes for detail view
+    classification?: 'public' | 'internal' | 'confidential' | 'restricted';
+    attributes?: Record<string, unknown>;
     tags?: string[];
-    createdAt?: string;
-    updatedAt?: string;
-    createdBy?: string;
-    updatedBy?: string;
 };
 
-export type CreateArtefactInput = Omit<Artefact, '_id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'>;
-export type UpdateArtefactInput = Partial<CreateArtefactInput>;
+export type RelationshipType = 'supports' | 'uses' | 'depends_on' | 'manages' | 'integrates_with';
 
-// Type-specific attributes
-export type BusinessArtefactAttributes = {
-    processOwner?: string;
-    businessFunction?: string;
-    stakeholders?: string[];
-    kpis?: string[];
-};
+export interface Relationship {
+    id: string;
+    source: string;
+    target: string;
+    type: RelationshipType;
+    label: string;
+}
 
-export type ApplicationArtefactAttributes = {
-    vendor?: string;
-    version?: string;
-    platform?: string;
-    deploymentType?: 'on-premise' | 'cloud' | 'hybrid';
-    maintenanceWindow?: string;
-};
+export interface DashboardMetric {
+    label: string;
+    value: number;
+    change: number;
+    trend: 'up' | 'down' | 'stable';
+    icon: string;
+}
 
-export type DataArtefactAttributes = {
-    dataOwner?: string;
-    dataClassification?: string;
-    retentionPeriod?: string;
-    storageLocation?: string;
-};
-
-export type TechnologyArtefactAttributes = {
-    vendor?: string;
-    model?: string;
-    location?: string;
-    capacity?: string;
-    expiryDate?: string;
-};
-
-export type SecurityArtefactAttributes = {
-    securityLevel?: string;
-    complianceFramework?: string[];
-    lastAuditDate?: string;
-    riskLevel?: 'low' | 'medium' | 'high' | 'critical';
-};
-
-export type IntegrationArtefactAttributes = {
-    protocol?: string;
-    dataFormat?: string;
-    frequency?: string;
-    sourceSystem?: string;
-    targetSystem?: string;
-};
+export interface ArtefactVersion {
+    id: string;
+    artefactId: string;
+    version: string;
+    changes: string;
+    changedBy: string;
+    changedAt: string;
+    previousVersion: string | null;
+}
