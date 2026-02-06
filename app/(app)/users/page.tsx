@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Users as UsersIcon, Lock, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUsers } from '@/hooks/useUsers';
@@ -14,6 +14,12 @@ import { DepartmentsTable } from './_components/DepartmentsTable';
 import { CreateUserModal } from './_components/CreateUserModal';
 import { EditUserModal } from './_components/EditUserModal';
 import { CreateRoleModal } from './_components/CreateRoleModal';
+import {
+  UsersTableSkeleton,
+  RolesTableSkeleton,
+  DepartmentsTableSkeleton,
+  FilterSidebarSkeleton,
+} from './_components/UserManagementSkeleton';
 import { Button } from '@/components/ui/button';
 import type { User as UserType } from '@/types';
 
@@ -31,6 +37,11 @@ export default function UsersPage() {
   const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserType | null>(null);
   const [isCreateRoleModalOpen, setIsCreateRoleModalOpen] = useState(false);
+
+  // Loading states per tab
+  const isUsersLoading = usersLoading || rolesLoading;
+  const isRolesLoading = rolesLoading;
+  const isDepartmentsLoading = deptsLoading;
 
   // Calculate user counts per role
   const userCounts = useMemo(() => {
@@ -75,8 +86,6 @@ export default function UsersPage() {
     });
   }, [filteredUsers, searchQuery]);
 
-  const isLoading = usersLoading || rolesLoading || deptsLoading;
-
   // Handlers
   const handleEditUser = (user: UserType) => {
     setEditingUser(user);
@@ -85,7 +94,6 @@ export default function UsersPage() {
 
   const handleEditUserSubmit = (data: Partial<UserType>) => {
     console.log('Edit user:', data);
-    // TODO: API call to update user
     setIsEditUserModalOpen(false);
     setEditingUser(null);
   };
@@ -99,12 +107,10 @@ export default function UsersPage() {
     isSystemRole: boolean;
   }) => {
     console.log('Create role:', data);
-    // TODO: API call to create role
   };
 
   const handleEditRole = (role: typeof roles[0]) => {
     console.log('Edit role:', role);
-    // TODO: Open edit role modal
   };
 
   return (
@@ -113,116 +119,162 @@ export default function UsersPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 sm:p-6 pb-0 sm:pb-0">
         <p className="text-sm text-muted-foreground">จัดการข้อมูลผู้ใช้งาน บทบาท และสิทธิการเข้าถึงเมนูต่างๆ ในระบบ</p>
         <div className="flex gap-2">
-          {activeTab === 'users' && (
-            <Button className="gap-2" onClick={() => setIsCreateUserModalOpen(true)}>
-              <Plus className="w-4 h-4" />
-              เพิ่มผู้ใช้งาน
-            </Button>
-          )}
-          {activeTab === 'roles' && (
-            <Button className="gap-2" onClick={() => setIsCreateRoleModalOpen(true)}>
-              <Plus className="w-4 h-4" />
-              เพิ่มบทบาท
-            </Button>
-          )}
-          {/* Departments button moved inside DepartmentsTable */}
+          <AnimatePresence mode="wait">
+            {activeTab === 'users' && (
+              <motion.div
+                key="users-btn"
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.15 }}
+              >
+                <Button className="gap-2" onClick={() => setIsCreateUserModalOpen(true)}>
+                  <Plus className="w-4 h-4" />
+                  เพิ่มผู้ใช้งาน
+                </Button>
+              </motion.div>
+            )}
+            {activeTab === 'roles' && (
+              <motion.div
+                key="roles-btn"
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.15 }}
+              >
+                <Button className="gap-2" onClick={() => setIsCreateRoleModalOpen(true)}>
+                  <Plus className="w-4 h-4" />
+                  เพิ่มบทบาท
+                </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
       {/* Tabs */}
       <div className="overflow-x-auto px-4 sm:px-6 py-4 scrollbar-hide">
         <div className="flex items-center gap-1 p-1 bg-muted rounded-xl w-fit min-w-max">
-          <button
-            onClick={() => setActiveTab('users')}
-            className={cn(
-              "flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
-              activeTab === 'users'
-                ? "bg-card shadow-sm text-primary"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <UsersIcon className="w-4 h-4" />
-            <span className="hidden xs:inline">ผู้ใช้งาน</span>
-            <span className="xs:hidden">ผู้ใช้</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('roles')}
-            className={cn(
-              "flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
-              activeTab === 'roles'
-                ? "bg-card shadow-sm text-primary"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <Lock className="w-4 h-4" />
-            <span className="hidden xs:inline">สิทธิ</span>
-            <span className="xs:hidden">สิทธิ</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('departments')}
-            className={cn(
-              "flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
-              activeTab === 'departments'
-                ? "bg-card shadow-sm text-primary"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <Building2 className="w-4 h-4" />
-            <span className="hidden xs:inline">หน่วยงาน</span>
-            <span className="xs:hidden">หน่วยงาน</span>
-          </button>
+          {[
+            { id: 'users', icon: UsersIcon, label: 'ผู้ใช้งาน', shortLabel: 'ผู้ใช้' },
+            { id: 'roles', icon: Lock, label: 'สิทธิ', shortLabel: 'สิทธิ' },
+            { id: 'departments', icon: Building2, label: 'หน่วยงาน', shortLabel: 'หน่วยงาน' },
+          ].map((tab) => (
+            <motion.button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as typeof activeTab)}
+              className={cn(
+                "relative flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap",
+                activeTab === tab.id
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              {activeTab === tab.id && (
+                <motion.div
+                  layoutId="activeTabBg"
+                  className="absolute inset-0 bg-card shadow-sm rounded-lg"
+                  transition={{ type: "spring", duration: 0.4, bounce: 0.15 }}
+                />
+              )}
+              <tab.icon className="w-4 h-4 relative z-10" />
+              <span className="hidden xs:inline relative z-10">{tab.label}</span>
+              <span className="xs:hidden relative z-10">{tab.shortLabel}</span>
+            </motion.button>
+          ))}
         </div>
       </div>
 
-      {/* Content */}
-      {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      ) : activeTab === 'users' ? (
-        <div className="flex flex-1 overflow-hidden">
-          {/* Filter Sidebar - Desktop only */}
-          <div className="hidden lg:block border-r border-border">
-            <FilterSidebar
-              roles={roles}
-              selectedRole={selectedRole}
-              onRoleChange={setSelectedRole}
-              userCounts={userCounts}
-              totalUsers={users.length}
-            />
-          </div>
+      {/* Content with AnimatePresence for smooth transitions */}
+      <AnimatePresence mode="wait">
+        {activeTab === 'users' && (
+          <motion.div
+            key="users-content"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="flex flex-1 overflow-hidden"
+          >
+            {/* Filter Sidebar - Desktop only */}
+            <div className="hidden lg:block border-r border-border">
+              {isUsersLoading ? (
+                <FilterSidebarSkeleton />
+              ) : (
+                <FilterSidebar
+                  roles={roles}
+                  selectedRole={selectedRole}
+                  onRoleChange={setSelectedRole}
+                  userCounts={userCounts}
+                  totalUsers={users.length}
+                />
+              )}
+            </div>
 
-          {/* Users Table */}
-          <div className="flex-1 overflow-auto p-4 sm:p-6 pt-0 sm:pt-0">
-            <UsersTable
-              users={searchedUsers}
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-              onViewUser={(user) => console.log('View:', user)}
-              onEditUser={handleEditUser}
-              onDeleteUser={(id) => console.log('Delete:', id)}
-              onResetPassword={(id) => console.log('Reset password:', id)}
-            />
-          </div>
-        </div>
-      ) : activeTab === 'roles' ? (
-        <div className="flex-1 overflow-auto p-4 sm:p-6 pt-0 sm:pt-0">
-          <RolesTable
-            roles={roles}
-            onEditRole={handleEditRole}
-            onDeleteRole={(id) => console.log('Delete role:', id)}
-          />
-        </div>
-      ) : (
-        <div className="flex-1 overflow-auto p-4 sm:p-6 pt-0 sm:pt-0">
-          <DepartmentsTable
-            departments={departments}
-            onCreate={(data) => console.log('Create department:', data)}
-            onUpdate={(id, data) => console.log('Update department:', id, data)}
-            onDelete={(id) => console.log('Delete department:', id)}
-          />
-        </div>
-      )}
+            {/* Users Table */}
+            <div className="flex-1 overflow-auto p-4 sm:p-6 pt-0 sm:pt-0">
+              {isUsersLoading ? (
+                <UsersTableSkeleton />
+              ) : (
+                <UsersTable
+                  users={searchedUsers}
+                  searchQuery={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  onViewUser={(user) => console.log('View:', user)}
+                  onEditUser={handleEditUser}
+                  onDeleteUser={(id) => console.log('Delete:', id)}
+                  onResetPassword={(id) => console.log('Reset password:', id)}
+                />
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {activeTab === 'roles' && (
+          <motion.div
+            key="roles-content"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="flex-1 overflow-auto p-4 sm:p-6 pt-0 sm:pt-0"
+          >
+            {isRolesLoading ? (
+              <RolesTableSkeleton />
+            ) : (
+              <RolesTable
+                roles={roles}
+                onEditRole={handleEditRole}
+                onDeleteRole={(id) => console.log('Delete role:', id)}
+              />
+            )}
+          </motion.div>
+        )}
+
+        {activeTab === 'departments' && (
+          <motion.div
+            key="departments-content"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="flex-1 overflow-auto p-4 sm:p-6 pt-0 sm:pt-0"
+          >
+            {isDepartmentsLoading ? (
+              <DepartmentsTableSkeleton />
+            ) : (
+              <DepartmentsTable
+                departments={departments}
+                onCreate={(data) => console.log('Create department:', data)}
+                onUpdate={(id, data) => console.log('Update department:', id, data)}
+                onDelete={(id) => console.log('Delete department:', id)}
+              />
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Modals */}
       <CreateUserModal

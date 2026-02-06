@@ -10,7 +10,6 @@ const getHeaderInfo = (path: string) => {
     case '/graph': return { title: 'แผนผังสถาปัตยกรรม', subtitle: '' };
     case '/artefacts': return { title: 'Artefacts ทั้งหมด', subtitle: '' };
     case '/users': return { title: 'จัดการผู้ใช้งาน', subtitle: '' };
-    case '/wifi': return { title: 'WiFi Authentication', subtitle: '' };
     case '/audit': return { title: 'ข้อมูลการใช้งาน', subtitle: '' };
     case '/settings': return { title: 'ตั้งค่าระบบ', subtitle: '' };
     default: return { title: 'EA Management System', subtitle: '' };
@@ -30,7 +29,7 @@ export default function DashboardLayout({
       <AppSidebar />
       <main className="flex-1 flex flex-col overflow-hidden">
         <AppHeader title={header.title} subtitle={header.subtitle} />
-        <div className={`flex-1 bg-background ${pathname === '/graph' ? 'p-0 overflow-hidden' : 'p-6 overflow-y-auto'}`}>
+        <div className={`flex-1 bg-background ${['/graph', '/users'].includes(pathname) ? 'p-0 overflow-hidden' : 'p-6 overflow-y-auto'}`}>
           {children}
         </div>
       </main>

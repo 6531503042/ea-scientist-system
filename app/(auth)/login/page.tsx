@@ -3,157 +3,279 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { Eye, EyeOff, Loader2, RefreshCcw } from 'lucide-react';
-import Image from 'next/image';
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { useToast } from "@/components/ui/use-toast"
+import { Loader2, User, Eye, EyeOff, Copy, Check, Network } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { motion } from 'framer-motion';
 
-export default function LoginPage() {
-    const router = useRouter();
-    const { login } = useAuth();
-    const [loading, setLoading] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
+const testAccounts = {
+    admin: [
+        { name: 'ผู้ดูแลระบบ', email: 'admin@dss.go.th', password: 'password123', role: 'admin' },
+    ],
+    architect: [
+        { name: 'Somchai A.', email: 'somchai@dss.go.th', password: 'password123', role: 'architect' },
+    ],
+    executive: [
+        { name: 'Director N.', email: 'director@dss.go.th', password: 'password123', role: 'executive' },
+    ],
+};
 
-    const handleLogin = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        setError('');
+interface TestAccountRowProps {
+    name: string;
+    email: string;
+    password: string;
+    onUse: (email: string, password: string) => void;
+}
 
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
+function TestAccountRow({ name, email, password, onUse }: TestAccountRowProps) {
+    const [copied, setCopied] = useState<'email' | 'password' | null>(null);
 
-        // Mock Login Logic
-        // In a real app, this would call an API
-        if (email && password) {
-            // Determine role based on email for demo purposes
-            let role = 'user';
-            if (email.includes('admin')) role = 'admin';
-            if (email.includes('architect')) role = 'architect';
-            if (email.includes('exec')) role = 'executive';
-
-            const mockUser = {
-                id: '1',
-                name: email.split('@')[0],
-                email,
-                role,
-                avatar: 'https://github.com/shadcn.png'
-            };
-
-            login('mock-jwt-token', mockUser);
-            router.push('/dashboard');
-        } else {
-            setError('Please enter email and password');
-            setLoading(false);
-        }
+    const copyToClipboard = (text: string, type: 'email' | 'password') => {
+        navigator.clipboard.writeText(text);
+        setCopied(type);
+        setTimeout(() => setCopied(null), 2000);
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
-            <div className="w-full max-w-sm lg:max-w-4xl grid lg:grid-cols-2 gap-4 bg-background rounded-2xl shadow-xl overflow-hidden border border-border">
-
-                {/* Left Side - Visual */}
-                <div className="hidden lg:flex flex-col justify-between p-10 bg-zinc-900 text-white relative">
-                    <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1664575602276-acd073f104c1?q=80&w=2940&auto=format&fit=crop')] bg-cover bg-center opacity-40 mix-blend-overlay"></div>
-                    <div className="relative z-10">
-                        <div className="flex items-center gap-2 text-lg font-bold">
-                            <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center backdrop-blur">
-                                <RefreshCcw className="w-5 h-5" />
-                            </div>
-                            The Insight Compass
-                        </div>
-                    </div>
-                    <div className="relative z-10 space-y-4">
-                        <blockquote className="space-y-2">
-                            <p className="text-lg font-medium leading-relaxed">
-                                &ldquo;This platform has completely transformed how we visualize and manage our enterprise architecture. The insight map is a game changer.&rdquo;
-                            </p>
-                            <footer className="text-sm text-white/80">
-                                Sofia Davis, Lead Architect
-                            </footer>
-                        </blockquote>
-                    </div>
+        <div className="flex items-center justify-between py-3 px-4 hover:bg-muted/50 rounded-lg transition-colors">
+            <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <User className="w-5 h-5 text-primary" />
                 </div>
-
-                {/* Right Side - Form */}
-                <div className="p-8 lg:p-10 flex flex-col justify-center">
-                    <div className="flex flex-col space-y-2 text-center mb-8">
-                        <h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
-                        <p className="text-sm text-muted-foreground">
-                            Enter your credentials to access your account
-                        </p>
-                    </div>
-
-                    <form onSubmit={handleLogin} className="space-y-4">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="email">
-                                Email
-                            </label>
-                            <input
-                                id="email"
-                                type="email"
-                                placeholder="name@example.com"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                required
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="password">
-                                Password
-                            </label>
-                            <div className="relative">
-                                <input
-                                    id="password"
-                                    type={showPassword ? 'text' : 'password'}
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pr-10"
-                                    required
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                                >
-                                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                </button>
-                            </div>
-                        </div>
-
-                        {error && (
-                            <motion.div
-                                initial={{ opacity: 0, y: -10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="text-sm text-destructive font-medium bg-destructive/10 p-3 rounded-md"
-                            >
-                                {error}
-                            </motion.div>
-                        )}
-
+                <div>
+                    <p className="font-medium text-sm">{name}</p>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <span>{email}</span>
                         <button
-                            type="submit"
-                            disabled={loading}
-                            className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 w-full"
+                            onClick={() => copyToClipboard(email, 'email')}
+                            className="p-0.5 hover:bg-muted rounded"
                         >
-                            {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                            Sign In
+                            {copied === 'email' ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
                         </button>
-                    </form>
-
-                    <div className="mt-6 text-center text-sm text-muted-foreground">
-                        <p>Demo Credentials:</p>
-                        <div className="mt-2 text-xs bg-muted/50 p-3 rounded-lg border border-border">
-                            <p><code className="font-mono">admin@example.com</code> (Admin)</p>
-                            <p><code className="font-mono">architect@example.com</code> (Architect)</p>
-                            <p><code className="font-mono">user@example.com</code> (User)</p>
-                            <p className="mt-1">Pass: any</p>
-                        </div>
                     </div>
                 </div>
             </div>
+            <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1 text-xs text-muted-foreground font-mono bg-muted px-2 py-1 rounded">
+                    <span>{password}</span>
+                    <button
+                        onClick={() => copyToClipboard(password, 'password')}
+                        className="p-0.5 hover:bg-background rounded"
+                    >
+                        {copied === 'password' ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
+                    </button>
+                </div>
+                <Button size="sm" onClick={() => onUse(email, password)}>
+                    ใช้บัญชีนี้
+                </Button>
+            </div>
+        </div>
+    );
+}
+
+export default function Login() {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [selectedRole, setSelectedRole] = useState<'admin' | 'architect' | 'executive'>('architect');
+    const [showPassword, setShowPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [testAccountsOpen, setTestAccountsOpen] = useState(false);
+    const { login } = useAuth();
+    const router = useRouter(); // Changed from useNavigate
+    const { toast } = useToast();
+
+    // Mock login handler
+    const handleLogin = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        if (!email || !password) return;
+
+        setLoading(true);
+
+        // Simulate API call
+        setTimeout(() => {
+            // Mock successful login with selected role
+            const mockUser = {
+                id: 'user-1',
+                email: email,
+                name: email.split('@')[0],
+                role: selectedRole,
+                avatar: 'https://github.com/shadcn.png' // Added missing prop expected by AuthContext usually
+            };
+
+            login('mock-jwt-token', mockUser);
+
+            toast({
+                title: "เข้าสู่ระบบสำเร็จ",
+                description: `ยินดีต้อนรับกลับเข้าสู่ระบบในฐานะ ${selectedRole}`,
+            });
+
+            router.push('/'); // Changed from navigate('/')
+            setLoading(false);
+        }, 800);
+    };
+
+    const useTestAccount = (testEmail: string, testPassword: string, role: string) => {
+        setEmail(testEmail);
+        setPassword(testPassword);
+        setSelectedRole(role as any);
+        setTestAccountsOpen(false);
+        toast({
+            title: "เลือกบัญชีทดสอบแล้ว",
+            description: `กรุณากดเข้าสู่ระบบเพื่อดำเนินการต่อในฐานะ ${role}`,
+        });
+    };
+
+    return (
+        <div className="flex min-h-screen">
+            {/* Left side - Branding */}
+            <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary via-primary/90 to-primary/80 flex-col items-center justify-center p-12 relative overflow-hidden"
+            >
+                {/* Background decoration */}
+                <div className="absolute inset-0 opacity-10">
+                    <div className="absolute top-20 left-20 w-64 h-64 bg-white rounded-full blur-3xl" />
+                    <div className="absolute bottom-20 right-20 w-96 h-96 bg-accent rounded-full blur-3xl" />
+                </div>
+
+                <div className="relative z-10 text-center text-primary-foreground">
+                    <div className="w-20 h-20 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-6">
+                        <Network className="w-10 h-10" />
+                    </div>
+                    <h1 className="text-3xl font-bold mb-2">EA Management System</h1>
+                    <p className="text-primary-foreground/80 max-w-md">
+                        ระบบจัดการสถาปัตยกรรมองค์กร
+                        <br />
+                        กรมวิทยาศาสตร์บริการ
+                    </p>
+                </div>
+            </motion.div>
+
+            {/* Right side - Login Form */}
+            <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="flex-1 flex items-center justify-center p-8 bg-background"
+            >
+                <Card className="w-full max-w-md border-0 shadow-lg">
+                    <CardHeader className="space-y-1 text-center">
+                        <CardTitle className="text-2xl">เข้าสู่ระบบ</CardTitle>
+                        <CardDescription>
+                            กรอกอีเมลและรหัสผ่านเพื่อเข้าสู่ระบบ
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <form onSubmit={handleLogin} className="space-y-4">
+                            {/* Role Selection */}
+
+
+                            <div className="space-y-2">
+                                <Label htmlFor="email">อีเมล</Label>
+                                <Input
+                                    id="email"
+                                    type="email"
+                                    placeholder="example@dss.go.th"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    required
+                                    className="h-11"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="password">รหัสผ่าน</Label>
+                                <div className="relative">
+                                    <Input
+                                        id="password"
+                                        type={showPassword ? "text" : "password"}
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        required
+                                        className="h-11 pr-10"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                    >
+                                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <Button type="submit" className="w-full h-11" disabled={loading}>
+                                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                เข้าสู่ระบบ
+                            </Button>
+                        </form>
+
+                        <div className="relative my-6">
+                            <div className="absolute inset-0 flex items-center">
+                                <span className="w-full border-t" />
+                            </div>
+                            <div className="relative flex justify-center text-xs uppercase">
+                                <span className="bg-card px-2 text-muted-foreground">หรือ</span>
+                            </div>
+                        </div>
+
+                        {/* Test Accounts Button */}
+                        <Dialog open={testAccountsOpen} onOpenChange={setTestAccountsOpen}>
+                            <DialogTrigger asChild>
+                                <Button variant="outline" className="w-full h-11">
+                                    <User className="mr-2 h-4 w-4" />
+                                    ดูบัญชีทดสอบ
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-2xl">
+                                <DialogHeader>
+                                    <DialogTitle>บัญชีผู้ใช้งานทดสอบ</DialogTitle>
+                                    <DialogDescription>
+                                        รายการบัญชีทั้งหมด {Object.values(testAccounts).flat().length} บัญชี - คลิกเพื่อใช้งานหรือคัดลอกข้อมูล
+                                    </DialogDescription>
+                                </DialogHeader>
+
+                                <Tabs defaultValue="admin" className="mt-4">
+                                    <TabsList className="grid w-full grid-cols-3">
+                                        <TabsTrigger value="architect" className="text-xs">
+                                            Architect <span className="ml-1 text-muted-foreground">{testAccounts.architect.length}</span>
+                                        </TabsTrigger>
+                                        <TabsTrigger value="executive" className="text-xs">
+                                            Executive <span className="ml-1 text-muted-foreground">{testAccounts.executive.length}</span>
+                                        </TabsTrigger>
+                                        <TabsTrigger value="admin" className="text-xs">
+                                            Admin <span className="ml-1 text-muted-foreground">{testAccounts.admin.length}</span>
+                                        </TabsTrigger>
+                                    </TabsList>
+
+                                    {Object.entries(testAccounts).map(([role, accounts]) => (
+                                        <TabsContent key={role} value={role}>
+                                            <ScrollArea className="h-[300px] pr-4">
+                                                <div className="space-y-1">
+                                                    {accounts.map((acc) => (
+                                                        <TestAccountRow
+                                                            key={acc.email}
+                                                            name={acc.name}
+                                                            email={acc.email}
+                                                            password={acc.password}
+                                                            onUse={(e, p) => useTestAccount(e, p, acc.role)}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            </ScrollArea>
+                                        </TabsContent>
+                                    ))}
+                                </Tabs>
+                            </DialogContent>
+                        </Dialog>
+                    </CardContent>
+                </Card>
+            </motion.div>
         </div>
     );
 }
