@@ -12,14 +12,14 @@ import {
     DropdownMenuContent,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { UserColumnKey, userColumns } from './columns';
+import type { Column } from './UsersTable';
 
 interface UserTableHeaderProps {
     searchQuery: string;
     onSearchChange: (value: string) => void;
-    visibleColumns: Set<UserColumnKey>;
-    setVisibleColumns: (columns: Set<UserColumnKey>) => void;
-    // totalUsers: number; // Removed as not used in visual design
+    visibleColumns: Set<string>;
+    setVisibleColumns: (columns: Set<string>) => void;
+    columns: Column[];
 }
 
 export function UserTableHeader({
@@ -27,9 +27,10 @@ export function UserTableHeader({
     onSearchChange,
     visibleColumns,
     setVisibleColumns,
+    columns,
 }: UserTableHeaderProps) {
 
-    const toggleColumn = (columnUid: UserColumnKey) => {
+    const toggleColumn = (columnUid: string) => {
         const newVisibleColumns = new Set(visibleColumns);
         if (newVisibleColumns.has(columnUid)) {
             newVisibleColumns.delete(columnUid);
@@ -60,14 +61,14 @@ export function UserTableHeader({
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-[150px]">
-                        {userColumns.map((column) => (
+                        {columns.map((column) => (
                             <DropdownMenuCheckboxItem
                                 key={column.uid}
                                 className="capitalize"
                                 checked={visibleColumns.has(column.uid)}
                                 onCheckedChange={() => toggleColumn(column.uid)}
                             >
-                                {column.nameTh || column.name}
+                                {column.name}
                             </DropdownMenuCheckboxItem>
                         ))}
                     </DropdownMenuContent>
@@ -76,3 +77,4 @@ export function UserTableHeader({
         </div>
     );
 }
+

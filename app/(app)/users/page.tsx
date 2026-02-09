@@ -196,7 +196,7 @@ export default function UsersPage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="flex flex-1 overflow-hidden"
+            className="flex flex-1 overflow-hidden h-full"
           >
             {/* Filter Sidebar - Desktop only */}
             <div className="hidden lg:block border-r border-border">
