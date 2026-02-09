@@ -26,5 +26,6 @@ dist-ssr
 bestpractice-frontend-example/
 example-other-project/
 old-frontend/
+example-production
 
 .next
