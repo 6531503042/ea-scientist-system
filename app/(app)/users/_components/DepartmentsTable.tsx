@@ -18,7 +18,7 @@ import {
     ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { Department } from '@/types';
+import type { Department } from '@/types/department';
 import {
     Dialog,
     DialogContent,

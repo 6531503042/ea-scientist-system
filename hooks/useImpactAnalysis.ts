@@ -2,22 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { Edge, Node } from '@xyflow/react';
-import type { Artefact } from '@/data/mockData';
+import type { Artefact } from '@/types/artefact';
 import { artefacts } from '@/data/mockData';
-
-interface ImpactStats {
-    affected: number;
-    critical: number;
-    upstream: number;
-}
-
-interface UseImpactAnalysisProps {
-    selectedNode: Artefact | null;
-    nodes: Node[];
-    edges: Edge[];
-    setNodes: React.Dispatch<React.SetStateAction<Node[]>>;
-    setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
-}
+import type { ImpactStats, UseImpactAnalysisProps } from '@/types/graph';
 
 export function useImpactAnalysis({
     selectedNode,

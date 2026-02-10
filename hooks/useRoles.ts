@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import type { Role, Permission } from '@/types';
+import type { Role, Permission } from '@/types/role';
 import { mockRoles } from '@/data/mockUserManagement';
 
 type MockRole = typeof mockRoles[number];

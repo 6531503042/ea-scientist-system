@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { Role } from '@/types';
+import type { Role } from '@/types/role';
 
 interface RolesCardProps {
     roles: Role[];

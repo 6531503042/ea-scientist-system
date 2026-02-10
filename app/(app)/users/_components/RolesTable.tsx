@@ -10,7 +10,7 @@ import {
     Check,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { Role } from '@/types';
+import type { Role } from '@/types/role';
 import {
     Dialog,
     DialogContent,

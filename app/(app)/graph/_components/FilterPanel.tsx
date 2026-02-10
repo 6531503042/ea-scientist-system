@@ -3,15 +3,10 @@ import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Filter, Layers, Database, Cpu, Link, Shield, Briefcase, X, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { ArtefactType } from '@/data/mockData';
+import type { ArtefactType } from '@/types/artefact';
 import type { Edge } from '@xyflow/react';
 import { useLanguage } from '@/context/LanguageContext';
-
-interface FilterPanelProps {
-  selectedTypes: ArtefactType[];
-  onFilterChange: (types: ArtefactType[]) => void;
-  relationships?: Edge[];
-}
+import type { FilterPanelProps } from '@/types/graph';
 
 export function FilterPanel({ selectedTypes, onFilterChange, relationships = [] }: FilterPanelProps) {
   const { t, language } = useLanguage();

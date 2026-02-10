@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import type { Artefact, CreateArtefactInput, UpdateArtefactInput, ArtefactType } from '@/types';
+import type { Artefact, ArtefactType } from '@/types/artefact';
 import { artefacts as mockArtefacts } from '@/data/mockData';
 
 // Edge type from mockData

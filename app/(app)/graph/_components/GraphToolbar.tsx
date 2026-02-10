@@ -2,17 +2,7 @@
 
 import { Briefcase, User, Network, FolderTree, Search, PanelRightOpen, PanelRightClose } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-interface GraphToolbarProps {
-    viewMode: 'architect' | 'executive';
-    setViewMode: (mode: 'architect' | 'executive') => void;
-    layoutMode: 'graph' | 'hierarchy';
-    setLayoutMode: (mode: 'graph' | 'hierarchy') => void;
-    showFloatingPanel: boolean;
-    setShowFloatingPanel: (show: boolean) => void;
-    searchQuery: string;
-    setSearchQuery: (query: string) => void;
-}
+import type { GraphToolbarProps } from '@/types/graph';
 
 export function GraphToolbar({
     viewMode,

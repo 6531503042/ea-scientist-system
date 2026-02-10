@@ -1,4 +1,4 @@
-import type { ArtefactType } from './mockData';
+import type { ArtefactType } from '@/types/artefact';
 
 export interface BestPracticeExample {
     id: string;

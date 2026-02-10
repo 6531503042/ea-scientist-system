@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { UserTableContent } from './UserTableContent';
-import type { User } from '@/types';
+import type { User } from '@/types/user';
 import {
     DropdownMenu,
     DropdownMenuContent,

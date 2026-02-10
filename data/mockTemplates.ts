@@ -1,5 +1,5 @@
 // Mock Templates & Best Practice Library - TOR Requirement #13
-import { ArtefactType } from './mockData';
+import { ArtefactType } from '../types/artefact';
 
 export interface ArtefactTemplate {
     id: string;

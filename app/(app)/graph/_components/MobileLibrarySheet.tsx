@@ -4,8 +4,9 @@ import { motion } from 'framer-motion';
 import { X, Briefcase } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
-import { artefacts, type Artefact, type ArtefactType, typeLabels } from '@/data/mockData';
-import { graphTypeColors, artefactTypeOrder } from '../_utils/graph-helpers';
+import { artefacts, typeLabels } from '@/data/mockData';
+import type { Artefact, ArtefactType } from '@/types/artefact';
+import { graphTypeColors, artefactTypeOrder } from '@/lib/graph-helpers';
 
 interface MobileLibrarySheetProps {
     onClose: () => void;

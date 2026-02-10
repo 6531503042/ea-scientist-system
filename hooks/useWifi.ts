@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import type { WifiDevice, WifiAuthLog, WifiAuthFilter, WifiAuthStatus } from '@/types';
+import type { WifiDevice, WifiAuthLog, WifiAuthFilter, WifiAuthStatus } from '@/types/wifi';
 
 // Mock WiFi data
 const mockWifiDevices: WifiDevice[] = [

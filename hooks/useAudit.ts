@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import type { AuditLog, AuditLogFilter } from '@/types';
+import type { AuditLog, AuditLogFilter } from '@/types/audit';
 
 // Mock audit data
 const mockAuditLogs: AuditLog[] = [

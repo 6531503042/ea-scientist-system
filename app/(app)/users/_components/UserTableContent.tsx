@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/table';
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { User } from '@/types';
+import type { User } from '@/types/user';
 import { UserTableHeader } from './UserTableHeader';
 import { UserTablePagination } from './UserTablePagination';
 import type { Column } from './UsersTable';

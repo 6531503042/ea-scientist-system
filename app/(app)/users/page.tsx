@@ -21,7 +21,7 @@ import {
   FilterSidebarSkeleton,
 } from './_components/UserManagementSkeleton';
 import { Button } from '@/components/ui/button';
-import type { User as UserType } from '@/types';
+import type { User as UserType } from '@/types/user';
 
 export default function UsersPage() {
   const { users, loading: usersLoading } = useUsers();

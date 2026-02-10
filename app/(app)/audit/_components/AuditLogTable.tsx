@@ -13,7 +13,7 @@ import {
     AlertTriangle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { AuditLog, AuditAction, AuditSeverity } from '@/types';
+import type { AuditLog, AuditAction, AuditSeverity } from '@/types/audit';
 
 const actionLabels: Record<AuditAction, { label: string; color: string }> = {
     create: { label: 'สร้าง', color: 'text-success' },

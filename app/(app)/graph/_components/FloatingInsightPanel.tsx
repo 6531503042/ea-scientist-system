@@ -13,7 +13,10 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
-import { relationships, artefacts, type Artefact, typeLabels, type ArtefactType } from '@/data/mockData';
+import { relationships, artefacts, typeLabels } from '@/data/mockData';
+import type { Artefact } from '@/types/artefact';
+import type { ArtefactType } from '@/types/artefact';
+import type { FloatingInsightPanelProps } from '@/types/graph';
 
 // Type colors matching ArtefactListEnhanced
 const typeColors: Record<ArtefactType, string> = {
@@ -24,19 +27,6 @@ const typeColors: Record<ArtefactType, string> = {
     security: 'bg-amber-500',
     integration: 'bg-pink-500',
 };
-
-interface FloatingInsightPanelProps {
-    artefact: Artefact;
-    onClose: () => void;
-    onImpactAnalysis: () => void;
-    impactMode: boolean;
-    impactStats: { affected: number; critical: number; upstream: number };
-    upstreamList: Artefact[];
-    downstreamList: Artefact[];
-    simulationAction: 'none' | 'delete' | 'modify';
-    setSimulationAction: (action: 'none' | 'delete' | 'modify') => void;
-    setImpactMode: (mode: boolean) => void;
-}
 
 export function FloatingInsightPanel({
     artefact,

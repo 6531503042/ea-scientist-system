@@ -24,7 +24,8 @@ import { ArtefactNode } from './_components/ArtefactNode';
 import { FilterPanel } from './_components/FilterPanel';
 import { ImpactAnalysisModal } from './_components/ImpactAnalysisModal';
 import { TransactionHistory } from './_components/TransactionHistory';
-import { artefacts, relationships, type Artefact, type ArtefactType } from '@/data/mockData';
+import { artefacts, relationships } from '@/data/mockData';
+import type { Artefact, ArtefactType } from '@/types/artefact';
 import { TreeView } from './_components/TreeView';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -32,8 +33,8 @@ import { FloatingInsightPanel } from './_components/FloatingInsightPanel';
 import { ArtefactLibraryPanel } from './_components/ArtefactLibraryPanel';
 import { MobileLibrarySheet } from './_components/MobileLibrarySheet';
 import { GraphToolbar } from './_components/GraphToolbar';
-import { createNodes, createEdges } from './_utils/graph-helpers';
-import { useImpactAnalysis } from './_hooks/useImpactAnalysis';
+import { createNodes, createEdges } from '@/lib/graph-helpers';
+import { useImpactAnalysis } from '@/hooks/useImpactAnalysis';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AppNode = Node<any, string>;

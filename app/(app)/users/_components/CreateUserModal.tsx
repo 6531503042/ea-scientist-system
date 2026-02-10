@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, User, Mail, Lock, Building } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { CreateUserInput, RoleKey } from '@/types';
+import type { CreateUserInput } from '@/types/user';
+import type { RoleKey } from '@/types/role';
 
 const roleOptions: { value: RoleKey; label: string }[] = [
     { value: 'admin', label: 'ผู้ดูแลระบบ' },
