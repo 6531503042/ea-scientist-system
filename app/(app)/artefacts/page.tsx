@@ -5,12 +5,11 @@ import { ArtefactTable } from './_components/ArtefactTable';
 import { useLanguage } from '@/context/LanguageContext';
 
 export default function ArtefactsPage() {
-    const { artefacts, loading } = useArtefacts();
+    const { artefacts, loading, fetchArtefacts } = useArtefacts();
     const { language } = useLanguage();
 
     return (
         <div className="flex flex-col h-full">
-            {/* Main Content - No page header per user request */}
             <div className="flex-1 overflow-hidden">
                 {loading ? (
                     <div className="flex items-center justify-center h-full">
@@ -22,7 +21,7 @@ export default function ArtefactsPage() {
                         </div>
                     </div>
                 ) : (
-                    <ArtefactTable initialData={artefacts} />
+                    <ArtefactTable initialData={artefacts} onRefresh={fetchArtefacts} />
                 )}
             </div>
         </div>

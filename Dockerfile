@@ -38,7 +38,12 @@ RUN bunx prisma generate
 # oven/bun image comes with Node.js compatible runtime.
 RUN bun run build
 
-# Stage 3: Runner
+# Stage 3: Migrator (runs migrations + seed at startup)
+FROM builder AS migrator
+WORKDIR /app
+CMD ["sh", "-c", "bunx prisma db push --accept-data-loss && bun prisma/seed.ts"]
+
+# Stage 4: Runner
 FROM oven/bun:1 AS runner
 WORKDIR /app
 ENV TZ=Asia/Bangkok

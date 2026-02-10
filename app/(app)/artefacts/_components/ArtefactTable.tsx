@@ -9,6 +9,7 @@ import { ArtefactDetailModal } from './ArtefactDetailModal';
 import { CreateArtefactModal } from './CreateArtefactModal';
 import { EditArtefactModal } from './EditArtefactModal';
 import { ExportImportModal } from './ExportImportModal';
+import { useToast } from '@/components/ui/use-toast';
 import type { Artefact, ArtefactType, ArtefactStatus } from '@/types/artefact';
 
 // TOGAF Order - Business → Application → Data → Technology → Security → Integration
@@ -16,9 +17,12 @@ const TOGAF_ORDER: ArtefactType[] = ['business', 'application', 'data', 'technol
 
 interface ArtefactTableProps {
     initialData: Artefact[];
+    onRefresh?: () => void;
 }
 
-export function ArtefactTable({ initialData }: ArtefactTableProps) {
+export function ArtefactTable({ initialData, onRefresh }: ArtefactTableProps) {
+    const { toast } = useToast();
+
     // State
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedType, setSelectedType] = useState<ArtefactType | 'all'>('all');
@@ -145,7 +149,17 @@ export function ArtefactTable({ initialData }: ArtefactTableProps) {
                         data={paginatedData}
                         onView={(artefact) => setSelectedArtefact(artefact)}
                         onEdit={(artefact) => setEditingArtefact(artefact)}
-                        onDelete={(artefact) => console.log('Delete', artefact.id)}
+                        onDelete={async (artefact) => {
+                            if (!confirm(`ต้องการลบ "${artefact.name}" หรือไม่?`)) return;
+                            try {
+                                const res = await fetch(`/api/v1/artefacts/${artefact.id}`, { method: 'DELETE' });
+                                if (!res.ok) throw new Error('Failed to delete');
+                                toast({ title: "ลบสำเร็จ", description: `${artefact.name} ถูกลบแล้ว` });
+                                onRefresh?.();
+                            } catch {
+                                toast({ variant: "destructive", title: "ลบไม่สำเร็จ", description: "เกิดข้อผิดพลาด" });
+                            }
+                        }}
                     />
                 </div>
 
@@ -165,9 +179,9 @@ export function ArtefactTable({ initialData }: ArtefactTableProps) {
             <CreateArtefactModal
                 isOpen={isCreateModalOpen}
                 onClose={() => setIsCreateModalOpen(false)}
-                onSubmit={(data) => {
-                    console.log('Created:', data);
+                onSubmit={() => {
                     setIsCreateModalOpen(false);
+                    onRefresh?.();
                 }}
             />
 
@@ -175,9 +189,9 @@ export function ArtefactTable({ initialData }: ArtefactTableProps) {
                 <EditArtefactModal
                     artefact={editingArtefact}
                     onClose={() => setEditingArtefact(null)}
-                    onSubmit={(data) => {
-                        console.log('Updated:', data);
+                    onSubmit={() => {
                         setEditingArtefact(null);
+                        onRefresh?.();
                     }}
                 />
             )}

@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Check, FileText, Eye, Star, Layers } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -9,13 +9,47 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/components/ui/use-toast";
 import type { ArtefactType } from '@/types/artefact';
-import { mockUsers, mockDepartments } from '@/data/mockUserManagement';
 import { bestPracticeExamples } from '@/data/bestPractices';
 
 // Import extracted configs and templates
 import { typeIcons, typeColors, togafLabels, togafTypeFields, typeOrder } from './create-artefact/config';
 import { templates } from './create-artefact/templates';
+
+/**
+ * Map frontend status to Prisma LifecycleStatus.
+ * "draft", "active", "planned" are all ACTIVE in Prisma terms.
+ * Only explicitly deprecated/archived → RETIRED.
+ */
+const STATUS_MAP: Record<string, string> = {
+    draft: 'ACTIVE',
+    active: 'ACTIVE',
+    planned: 'ACTIVE',
+    deprecated: 'INACTIVE',
+    archived: 'RETIRED',
+};
+
+/** Localized name helper */
+const getLoc = (val: any, lang: 'th' | 'en' = 'en'): string => {
+    if (!val) return '';
+    if (typeof val === 'string') return val;
+    return val[lang] || val['en'] || val['th'] || '';
+};
+
+/** Type returned from /api/v1/architecture-layers */
+interface ApiLayer {
+    id: number;
+    layerName: { en: string; th: string } | string;
+    artifactCategories: ApiCategory[];
+}
+
+/** Type returned from /api/v1/categories */
+interface ApiCategory {
+    id: number;
+    categoryName: { en: string; th: string } | string;
+    architectureLayerId?: number;
+}
 
 interface CreateArtefactModalProps {
   isOpen: boolean;
@@ -23,30 +57,134 @@ interface CreateArtefactModalProps {
   onSubmit: (data: any) => void;
 }
 
+// Lightweight types for the dropdown options
+interface ApiUser {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+interface ApiDepartment {
+  id: number;
+  shortName: string;
+  fullName: string;
+}
+
 export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefactModalProps) {
   const [loading, setLoading] = useState(false);
   const [selectedType, setSelectedType] = useState<ArtefactType>('business');
   const [selectedTemplateIndex, setSelectedTemplateIndex] = useState<number | null>(null);
   const [showExamples, setShowExamples] = useState(false);
+  const [users, setUsers] = useState<ApiUser[]>([]);
+  const [departments, setDepartments] = useState<ApiDepartment[]>([]);
+  const [layers, setLayers] = useState<ApiLayer[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     nameTh: '',
     type: 'business' as ArtefactType,
     description: '',
-    owner: '',
-    department: '',
+    ownerId: '',       // store user ID as string for Select
+    departmentId: '',  // store department ID as string for Select
     version: '1.0',
     status: 'draft',
     typeSpecificFields: {} as Record<string, string>,
   });
 
+  const { toast } = useToast();
+
+  // Fetch users, departments, and architecture layers from API when modal opens
+  useEffect(() => {
+    if (!isOpen) return;
+    const fetchOptions = async () => {
+      try {
+        const [usersRes, deptsRes, layersRes] = await Promise.all([
+          fetch('/api/v1/users'),
+          fetch('/api/v1/departments'),
+          fetch('/api/v1/architecture-layers'),
+        ]);
+        const [usersJson, deptsJson, layersJson] = await Promise.all([
+          usersRes.json(), deptsRes.json(), layersRes.json(),
+        ]);
+        if (usersJson.success && Array.isArray(usersJson.data)) setUsers(usersJson.data);
+        if (deptsJson.success && Array.isArray(deptsJson.data)) setDepartments(deptsJson.data);
+        if (layersJson.success && Array.isArray(layersJson.data)) setLayers(layersJson.data);
+      } catch {
+        // Silently fail – dropdowns will just be empty
+      }
+    };
+    fetchOptions();
+  }, [isOpen]);
+
+  /**
+   * Resolve layerId and categoryId from the selected TOGAF type.
+   * Matches the English layer name to the ArtefactType key.
+   */
+  const resolveLayerAndCategory = (type: ArtefactType): { layerId?: number; categoryId?: number } => {
+    const typeToLayerKeyword: Record<ArtefactType, string> = {
+      business: 'business', application: 'application', data: 'data',
+      technology: 'technology', security: 'security', integration: 'integration',
+    };
+    const keyword = typeToLayerKeyword[type];
+    const layer = layers.find(l => getLoc(l.layerName, 'en').toLowerCase().includes(keyword));
+    if (!layer) return {};
+    // Pick the first category under this layer
+    const category = layer.artifactCategories?.[0];
+    return { layerId: layer.id, categoryId: category?.id };
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    onSubmit({ ...formData, type: selectedType });
-    setLoading(false);
-    resetForm();
+
+    try {
+      const { layerId, categoryId } = resolveLayerAndCategory(selectedType);
+      if (!categoryId) {
+        throw new Error(`ไม่พบ category สำหรับ ${selectedType} – กรุณาตรวจสอบ seed data`);
+      }
+
+      const apiPayload = {
+        artefactName: {
+          en: formData.name,
+          th: formData.nameTh,
+        },
+        description: formData.description
+          ? { en: formData.description, th: formData.description }
+          : undefined,
+        categoryId,
+        architectureLayerId: layerId,
+        lifecycleStatus: STATUS_MAP[formData.status] || 'ACTIVE',
+        responsibleById: formData.ownerId ? Number(formData.ownerId) : undefined,
+        ownerDepartmentId: formData.departmentId ? Number(formData.departmentId) : undefined,
+      };
+
+      const response = await fetch('/api/v1/artefacts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(apiPayload),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to create artefact');
+      }
+
+      toast({
+        title: "สร้าง Artefact สำเร็จ",
+        description: `${formData.name} ถูกสร้างเรียบร้อยแล้ว`,
+      });
+
+      resetForm();
+      onSubmit(result.data);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "สร้าง Artefact ไม่สำเร็จ",
+        description: error instanceof Error ? error.message : "เกิดข้อผิดพลาด กรุณาลองใหม่",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const resetForm = () => {
@@ -54,7 +192,7 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
     setSelectedTemplateIndex(null);
     setShowExamples(false);
     setFormData({
-      name: '', nameTh: '', type: 'business', description: '', owner: '', department: '', version: '1.0', status: 'draft',
+      name: '', nameTh: '', type: 'business', description: '', ownerId: '', departmentId: '', version: '1.0', status: 'draft',
       typeSpecificFields: {},
     });
   };
@@ -66,7 +204,7 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
   const selectType = (type: ArtefactType) => {
     setSelectedType(type);
     setSelectedTemplateIndex(null);
-    setFormData(prev => ({ ...prev, type, name: '', nameTh: '', description: '', typeSpecificFields: {} }));
+    setFormData(prev => ({ ...prev, type, name: '', nameTh: '', description: '', ownerId: '', departmentId: '', typeSpecificFields: {} }));
   };
 
   const handleTypeSpecificChange = (key: string, value: string) => {
@@ -87,8 +225,6 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
       name: template.fields.name,
       nameTh: template.fields.nameTh,
       description: template.fields.description,
-      owner: template.fields.owner || '',
-      department: template.fields.department || '',
       typeSpecificFields: template.typeSpecificFields || {}
     }));
   };
@@ -274,16 +410,16 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
                     <div className="space-y-1.5">
                       <Label htmlFor="owner" className="text-xs">ผู้รับผิดชอบ</Label>
                       <Select
-                        value={formData.owner}
-                        onValueChange={(val) => handleChange('owner', val)}
+                        value={formData.ownerId}
+                        onValueChange={(val) => handleChange('ownerId', val)}
                       >
                         <SelectTrigger className="h-9 text-sm" id="owner">
                           <SelectValue placeholder="เลือกผู้รับผิดชอบ" />
                         </SelectTrigger>
                         <SelectContent className="max-h-[200px]">
-                          {mockUsers.map(user => (
-                            <SelectItem key={user.id} value={user.name}>
-                              {user.name}
+                          {users.map(user => (
+                            <SelectItem key={user.id} value={String(user.id)}>
+                              {user.firstName} {user.lastName}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -292,16 +428,16 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
                     <div className="space-y-1.5">
                       <Label htmlFor="department" className="text-xs">หน่วยงาน</Label>
                       <Select
-                        value={formData.department}
-                        onValueChange={(val) => handleChange('department', val)}
+                        value={formData.departmentId}
+                        onValueChange={(val) => handleChange('departmentId', val)}
                       >
                         <SelectTrigger className="h-9 text-sm" id="department">
                           <SelectValue placeholder="เลือกหน่วยงาน" />
                         </SelectTrigger>
                         <SelectContent className="max-h-[200px]">
-                          {mockDepartments.map(dept => (
-                            <SelectItem key={dept.id} value={dept.name}>
-                              {dept.name}
+                          {departments.map(dept => (
+                            <SelectItem key={dept.id} value={String(dept.id)}>
+                              {dept.fullName || dept.shortName}
                             </SelectItem>
                           ))}
                         </SelectContent>

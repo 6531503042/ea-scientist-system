@@ -11,11 +11,15 @@ const getLoc = (val: any, lang: 'th' | 'en' = 'en') => {
 };
 
 /**
- * Map API architectureLayer name to ArtefactType
- * ถ้า backend ส่ง layer มาจะ map ให้ตรง, fallback เป็น 'application'
+ * Map API architectureLayer name to ArtefactType.
+ * layerName/categoryName from API are localized JSON objects { en: "...", th: "..." }
  */
-function mapLayerToType(layerName?: string, categoryName?: string): ArtefactType {
-    const name = (layerName || categoryName || '').toLowerCase();
+function mapLayerToType(layerName?: any, categoryName?: any): ArtefactType {
+    // Extract English string from localized object or use as-is if string
+    const rawLayer = getLoc(layerName, 'en');
+    const rawCategory = getLoc(categoryName, 'en');
+    const name = (rawLayer || rawCategory || '').toLowerCase();
+
     if (name.includes('business')) return 'business';
     if (name.includes('application')) return 'application';
     if (name.includes('data')) return 'data';
@@ -92,21 +96,19 @@ export function useArtefacts() {
         return artefacts.filter(a => a.type === type);
     }, [artefacts]);
 
-    const createArtefact = useCallback(async (data: any) => {
+    /**
+     * Create artefact via API.
+     * The caller (e.g. CreateArtefactModal) should pass the full API payload
+     * including categoryId, architectureLayerId, etc.
+     */
+    const createArtefact = useCallback(async (apiPayload: Record<string, unknown>) => {
         setLoading(true);
         setError(null);
         try {
-            const apiData = {
-                artefactName: { en: data.name, th: data.nameTh },
-                description: { en: data.description, th: data.description },
-                categoryId: 1, // Placeholder: need UI to select category
-                lifecycleStatus: 'ACTIVE',
-            };
-
             const response = await fetch('/api/v1/artefacts', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(apiData),
+                body: JSON.stringify(apiPayload),
             });
 
             if (!response.ok) {
@@ -126,13 +128,21 @@ export function useArtefacts() {
         }
     }, []);
 
-    const updateArtefact = useCallback(async (id: string, data: any) => {
+    /**
+     * Update artefact via API.
+     * Accepts either a full API payload or legacy { name, nameTh, description } shape.
+     */
+    const updateArtefact = useCallback(async (id: string, data: Record<string, unknown>) => {
         setLoading(true);
         setError(null);
         try {
-            const apiData: any = {};
-            if (data.name) apiData.artefactName = { en: data.name, th: data.nameTh };
-            if (data.description) apiData.description = { en: data.description };
+            // Support both raw API payload and legacy shape
+            const apiData = data.artefactName
+                ? data
+                : {
+                    ...(data.name && { artefactName: { en: data.name, th: data.nameTh || data.name } }),
+                    ...(data.description && { description: { en: data.description, th: data.description } }),
+                };
 
             const response = await fetch(`/api/v1/artefacts/${id}`, {
                 method: 'PATCH',

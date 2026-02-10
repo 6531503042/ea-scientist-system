@@ -7,7 +7,7 @@ import type { Prisma } from "@/generated/prisma/client";
 export class ArtefactsRepository {
     async findAll(where?: Prisma.ArtefactWhereInput) {
         return prisma.artefact.findMany({
-            where: { lifecycleStatus: "ACTIVE", ...where },
+            where: { lifecycleStatus: { not: "RETIRED" }, ...where },
             include: {
                 architectureLayer: { select: { id: true, layerName: true } },
                 category: { select: { id: true, categoryName: true } },
@@ -74,6 +74,8 @@ export class ArtefactsRepository {
             include: {
                 architectureLayer: { select: { id: true, layerName: true } },
                 category: { select: { id: true, categoryName: true } },
+                ownerDepartment: { select: { id: true, shortName: true, fullName: true } },
+                responsibleBy: { select: { id: true, firstName: true, lastName: true } },
             },
         });
     }

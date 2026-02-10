@@ -41,6 +41,22 @@ services:
       - pgadmin_data:/var/lib/pgadmin
 
   # ===========================================================================
+  # 🔄 Database Migration & Seed (runs once, then exits)
+  # ===========================================================================
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: migrator
+    container_name: ea-system-migrate
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-ea_system}?schema=public
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  # ===========================================================================
   # 🚀 Next.js Application
   # ===========================================================================
   app:
@@ -59,6 +75,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     volumes:
       - ./public/uploads:/app/public/uploads
       - ./public/signatures:/app/public/signatures

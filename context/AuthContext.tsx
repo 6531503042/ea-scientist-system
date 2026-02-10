@@ -56,7 +56,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const role = user?.role || 'user';
+    // Extract role string from user data (API returns role as object { roleName: "admin" })
+    const role = (typeof user?.role === 'object' ? user?.role?.roleName : user?.role) || 'user';
 
     return (
         <AuthContext.Provider value={{ user, role, login, logout, isAuthenticated: !!user, loading }}>

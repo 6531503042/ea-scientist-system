@@ -7,7 +7,7 @@ config({ path: ".env" });
 
 export default defineConfig({
     migrations: {
-        seed: "tsx prisma/seed.ts",
+        seed: "bun prisma/seed.ts",
     },
     datasource: {
         url: env("DATABASE_URL"),

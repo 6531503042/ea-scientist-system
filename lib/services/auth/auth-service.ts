@@ -1,3 +1,4 @@
+import bcrypt from "bcryptjs";
 import { UsersRepository } from "@/lib/repositories/users/users-repository";
 
 /**
@@ -20,9 +21,8 @@ export class AuthService {
             throw new Error("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
         }
 
-        // TODO: Replace with bcrypt comparison when bcrypt is installed
-        // const isValid = await bcrypt.compare(password, user.password);
-        const isValid = password === user.password; // Temporary plain-text check
+        // Compare password with bcrypt hash
+        const isValid = await bcrypt.compare(password, user.password);
         if (!isValid) {
             throw new Error("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
         }
@@ -67,15 +67,14 @@ export class AuthService {
             throw new Error("ไม่พบผู้ใช้");
         }
 
-        // TODO: bcrypt compare
-        const isValid = currentPassword === user.password;
+        const isValid = await bcrypt.compare(currentPassword, user.password);
         if (!isValid) {
             throw new Error("รหัสผ่านปัจจุบันไม่ถูกต้อง");
         }
 
-        // TODO: bcrypt hash
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
         await this.usersRepository.update(userId, {
-            password: newPassword,
+            password: hashedPassword,
             passwordChangedAt: new Date(),
         });
 
