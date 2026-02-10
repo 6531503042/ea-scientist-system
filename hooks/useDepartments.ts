@@ -2,21 +2,18 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { Department, CreateDepartmentInput, UpdateDepartmentInput } from '@/types/department';
-import { mockDepartments } from '@/data/mockUserManagement';
 
-type MockDept = typeof mockDepartments[number];
-
-// Transform mock departments to proper Department type
-function transformDepartment(mockDept: MockDept): Department {
+function transformApiDepartment(apiDept: any): Department {
     return {
-        _id: mockDept.id,
-        code: mockDept.code,
-        name: mockDept.name,
-        nameTh: mockDept.name,
-        head: mockDept.head,
-        memberCount: mockDept.memberCount,
-        userCount: mockDept.memberCount,
-        status: 'active',
+        _id: apiDept.id.toString(),
+        code: apiDept.shortName, // Use shortName as code
+        name: apiDept.fullName,
+        nameTh: apiDept.fullName,
+        // Head needs to be mapped if available, currently API might not return head info directly or needs expansion
+        head: '-',
+        memberCount: apiDept.userCount || 0,
+        userCount: apiDept.userCount || 0,
+        status: apiDept.isActive ? 'active' : 'inactive',
     };
 }
 
@@ -29,10 +26,18 @@ export function useDepartments() {
         setLoading(true);
         setError(null);
         try {
-            await new Promise(resolve => setTimeout(resolve, 200));
-            setDepartments(mockDepartments.map(transformDepartment));
+            const response = await fetch('/api/v1/departments');
+            if (!response.ok) throw new Error('Failed to fetch departments');
+            const result = await response.json();
+
+            if (result.success && Array.isArray(result.data)) {
+                setDepartments(result.data.map(transformApiDepartment));
+            } else {
+                setDepartments([]);
+            }
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : 'Failed to fetch departments.');
+            setDepartments([]);
         } finally {
             setLoading(false);
         }
@@ -42,12 +47,26 @@ export function useDepartments() {
         setLoading(true);
         setError(null);
         try {
-            await new Promise(resolve => setTimeout(resolve, 200));
-            const newDept: Department = {
-                ...data,
-                _id: `dept_${Date.now()}`,
-                createdAt: new Date().toISOString(),
+            const parentValue = typeof data.parent === 'string' ? data.parent : undefined;
+            const apiData = {
+                shortName: data.code,
+                fullName: data.name,
+                parentId: parentValue ? parseInt(parentValue) : undefined,
             };
+
+            const response = await fetch('/api/v1/departments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(apiData),
+            });
+
+            if (!response.ok) {
+                const res = await response.json();
+                throw new Error(res.error || 'Failed to create department');
+            }
+
+            const result = await response.json();
+            const newDept = transformApiDepartment(result.data);
             setDepartments(prev => [...prev, newDept]);
             return newDept;
         } catch (err: unknown) {
@@ -62,10 +81,20 @@ export function useDepartments() {
         setLoading(true);
         setError(null);
         try {
-            await new Promise(resolve => setTimeout(resolve, 200));
-            setDepartments(prev => prev.map(d =>
-                d._id === id ? { ...d, ...data, updatedAt: new Date().toISOString() } : d
-            ));
+            const apiData: any = {};
+            if (data.code) apiData.shortName = data.code;
+            if (data.name) apiData.fullName = data.name;
+            // if (data.head) ...
+
+            const response = await fetch(`/api/v1/departments/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(apiData),
+            });
+
+            if (!response.ok) throw new Error('Failed to update department');
+
+            await fetchDepartments();
             return true;
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : 'Failed to update department.');
@@ -73,13 +102,18 @@ export function useDepartments() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [fetchDepartments]);
 
     const deleteDepartment = useCallback(async (id: string) => {
         setLoading(true);
         setError(null);
         try {
-            await new Promise(resolve => setTimeout(resolve, 200));
+            const response = await fetch(`/api/v1/departments/${id}`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) throw new Error('Failed to delete department');
+
             setDepartments(prev => prev.filter(d => d._id !== id));
             return true;
         } catch (err: unknown) {

@@ -4,7 +4,7 @@ import { Handle, Position } from '@xyflow/react';
 import { motion } from 'framer-motion';
 import { Layers, Database, Cpu, Link, Shield, Briefcase, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { Artefact, ArtefactType, RiskLevel } from '@/data/mockData';
+import type { Artefact, ArtefactType, RiskLevel } from '@/types/artefact';
 
 const typeConfig: Record<ArtefactType, {
   color: string;

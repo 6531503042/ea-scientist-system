@@ -1,22 +1,19 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import type { Role, Permission } from '@/types/role';
-import { mockRoles } from '@/data/mockUserManagement';
+import { useState, useCallback, useEffect } from 'react';
+import type { Role } from '@/types/role';
 
-type MockRole = typeof mockRoles[number];
-
-// Transform mock roles to proper Role type
-function transformRole(mockRole: MockRole): Role {
+function transformApiRole(apiRole: any): Role {
     return {
-        _id: mockRole.id,
-        name: mockRole.name,
-        nameTh: mockRole.name, // Can be localized later
-        description: mockRole.description,
-        permissions: mockRole.permissions,
-        isDefault: true,
-        isSystemRole: true,
-        userCount: mockRole.userCount,
+        _id: apiRole.id.toString(),
+        name: apiRole.roleName,
+        nameTh: apiRole.roleName, // Use same name for now
+        description: apiRole.description || '',
+        permissions: apiRole.permissions || [],
+        isDefault: false, // API doesn't have this yet
+        isSystemRole: false,
+        userCount: apiRole.userCount || 0,
+        color: apiRole.color || 'bg-gray-500/10 text-gray-700 border-gray-200', // Default color
     };
 }
 
@@ -29,8 +26,15 @@ export function useRoles() {
         setLoading(true);
         setError(null);
         try {
-            await new Promise(resolve => setTimeout(resolve, 200));
-            setRoles(mockRoles.map(transformRole));
+            const response = await fetch('/api/v1/roles');
+            if (!response.ok) throw new Error('Failed to fetch roles');
+            const result = await response.json();
+
+            if (result.success && Array.isArray(result.data)) {
+                setRoles(result.data.map(transformApiRole));
+            } else {
+                setRoles([]);
+            }
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : 'Failed to fetch roles.');
         } finally {
@@ -42,13 +46,25 @@ export function useRoles() {
         setLoading(true);
         setError(null);
         try {
-            await new Promise(resolve => setTimeout(resolve, 200));
-            const newRole: Role = {
-                _id: `role_${Date.now()}`,
-                name: roleData.name || 'New Role',
-                permissions: roleData.permissions || [],
-                ...roleData,
+            const apiData = {
+                roleName: roleData.name,
+                description: roleData.description,
+                permissions: roleData.permissions,
             };
+
+            const response = await fetch('/api/v1/roles', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(apiData),
+            });
+
+            if (!response.ok) {
+                const res = await response.json();
+                throw new Error(res.error || 'Failed to create role');
+            }
+
+            const result = await response.json();
+            const newRole = transformApiRole(result.data);
             setRoles(prev => [...prev, newRole]);
             return newRole;
         } catch (err: unknown) {
@@ -63,10 +79,20 @@ export function useRoles() {
         setLoading(true);
         setError(null);
         try {
-            await new Promise(resolve => setTimeout(resolve, 200));
-            setRoles(prev => prev.map(r =>
-                r._id === id ? { ...r, ...roleData, updatedAt: new Date().toISOString() } : r
-            ));
+            const apiData: any = {};
+            if (roleData.name) apiData.roleName = roleData.name;
+            if (roleData.description) apiData.description = roleData.description;
+            if (roleData.permissions) apiData.permissions = roleData.permissions;
+
+            const response = await fetch(`/api/v1/roles/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(apiData),
+            });
+
+            if (!response.ok) throw new Error('Failed to update role');
+
+            await fetchRoles();
             return true;
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : 'Failed to update role.');
@@ -74,13 +100,18 @@ export function useRoles() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [fetchRoles]);
 
     const deleteRole = useCallback(async (id: string) => {
         setLoading(true);
         setError(null);
         try {
-            await new Promise(resolve => setTimeout(resolve, 200));
+            const response = await fetch(`/api/v1/roles/${id}`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) throw new Error('Failed to delete role');
+
             setRoles(prev => prev.filter(r => r._id !== id));
             return true;
         } catch (err: unknown) {

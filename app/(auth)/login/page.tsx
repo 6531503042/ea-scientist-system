@@ -90,34 +90,45 @@ export default function Login() {
     const router = useRouter(); // Changed from useNavigate
     const { toast } = useToast();
 
-    // Mock login handler
+    // Real login handler
     const handleLogin = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
         if (!email || !password) return;
 
         setLoading(true);
 
-        // Simulate API call
-        setTimeout(() => {
-            // Mock successful login with selected role
-            const mockUser = {
-                id: 'user-1',
-                email: email,
-                name: email.split('@')[0],
-                role: selectedRole,
-                avatar: 'https://github.com/shadcn.png' // Added missing prop expected by AuthContext usually
-            };
+        try {
+            const response = await fetch('/api/v1/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+            });
 
-            login('mock-jwt-token', mockUser);
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'เข้าสู่ระบบไม่สำเร็จ');
+            }
+
+            // Login successful
+            // Token is in httpOnly cookie, just update context state
+            login('cookie-auth', data.data);
 
             toast({
                 title: "เข้าสู่ระบบสำเร็จ",
-                description: `ยินดีต้อนรับกลับเข้าสู่ระบบในฐานะ ${selectedRole}`,
+                description: `ยินดีต้อนรับกลับเข้าสู่ระบบ`,
             });
 
-            router.push('/'); // Changed from navigate('/')
+            router.push('/');
+        } catch (error) {
+            toast({
+                variant: "destructive",
+                title: "เข้าสู่ระบบไม่สำเร็จ",
+                description: error instanceof Error ? error.message : "เกิดข้อผิดพลาด กรุณาลองใหม่",
+            });
+        } finally {
             setLoading(false);
-        }, 800);
+        }
     };
 
     const useTestAccount = (testEmail: string, testPassword: string, role: string) => {

@@ -11,7 +11,8 @@ import {
     AlertCircle,
     Loader2
 } from 'lucide-react';
-import { artefacts, ArtefactType, Status, Artefact } from '@/data/mockData';
+import { artefacts } from '@/data/mockData';
+import type { Artefact, ArtefactType, ArtefactStatus as Status } from '@/types/artefact';
 
 interface ExportImportModalProps {
     isOpen: boolean;

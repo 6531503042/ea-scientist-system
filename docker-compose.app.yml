@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  # ===========================================================================
+  # 🚀 Next.js Application Only
+  # ===========================================================================
+  # Usage: Connects to external DB or already running DB container
+  # Ensure DATABASE_URL is set in .env correctly
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ea-system-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      # Override DATABASE_URL if needed, or use .env
+      - NODE_ENV=production
+    volumes:
+      - ./public/uploads:/app/public/uploads
+      - ./public/signatures:/app/public/signatures
+      - ./file/uploads:/app/file/uploads
+    # Remove depends_on if DB is external
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # Access host localhost if needed

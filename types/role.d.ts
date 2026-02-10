@@ -20,6 +20,7 @@ export type Role = {
     isDefault?: boolean;
     isSystemRole?: boolean;
     userCount?: number;
+    color?: string;
     createdAt?: string;
     updatedAt?: string;
 };

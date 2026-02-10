@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { Artefact, ArtefactType } from '@/data/mockData';
+import type { Artefact, ArtefactType } from '@/types/artefact';
 
 interface EditArtefactModalProps {
   artefact: Artefact;
@@ -238,7 +238,7 @@ export function EditArtefactModal({ artefact, onClose, onSubmit }: EditArtefactM
                   <div className="bg-muted/50 rounded-xl p-4">
                     <h4 className="font-medium mb-2">TOGAF Framework</h4>
                     <p className="text-sm text-muted-foreground">
-                      TOGAF (The Open Group Architecture Framework) เป็นมาตรฐานสากลสำหรับการพัฒนาสถาปัตยกรรมองค์กร 
+                      TOGAF (The Open Group Architecture Framework) เป็นมาตรฐานสากลสำหรับการพัฒนาสถาปัตยกรรมองค์กร
                       แบ่งออกเป็น 4 โดเมนหลัก: Business, Application, Data, Technology และเสริมด้วย Security และ Integration
                     </p>
                   </div>

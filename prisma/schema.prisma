@@ -1,0 +1,444 @@
+// ============================================================
+// EA System - Prisma Schema
+// Following example-production patterns
+// ============================================================
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// =========================
+// ENUMS
+// =========================
+
+enum LifecycleStatus {
+  ACTIVE
+  INACTIVE
+  RETIRED
+}
+
+// FieldType removed — ERD defines field_type as Localization (Json)
+// Values: TEXT / NUMBER / DATE / SELECT / MULTISELECT / BOOLEAN stored as Json
+
+enum ViewMode {
+  GRAPH
+  TABLE
+  DASHBOARD
+}
+
+enum NotificationStatus {
+  WAITING
+  SUCCESS
+  FAILED
+}
+
+enum UploadCategory {
+  IMAGE
+  FILE
+}
+
+// =========================
+// RBAC / AUTH
+// =========================
+
+model Department {
+  id        Int      @id @default(autoincrement())
+  shortName String   @map("short_name") @db.VarChar(255)
+  fullName  String   @map("full_name") @db.VarChar(255)
+  parentId  Int?     @map("parent_id")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Self-relation for hierarchy
+  parent   Department?  @relation("DepartmentHierarchy", fields: [parentId], references: [id])
+  children Department[] @relation("DepartmentHierarchy")
+
+  // Reverse relations
+  users                User[]
+  artefactsOwned       Artefact[]     @relation("ArtefactOwnerDepartment")
+  notifications        Notification[]
+
+  @@index([parentId])
+  @@map("departments")
+}
+
+model Role {
+  id          Int      @id @default(autoincrement())
+  roleName    String   @unique @map("role_name") @db.VarChar(255)
+  description String?  @db.Text
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Reverse relations
+  users           User[]
+  rolePermissions RolePermission[]
+  notifications   Notification[]
+
+  @@map("roles")
+}
+
+model User {
+  id                Int       @id @default(autoincrement())
+  roleId            Int       @map("role_id")
+  departmentId      Int?      @map("department_id")
+  firstName         String    @map("first_name") @db.VarChar(255)
+  lastName          String    @map("last_name") @db.VarChar(255)
+  email             String    @unique @db.VarChar(255)
+  username          String    @unique @db.VarChar(255)
+  password          String    @db.VarChar(255)
+  passwordChangedAt DateTime? @map("password_changed_at")
+  isActive          Boolean   @default(true) @map("is_active")
+  lastLoginAt       DateTime? @map("last_login_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  role       Role        @relation(fields: [roleId], references: [id])
+  department Department? @relation(fields: [departmentId], references: [id])
+
+  // Reverse relations
+  artefactsResponsible Artefact[]  @relation("ArtefactResponsibleUser")
+  uploads              Upload[]
+  auditLogs            AuditLog[]
+
+  @@index([roleId])
+  @@index([departmentId])
+  @@index([email])
+  @@index([username])
+  @@map("users")
+}
+
+model Permission {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique @db.VarChar(255)
+  description String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Reverse relations
+  rolePermissions RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       Int      @map("role_id")
+  permissionId Int      @map("permission_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+// =========================
+// EA CORE
+// =========================
+
+/// Architecture layers: Business / Data / Application / Integration / Security / Technology
+model ArchitectureLayer {
+  id          Int      @id @default(autoincrement())
+  layerName   Json     @map("layer_name")  // { th: "...", en: "..." }
+  description Json?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Reverse relations
+  artifactCategories ArtifactCategory[]
+  artefacts          Artefact[]
+
+  @@map("architecture_layers")
+}
+
+/// Sub-categories within each layer (e.g., Business → Capability / Process)
+model ArtifactCategory {
+  id                  Int      @id @default(autoincrement())
+  architectureLayerId Int      @map("architecture_layer_id")
+  categoryName        Json     @map("category_name") // { th: "...", en: "..." }
+  description         Json?
+  isActive            Boolean  @default(true) @map("is_active")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  architectureLayer ArchitectureLayer @relation(fields: [architectureLayerId], references: [id])
+
+  // Reverse relations
+  attributeDefinitions AttributeDefinition[]
+  artefacts            Artefact[]
+  artefactTemplates    ArtefactTemplate[]
+
+  @@unique([architectureLayerId, categoryName])
+  @@index([architectureLayerId])
+  @@map("artifact_categories")
+}
+
+/// Dynamic field definitions for each category (used to render UI forms)
+model AttributeDefinition {
+  id         Int       @id @default(autoincrement())
+  categoryId Int       @map("category_id")
+  fieldKey   Json      @map("field_key")   // { th: "...", en: "..." }
+  fieldLabel Json      @map("field_label") // { th: "...", en: "..." }
+  fieldType  Json      @map("field_type")  // Localization: TEXT/NUMBER/DATE/SELECT/MULTISELECT/BOOLEAN
+  isRequired Boolean   @default(false) @map("is_required")
+  sortOrder  Int       @default(0) @map("sort_order")
+  options    Json?     // For SELECT/MULTISELECT: ["A","B"] or [{label, value}]
+  isActive   Boolean   @default(true) @map("is_active")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  category ArtifactCategory @relation(fields: [categoryId], references: [id])
+
+  // Reverse relations
+  artefactAttributes ArtefactAttribute[]
+
+  @@unique([categoryId, fieldKey])
+  @@index([categoryId])
+  @@map("attribute_definitions")
+}
+
+/// Core artefact entity
+model Artefact {
+  id                  Int             @id @default(autoincrement())
+  architectureLayerId Int?            @map("architecture_layer_id")
+  categoryId          Int             @map("category_id")
+  ownerDepartmentId   Int?            @map("owner_department_id")
+  responsibleById     Int?            @map("responsible_by_id")
+  artefactName        Json            @map("artefact_name") // { th: "...", en: "..." }
+  description         Json?
+  lifecycleStatus     LifecycleStatus @default(ACTIVE) @map("lifecycle_status")
+  version             Int             @default(1)
+  createdAt           DateTime        @default(now()) @map("created_at")
+  updatedAt           DateTime        @updatedAt @map("updated_at")
+
+  // Relations
+  architectureLayer ArchitectureLayer? @relation(fields: [architectureLayerId], references: [id])
+  category          ArtifactCategory   @relation(fields: [categoryId], references: [id])
+  ownerDepartment   Department?        @relation("ArtefactOwnerDepartment", fields: [ownerDepartmentId], references: [id])
+  responsibleBy     User?              @relation("ArtefactResponsibleUser", fields: [responsibleById], references: [id])
+
+  // Reverse relations
+  artefactAttributes ArtefactAttribute[]
+  artefactVersions   ArtefactVersion[]
+  sourceRelationships Relationship[]   @relation("RelationshipSource")
+  targetRelationships Relationship[]   @relation("RelationshipTarget")
+
+  @@index([architectureLayerId])
+  @@index([categoryId])
+  @@index([ownerDepartmentId])
+  @@index([responsibleById])
+  @@index([categoryId, artefactName])
+  @@map("artefacts")
+}
+
+/// EAV pattern: actual attribute values for an artefact
+model ArtefactAttribute {
+  id                    Int      @id @default(autoincrement())
+  artefactId            Int      @map("artefact_id")
+  attributeDefinitionId Int      @map("attribute_definition_id")
+  value                 Json
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  artefact            Artefact            @relation(fields: [artefactId], references: [id], onDelete: Cascade)
+  attributeDefinition AttributeDefinition @relation(fields: [attributeDefinitionId], references: [id])
+
+  @@unique([artefactId, attributeDefinitionId])
+  @@map("artefact_attributes")
+}
+
+// =========================
+// RELATIONSHIPS
+// =========================
+
+model RelationshipType {
+  id               Int      @id @default(autoincrement())
+  relationshipKey  String   @unique @map("relationship_key") @db.VarChar(100) // USES / AUTHENTICATES / GUARDS / READS / WRITES
+  relationshipName Json     @map("relationship_name") // { th: "...", en: "..." }
+  description      Json?
+  isActive         Boolean  @default(true) @map("is_active")
+  allowedPairs     Json     @map("allowed_pairs") // [{source_category_id, target_category_id}]
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  // Reverse relations
+  relationships Relationship[]
+
+  @@map("relationship_types")
+}
+
+model Relationship {
+  id                 Int      @id @default(autoincrement())
+  sourceArtefactId   Int      @map("source_artefact_id")
+  targetArtefactId   Int      @map("target_artefact_id")
+  relationshipTypeId Int      @map("relationship_type_id")
+  description        Json?
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  sourceArtefact   Artefact          @relation("RelationshipSource", fields: [sourceArtefactId], references: [id], onDelete: Cascade)
+  targetArtefact   Artefact          @relation("RelationshipTarget", fields: [targetArtefactId], references: [id], onDelete: Cascade)
+  relationshipType RelationshipType @relation(fields: [relationshipTypeId], references: [id])
+
+  @@unique([sourceArtefactId, targetArtefactId, relationshipTypeId])
+  @@index([sourceArtefactId])
+  @@index([targetArtefactId])
+  @@index([relationshipTypeId])
+  @@map("relationships")
+}
+
+// =========================
+// VERSIONS
+// =========================
+
+model ArtefactVersion {
+  id            Int      @id @default(autoincrement())
+  artefactId    Int      @map("artefact_id")
+  versionNumber Int      @map("version_number")
+  changeSummary Json?    @map("change_summary") // { th: "...", en: "..." }
+  snapshot      Json?    // Full artefact snapshot at this version
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  // Relations
+  artefact Artefact @relation(fields: [artefactId], references: [id], onDelete: Cascade)
+
+  @@unique([artefactId, versionNumber])
+  @@index([artefactId])
+  @@map("artefact_versions")
+}
+
+// =========================
+// TEMPLATES
+// =========================
+
+model ArtefactTemplate {
+  id             Int      @id @default(autoincrement())
+  categoryId     Int      @map("category_id")
+  templateName   Json     @map("template_name") // { th: "...", en: "..." }
+  templateSchema Json     @map("template_schema") // Layout/grouping/sections
+  isActive       Boolean  @default(true) @map("is_active")
+  usageCount     Int      @default(0) @map("usage_count")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  category ArtifactCategory @relation(fields: [categoryId], references: [id])
+
+  @@unique([categoryId, templateName])
+  @@index([categoryId])
+  @@map("artefact_templates")
+}
+
+// =========================
+// VIEW DEFINITIONS
+// =========================
+
+model ViewDefinition {
+  id          Int      @id @default(autoincrement())
+  viewName    Json     @map("view_name") // { th: "...", en: "..." }
+  description Json?
+  viewMode    ViewMode @default(GRAPH) @map("view_mode")
+  config      Json
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("view_definitions")
+}
+
+// =========================
+// NOTIFICATIONS
+// =========================
+
+model Notification {
+  id               Int                @id @default(autoincrement())
+  roleId           Int?               @map("role_id")
+  departmentId     Int?               @map("department_id")
+  notificationType String             @map("notification_type") @db.VarChar(100)
+  title            String?            @db.VarChar(500)
+  description      String?            @db.Text
+  link             String?            @db.VarChar(500)
+  notificationAt   DateTime?          @map("notification_at")
+  status           NotificationStatus
+  isRead           Boolean            @default(false) @map("is_read")
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+
+  // Relations
+  role       Role?       @relation(fields: [roleId], references: [id])
+  department Department? @relation(fields: [departmentId], references: [id])
+
+  @@index([roleId])
+  @@index([departmentId])
+  @@index([notificationType])
+  @@index([status])
+  @@index([isRead])
+  @@index([notificationAt])
+  @@map("notifications")
+}
+
+// =========================
+// UPLOADS
+// =========================
+
+model Upload {
+  id           Int            @id @default(autoincrement())
+  originalName String         @map("original_name") @db.VarChar(500)
+  storedName   String         @map("stored_name") @db.VarChar(500)
+  mimeType     String         @map("mime_type") @db.VarChar(255)
+  size         Int
+  category     UploadCategory @default(FILE)
+  tags         Json?          // JSON array of tag strings
+  path         String         @db.VarChar(1000)
+  uploadedAt   DateTime       @default(now()) @map("uploaded_at")
+  uploadedById Int            @map("uploaded_by_id")
+
+  // Relations
+  uploadedBy User @relation(fields: [uploadedById], references: [id])
+
+  @@index([uploadedById])
+  @@index([category])
+  @@map("uploads")
+}
+
+// =========================
+// AUDIT TRAIL
+// =========================
+
+model AuditLog {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @map("user_id")
+  requestId   String?  @map("request_id") @db.VarChar(255)
+  ipAddress   String?  @map("ip_address") @db.VarChar(45)
+  userAgent   String?  @map("user_agent") @db.VarChar(500)
+  action      String   @db.VarChar(100)   // LOGIN / EXPORT / IMPORT / BULK_UPDATE
+  operation   String?  @db.VarChar(50)    // CREATE / UPDATE / DELETE / LINK / UNLINK / DOWNLOAD
+  summary     String?  @db.Text
+  entityType  String?  @map("entity_type") @db.VarChar(100) // ARTEFACT / RELATIONSHIP / UPLOAD / USER
+  entityId    Int?     @map("entity_id")
+  entityLabel String?  @map("entity_label") @db.VarChar(500)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([requestId])
+  @@index([action])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}

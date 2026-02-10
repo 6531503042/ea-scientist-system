@@ -3,7 +3,7 @@
  * Pre-defined templates for each EA artefact type
  */
 
-import type { ArtefactType } from '@/data/mockData';
+import type { ArtefactType } from '@/types/artefact';
 import type { ArtefactTemplate } from './config';
 
 // Enhanced Templates for each EA type with detailed defaults and type-specific fields

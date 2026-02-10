@@ -13,8 +13,10 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
   },
-  // Set output file tracing root to fix lockfile warning
-  outputFileTracingRoot: path.join(__dirname, '../../'),
+  // Set output file tracing root for standalone builds
+  outputFileTracingRoot: __dirname,
+  // Enable standalone output for Docker
+  output: "standalone",
 }
 
 module.exports = nextConfig

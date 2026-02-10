@@ -1,30 +1,60 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { Artefact, ArtefactType } from '@/types/artefact';
-import { artefacts as mockArtefacts } from '@/data/mockData';
 
-// Edge type from mockData
-type MockArtefact = typeof mockArtefacts[number];
+// Helper to safely get localized string
+const getLoc = (val: any, lang: 'th' | 'en' = 'en') => {
+    if (!val) return '';
+    if (typeof val === 'string') return val;
+    return val[lang] || val['en'] || val['th'] || '';
+};
 
-// Transform mock artefact to proper Artefact type
-function transformArtefact(mock: MockArtefact): Artefact {
+/**
+ * Map API architectureLayer name to ArtefactType
+ * ถ้า backend ส่ง layer มาจะ map ให้ตรง, fallback เป็น 'application'
+ */
+function mapLayerToType(layerName?: string, categoryName?: string): ArtefactType {
+    const name = (layerName || categoryName || '').toLowerCase();
+    if (name.includes('business')) return 'business';
+    if (name.includes('application')) return 'application';
+    if (name.includes('data')) return 'data';
+    if (name.includes('technology')) return 'technology';
+    if (name.includes('security')) return 'security';
+    if (name.includes('integration')) return 'integration';
+    return 'application'; // safe fallback
+}
+
+/**
+ * Transform API response → Artefact (frontend type)
+ * เตรียมรองรับ backend จริง โดย map fields ให้ตรงกับ types/artefact.d.ts
+ */
+function transformApiArtefact(apiArtefact: any): Artefact {
     return {
-        _id: mock.id,
-        name: mock.name,
-        nameTh: mock.nameTh,
-        type: mock.type as ArtefactType,
-        description: mock.description,
-        status: mock.status as Artefact['status'],
-        classification: 'internal',
-        owner: mock.owner,
-        department: mock.department,
-        version: mock.version,
-        relations: [],
-        attributes: {},
-        tags: [],
-        createdAt: mock.lastUpdated,
-        updatedAt: mock.lastUpdated,
+        id: apiArtefact.id?.toString() ?? '',
+        name: getLoc(apiArtefact.artefactName, 'en'),
+        nameTh: getLoc(apiArtefact.artefactName, 'th'),
+        type: mapLayerToType(
+            apiArtefact.architectureLayer?.layerName,
+            apiArtefact.category?.categoryName,
+        ),
+        description: getLoc(apiArtefact.description),
+        status: (apiArtefact.lifecycleStatus?.toLowerCase() as Artefact['status']) || 'draft',
+        riskLevel: apiArtefact.riskLevel?.toLowerCase() || 'none',
+        owner: apiArtefact.responsibleBy
+            ? `${apiArtefact.responsibleBy.firstName} ${apiArtefact.responsibleBy.lastName}`
+            : '-',
+        department: apiArtefact.ownerDepartment?.fullName || '-',
+        version: apiArtefact.version?.toString() || '1.0',
+        lastUpdated: apiArtefact.updatedAt || apiArtefact.createdAt || new Date().toISOString(),
+        usageFrequency: apiArtefact.usageFrequency?.toLowerCase() || 'medium',
+        dependencies: apiArtefact._count?.sourceRelationships ?? 0,
+        dependents: apiArtefact._count?.targetRelationships ?? 0,
+
+        // Optional fields
+        classification: apiArtefact.classification || 'internal',
+        attributes: apiArtefact.attributes ?? {},
+        tags: apiArtefact.tags ?? [],
     };
 }
 
@@ -38,9 +68,15 @@ export function useArtefacts() {
         setLoading(true);
         setError(null);
         try {
-            await new Promise(resolve => setTimeout(resolve, 300));
-            const transformed = mockArtefacts.map(transformArtefact);
-            setArtefacts(transformed);
+            const response = await fetch('/api/v1/artefacts');
+            if (!response.ok) throw new Error('Failed to fetch artefacts');
+            const result = await response.json();
+
+            if (result.success && Array.isArray(result.data)) {
+                setArtefacts(result.data.map(transformApiArtefact));
+            } else {
+                setArtefacts([]);
+            }
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : 'Failed to fetch artefacts.');
         } finally {
@@ -49,23 +85,37 @@ export function useArtefacts() {
     }, []);
 
     const getArtefactById = useCallback((id: string) => {
-        return artefacts.find(a => a._id === id) || null;
+        return artefacts.find(a => a.id === id) || null;
     }, [artefacts]);
 
     const getArtefactsByType = useCallback((type: ArtefactType) => {
         return artefacts.filter(a => a.type === type);
     }, [artefacts]);
 
-    const createArtefact = useCallback(async (data: CreateArtefactInput) => {
+    const createArtefact = useCallback(async (data: any) => {
         setLoading(true);
         setError(null);
         try {
-            await new Promise(resolve => setTimeout(resolve, 300));
-            const newArtefact: Artefact = {
-                ...data,
-                _id: `artefact_${Date.now()}`,
-                createdAt: new Date().toISOString(),
+            const apiData = {
+                artefactName: { en: data.name, th: data.nameTh },
+                description: { en: data.description, th: data.description },
+                categoryId: 1, // Placeholder: need UI to select category
+                lifecycleStatus: 'ACTIVE',
             };
+
+            const response = await fetch('/api/v1/artefacts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(apiData),
+            });
+
+            if (!response.ok) {
+                const res = await response.json();
+                throw new Error(res.error || 'Failed to create artefact');
+            }
+
+            const result = await response.json();
+            const newArtefact = transformApiArtefact(result.data);
             setArtefacts(prev => [...prev, newArtefact]);
             return newArtefact;
         } catch (err: unknown) {
@@ -76,14 +126,23 @@ export function useArtefacts() {
         }
     }, []);
 
-    const updateArtefact = useCallback(async (id: string, data: UpdateArtefactInput) => {
+    const updateArtefact = useCallback(async (id: string, data: any) => {
         setLoading(true);
         setError(null);
         try {
-            await new Promise(resolve => setTimeout(resolve, 300));
-            setArtefacts(prev => prev.map(a =>
-                a._id === id ? { ...a, ...data, updatedAt: new Date().toISOString() } : a
-            ));
+            const apiData: any = {};
+            if (data.name) apiData.artefactName = { en: data.name, th: data.nameTh };
+            if (data.description) apiData.description = { en: data.description };
+
+            const response = await fetch(`/api/v1/artefacts/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(apiData),
+            });
+
+            if (!response.ok) throw new Error('Failed to update artefact');
+
+            await fetchArtefacts();
             return true;
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : 'Failed to update artefact.');
@@ -91,14 +150,19 @@ export function useArtefacts() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [fetchArtefacts]);
 
     const deleteArtefact = useCallback(async (id: string) => {
         setLoading(true);
         setError(null);
         try {
-            await new Promise(resolve => setTimeout(resolve, 300));
-            setArtefacts(prev => prev.filter(a => a._id !== id));
+            const response = await fetch(`/api/v1/artefacts/${id}`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) throw new Error('Failed to delete artefact');
+
+            setArtefacts(prev => prev.filter(a => a.id !== id));
             return true;
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : 'Failed to delete artefact.');

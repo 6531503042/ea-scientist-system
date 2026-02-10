@@ -5,8 +5,8 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 interface AuthContextType {
     user: any;
     role: 'admin' | 'architect' | 'executive' | 'user';
-    login: (token: string, user: any) => void;
-    logout: () => void;
+    login: (token: string, user: any) => void; // Token arg kept for signature compatibility but unused
+    logout: () => Promise<void>;
     isAuthenticated: boolean;
     loading: boolean;
 }
@@ -15,55 +15,51 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<any>(null);
-    const [token, setToken] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
+    // Check for existing session on mount
     useEffect(() => {
-        // Only access localStorage on client-side
-        if (typeof window !== 'undefined') {
-            const storedToken = localStorage.getItem('token');
-            const storedUser = localStorage.getItem('user');
-
-            if (storedToken && storedUser) {
-                setToken(storedToken);
-                setUser(JSON.parse(storedUser));
+        const checkSession = async () => {
+            try {
+                const response = await fetch('/api/v1/auth/me');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        setUser(data.data);
+                    }
+                }
+            } catch (error) {
+                console.error("Session check failed:", error);
+            } finally {
+                setLoading(false);
             }
-        }
-        setLoading(false);
+        };
+
+        checkSession();
     }, []);
 
-    const login = (newToken: string, newUser: any) => {
-        // Only access browser APIs on client-side
-        if (typeof window !== 'undefined') {
-            // Persist to localStorage for client-side state
-            localStorage.setItem('token', newToken);
-            localStorage.setItem('user', JSON.stringify(newUser));
-
-            // Set a simple auth cookie so Next.js middleware can see it.
-            // (In real production code thisควรทำผ่าน secure HttpOnly cookie จาก API route)
-            document.cookie = `token=${encodeURIComponent(newToken)}; path=/; max-age=${60 * 60 * 24}`;
-        }
-        setToken(newToken);
+    const login = (token: string, newUser: any) => {
+        // Token is now handled by httpOnly cookies, so we just set the user state
         setUser(newUser);
     };
 
-    const logout = () => {
-        // Only access browser APIs on client-side
-        if (typeof window !== 'undefined') {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-
-            // Clear auth cookie used by middleware
-            document.cookie = 'token=; path=/; max-age=0';
+    const logout = async () => {
+        try {
+            await fetch('/api/v1/auth/logout', { method: 'POST' });
+            setUser(null);
+            // Optional: Redirect to login page
+            if (typeof window !== 'undefined') {
+                window.location.href = '/login';
+            }
+        } catch (error) {
+            console.error("Logout failed:", error);
         }
-        setToken(null);
-        setUser(null);
     };
 
     const role = user?.role || 'user';
 
     return (
-        <AuthContext.Provider value={{ user, role, login, logout, isAuthenticated: !!token, loading }}>
+        <AuthContext.Provider value={{ user, role, login, logout, isAuthenticated: !!user, loading }}>
             {children}
         </AuthContext.Provider>
     );

@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { History, ChevronRight, Layers, Database, Cpu, Link, Shield, Briefcase } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { ArtefactType } from '@/data/mockData';
+import type { ArtefactType } from '@/types/artefact';
 
 interface ChangeItem {
   artefact: string;
@@ -49,7 +49,7 @@ export function RecentChangesCard({ items, onViewAll }: RecentChangesCardProps) 
           </div>
           <h3 className="font-semibold text-foreground">Recent Changes</h3>
         </div>
-        <button 
+        <button
           onClick={onViewAll}
           className="flex items-center gap-1 text-sm text-muted-foreground hover:text-accent transition-colors"
         >
@@ -62,7 +62,7 @@ export function RecentChangesCard({ items, onViewAll }: RecentChangesCardProps) 
         {items.map((item, index) => {
           const Icon = typeIcons[item.type] || Layers;
           const colorClass = typeColors[item.type] || 'bg-muted text-muted-foreground';
-          
+
           return (
             <motion.div
               key={`${item.artefact}-${index}`}

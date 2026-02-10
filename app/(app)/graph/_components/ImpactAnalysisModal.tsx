@@ -21,7 +21,7 @@ import {
   Briefcase
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { Artefact, ArtefactType, RiskLevel } from '@/data/mockData';
+import type { Artefact, ArtefactType, RiskLevel } from '@/types/artefact';
 import { relationships, artefacts } from '@/data/mockData';
 import { useLanguage } from '@/context/LanguageContext';
 

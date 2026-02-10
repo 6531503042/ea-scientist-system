@@ -1,25 +1,59 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import {
+  getAccessTokenFromCookies,
+  getRefreshTokenFromCookies,
+} from "@/lib/auth/cookies";
 
-export function middleware(request: NextRequest) {
-  // Allow public routes (login + static landing at "/")
-  const publicRoutes = ['/login', '/'];
-  const isPublicRoute = publicRoutes.some(route => 
-    request.nextUrl.pathname === route
-  );
+// Routes that don't require authentication
+const PUBLIC_ROUTES = [
+  "/login",
+  "/api/v1/auth/login",
+  "/api/health",
+];
 
-  if (isPublicRoute) {
+// Routes that start with these prefixes don't require authentication
+const PUBLIC_PREFIXES = [
+  "/_next",
+  "/favicon.ico",
+  "/public",
+];
+
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Skip public prefixes
+  if (PUBLIC_PREFIXES.some(prefix => pathname.startsWith(prefix))) {
     return NextResponse.next();
   }
 
-  // Check authentication token
-  const token = request.cookies.get('token')?.value;
+  // Skip specific public routes
+  if (PUBLIC_ROUTES.includes(pathname)) {
+    return NextResponse.next();
+  }
 
-  if (!token && !isPublicRoute) {
-    const loginUrl = new URL('/login', request.url);
-    // ถ้าเป็น root ให้ redirect ไป dashboard หลัง login แทน
-    const targetPath = request.nextUrl.pathname === '/' ? '/dashboard' : request.nextUrl.pathname;
-    loginUrl.searchParams.set('redirect', targetPath);
+  // Check for tokens
+  const accessToken = getAccessTokenFromCookies(request.cookies);
+  const refreshToken = getRefreshTokenFromCookies(request.cookies);
+  const hasToken = !!(accessToken || refreshToken);
+
+  // If going to login page while authenticated, redirect to home
+  if (pathname === "/login" && hasToken) {
+    return NextResponse.redirect(new URL("/", request.url));
+  }
+
+  // If trying to access protected route without token, redirect to login
+  if (!hasToken && !PUBLIC_ROUTES.includes(pathname)) {
+    // Return 401 for API routes
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json(
+        { success: false, error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+    // Redirect for pages
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
@@ -29,12 +63,11 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
+     * Match all request paths except:
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
 };

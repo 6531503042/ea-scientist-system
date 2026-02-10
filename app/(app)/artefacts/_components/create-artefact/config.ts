@@ -3,7 +3,7 @@
  * Extracted to reduce main component file size
  */
 
-import type { ArtefactType } from '@/data/mockData';
+import type { ArtefactType } from '@/types/artefact';
 import { Briefcase, Database, Layers, Cpu, Link, Shield } from 'lucide-react';
 
 // Icon mapping for each artefact type

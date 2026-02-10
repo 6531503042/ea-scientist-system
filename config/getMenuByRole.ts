@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import { siteConfig, type NavItem, type NavSection } from './site';
 
-export type AppRole = 'admin' | 'architect' | 'manager' | 'business_owner' | 'auditor' | 'viewer';
+export type AppRole = 'admin' | 'architect' | 'manager' | 'business_owner' | 'auditor' | 'viewer' | 'user' | 'executive';
 
 export type { NavItem };
 
@@ -40,10 +40,19 @@ const rolePermissions: Record<AppRole, string[]> = {
     'artefacts:read',
     'graph:read',
   ],
+  user: [
+    'artefacts:read',
+    'graph:read',
+  ],
+  executive: [
+    'artefacts:read',
+    'graph:read',
+    'audit:read',
+    'organization:read',
+  ],
 };
 
 function hasPermission(role: AppRole, permission?: string): boolean {
-  if (!permission) return true;
   if (!permission) return true;
   const perms = rolePermissions[role] || rolePermissions['viewer'];
   if (perms.includes('*')) return true;

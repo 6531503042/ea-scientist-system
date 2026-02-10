@@ -27,5 +27,8 @@ bestpractice-frontend-example/
 example-other-project/
 old-frontend/
 example-production
+src_legacy_vite/
+frontend-next/
 
 .next
+generated/prisma

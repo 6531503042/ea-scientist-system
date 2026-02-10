@@ -1,80 +1,25 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { AuditLog, AuditLogFilter } from '@/types/audit';
 
-// Mock audit data
-const mockAuditLogs: AuditLog[] = [
-    {
-        _id: 'log_1',
-        timestamp: '2026-02-05T10:30:00+07:00',
-        userId: 'user_1',
-        userName: 'สมชาย ใจดี',
-        userRole: 'admin',
-        action: 'login',
-        module: 'auth',
-        description: 'เข้าสู่ระบบสำเร็จ',
-        ipAddress: '192.168.1.100',
-        severity: 'info',
-    },
-    {
-        _id: 'log_2',
-        timestamp: '2026-02-05T10:35:00+07:00',
-        userId: 'user_1',
-        userName: 'สมชาย ใจดี',
-        userRole: 'admin',
-        action: 'create',
-        module: 'artefacts',
-        resourceType: 'artefact',
-        resourceId: 'art_1',
-        resourceName: 'ระบบบริการประชาชน',
-        description: 'สร้าง Artefact ใหม่: ระบบบริการประชาชน',
-        ipAddress: '192.168.1.100',
-        severity: 'info',
-    },
-    {
-        _id: 'log_3',
-        timestamp: '2026-02-05T11:00:00+07:00',
-        userId: 'user_2',
-        userName: 'สมหญิง รักษ์งาน',
-        userRole: 'architect',
-        action: 'update',
-        module: 'artefacts',
-        resourceType: 'artefact',
-        resourceId: 'art_2',
-        resourceName: 'ฐานข้อมูลกลาง',
-        description: 'แก้ไข Artefact: ฐานข้อมูลกลาง',
-        ipAddress: '192.168.1.101',
-        severity: 'info',
-    },
-    {
-        _id: 'log_4',
-        timestamp: '2026-02-05T11:30:00+07:00',
-        userId: 'user_3',
-        userName: 'ผู้ใช้ทั่วไป',
-        userRole: 'viewer',
-        action: 'export',
-        module: 'reports',
-        description: 'ส่งออกรายงาน EA Dashboard',
-        ipAddress: '192.168.1.102',
-        severity: 'info',
-    },
-    {
-        _id: 'log_5',
-        timestamp: '2026-02-05T12:00:00+07:00',
-        userId: 'user_1',
-        userName: 'สมชาย ใจดี',
-        userRole: 'admin',
-        action: 'delete',
-        module: 'users',
-        resourceType: 'user',
-        resourceId: 'user_old',
-        resourceName: 'ผู้ใช้เก่า',
-        description: 'ลบผู้ใช้งาน: ผู้ใช้เก่า',
-        ipAddress: '192.168.1.100',
-        severity: 'warning',
-    },
-];
+function transformApiLog(apiLog: any): AuditLog {
+    return {
+        _id: apiLog.id.toString(),
+        timestamp: apiLog.createdAt,
+        userId: apiLog.userId?.toString(),
+        userName: apiLog.user ? `${apiLog.user.firstName} ${apiLog.user.lastName}` : 'System',
+        userRole: apiLog.user?.role?.roleName || 'unknown',
+        action: apiLog.action?.toLowerCase(), // LOGIN / EXPORT / IMPORT
+        module: apiLog.entityType || 'system',
+        description: apiLog.summary || apiLog.action,
+        ipAddress: apiLog.ipAddress || '-',
+        severity: 'info', // Mock severity for now as schema doesn't have it
+        resourceType: apiLog.entityType,
+        resourceId: apiLog.entityId?.toString(),
+        resourceName: apiLog.entityLabel,
+    };
+}
 
 export function useAudit() {
     const [logs, setLogs] = useState<AuditLog[]>([]);
@@ -86,26 +31,23 @@ export function useAudit() {
         setLoading(true);
         setError(null);
         try {
-            await new Promise(resolve => setTimeout(resolve, 300));
-
-            let filteredLogs = [...mockAuditLogs];
-
             const activeFilter = filterParams || filter;
+            const query = new URLSearchParams();
 
-            if (activeFilter.userId) {
-                filteredLogs = filteredLogs.filter(log => log.userId === activeFilter.userId);
-            }
-            if (activeFilter.action) {
-                filteredLogs = filteredLogs.filter(log => log.action === activeFilter.action);
-            }
-            if (activeFilter.module) {
-                filteredLogs = filteredLogs.filter(log => log.module === activeFilter.module);
-            }
-            if (activeFilter.severity) {
-                filteredLogs = filteredLogs.filter(log => log.severity === activeFilter.severity);
-            }
+            if (activeFilter.userId) query.append('userId', activeFilter.userId);
+            if (activeFilter.action) query.append('action', activeFilter.action);
+            if (activeFilter.module) query.append('entityType', activeFilter.module);
 
-            setLogs(filteredLogs);
+            const response = await fetch(`/api/v1/audit-logs?${query.toString()}`);
+            if (!response.ok) throw new Error('Failed to fetch audit logs');
+
+            const result = await response.json();
+
+            if (result.success && Array.isArray(result.data)) {
+                setLogs(result.data.map(transformApiLog));
+            } else {
+                setLogs([]);
+            }
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : 'Failed to fetch audit logs.');
         } finally {

@@ -4,7 +4,7 @@
  */
 
 import type { Node, Edge, MarkerType } from '@xyflow/react';
-import type { Artefact, ArtefactType, Relationship } from '@/data/mockData';
+import type { Artefact, ArtefactType, Relationship } from '@/types/artefact';
 
 // Position nodes in a hierarchical layout
 export function getNodePosition(type: ArtefactType, index: number): { x: number; y: number } {

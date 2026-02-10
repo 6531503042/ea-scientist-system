@@ -3,6 +3,13 @@
 ## Overview
 This document defines coding standards and best practices for the Enterprise Architecture System project, based on patterns from `bestpractice-frontend-example` (frontend) and `example-production` (full-stack).
 
+## Rule 0: TOR Requirement and etc.. =>  
+/Users/bricksocoolxd/Documents/GitHub/the-insight-compass/docs/ERD_Analysis.md
+/Users/bricksocoolxd/Documents/GitHub/the-insight-compass/docs/erd-analysis-and-recommendations.md
+/Users/bricksocoolxd/Documents/GitHub/the-insight-compass/docs/MIGRATION.md
+/Users/bricksocoolxd/Documents/GitHub/the-insight-compass/docs/requirement.md
+/Users/bricksocoolxd/Documents/GitHub/the-insight-compass/docs/TOR_EA_สถาปัตยกรรมองค์กรของกรมวิทยาศาสตร์บริ.pdf
+
 ---
 
 ## Rule 1: Best Practice References
@@ -379,3 +386,10 @@ import type { User } from '@/types';
 | Repository | `lib/repositories/` | Data access |
 | Validators | `lib/validators/` | Zod schemas |
 | Types | `lib/types/` or `types/` | TypeScript types |
+
+## Example References
+
+### 1. Example Production structure -> /Users/bricksocoolxd/Documents/GitHub/the-insight-compass/.examples/example-production
+
+### 2. Example Best Practices Structure -> /Users/bricksocoolxd/Documents/GitHub/the-insight-compass/.examples/bestpractice-frontend-example
+
