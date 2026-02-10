@@ -18,6 +18,8 @@ export type Role = {
     description?: string;
     permissions: Permission[] | string[];
     isDefault?: boolean;
+    isSystemRole?: boolean;
+    userCount?: number;
     createdAt?: string;
     updatedAt?: string;
 };

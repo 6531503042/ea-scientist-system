@@ -49,7 +49,7 @@ export default function UsersPage() {
     users.forEach(user => {
       const roleKey = typeof user.role === 'string' ? user.role : 'viewer';
       const matchingRole = roles.find(r =>
-        r.code === roleKey ||
+        r._id === roleKey ||
         r.name.toLowerCase() === roleKey.toLowerCase() ||
         r.name.toLowerCase().replace(/\s+/g, '_') === roleKey.toLowerCase()
       );
@@ -70,7 +70,7 @@ export default function UsersPage() {
     return users.filter(user => {
       const userRoleKey = typeof user.role === 'string' ? user.role : 'viewer';
       return (
-        role.code === userRoleKey ||
+        role._id === userRoleKey ||
         role.name.toLowerCase() === userRoleKey.toLowerCase() ||
         role.name.toLowerCase().replace(/\s+/g, '_') === userRoleKey.toLowerCase()
       );
@@ -219,6 +219,7 @@ export default function UsersPage() {
                 <UsersTableSkeleton />
               ) : (
                 <UsersTable
+                  isLoading={isUsersLoading}
                   users={searchedUsers}
                   searchQuery={searchQuery}
                   onSearchChange={setSearchQuery}

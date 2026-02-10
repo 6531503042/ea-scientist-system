@@ -23,7 +23,7 @@ export function AuditTable({ initialData }: AuditTableProps) {
     const filteredData = initialData.filter(log => {
         const matchesSearch =
             log.target?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            log.user.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            log.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
             log.ipAddress?.toLowerCase().includes(searchQuery.toLowerCase());
 
         const matchesTab =
@@ -93,7 +93,7 @@ export function AuditTable({ initialData }: AuditTableProps) {
                                     const config = AUDIT_ACTION_CONFIG[log.action] || AUDIT_ACTION_CONFIG['view'];
                                     return (
                                         <motion.tr
-                                            key={log.id}
+                                            key={log._id}
                                             initial={{ opacity: 0, y: 10 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             exit={{ opacity: 0, y: -10 }}
@@ -102,7 +102,7 @@ export function AuditTable({ initialData }: AuditTableProps) {
                                         >
                                             <td className="px-4 py-4">
                                                 <div className="flex flex-col">
-                                                    <span className="font-medium text-foreground">{log.user}</span>
+                                                    <span className="font-medium text-foreground">{log.userName}</span>
                                                     <span className="text-xs text-muted-foreground">{log.userRole}</span>
                                                 </div>
                                             </td>

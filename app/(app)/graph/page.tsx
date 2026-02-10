@@ -172,8 +172,8 @@ function GraphPageContent() {
     }
     if (searchQuery) {
       result = result.filter((node) =>
-        node.data.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        node.data.nameTh.toLowerCase().includes(searchQuery.toLowerCase())
+        (node.data.name as string).toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (node.data.nameTh as string).toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
     return result;

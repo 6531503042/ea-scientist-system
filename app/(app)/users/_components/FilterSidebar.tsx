@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Users, Shield, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { Role } from '@/types/user';
+import type { Role } from '@/types/role';
 
 interface FilterSidebarProps {
     roles: Role[];
@@ -15,13 +15,13 @@ interface FilterSidebarProps {
 
 // Role color mapping
 const roleColors: Record<string, { bg: string; text: string }> = {
-    administrator: { bg: 'bg-red-500/10', text: 'text-red-600' },
-    data_owner: { bg: 'bg-sky-500/10', text: 'text-sky-600' },
-    data_steward: { bg: 'bg-emerald-500/10', text: 'text-emerald-600' },
-    governance_committee: { bg: 'bg-violet-500/10', text: 'text-violet-600' },
-    auditor: { bg: 'bg-amber-500/10', text: 'text-amber-600' },
+    admin: { bg: 'bg-red-500/10', text: 'text-red-600' },
     architect: { bg: 'bg-blue-500/10', text: 'text-blue-600' },
+    manager: { bg: 'bg-amber-500/10', text: 'text-amber-600' },
     viewer: { bg: 'bg-gray-500/10', text: 'text-gray-600' },
+    // Backwards compatibility if needed, but safe to add
+    auditor: { bg: 'bg-amber-500/10', text: 'text-amber-600' },
+    business_owner: { bg: 'bg-sky-500/10', text: 'text-sky-600' },
 };
 
 export function FilterSidebar({
@@ -109,16 +109,16 @@ export function FilterSidebar({
 
                 {/* Role Items */}
                 {roles.map((role) => {
-                    const colors = roleColors[role.code] || roleColors.viewer;
-                    const count = userCounts[role.id] || 0;
+                    const colors = roleColors[role._id] || roleColors.viewer;
+                    const count = userCounts[role._id] || 0;
 
                     return (
                         <button
-                            key={role.id}
-                            onClick={() => onRoleChange(role.id)}
+                            key={role._id}
+                            onClick={() => onRoleChange(role._id)}
                             className={cn(
                                 "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors mb-1",
-                                selectedRole === role.id
+                                selectedRole === role._id
                                     ? "bg-primary/10 text-primary font-medium"
                                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                             )}
@@ -137,7 +137,7 @@ export function FilterSidebar({
                                     </span>
                                     <span className={cn(
                                         "text-xs px-2 py-0.5 rounded-full",
-                                        selectedRole === role.id
+                                        selectedRole === role._id
                                             ? "bg-primary/20 text-primary"
                                             : "bg-muted text-muted-foreground"
                                     )}>

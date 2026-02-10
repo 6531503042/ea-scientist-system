@@ -24,6 +24,8 @@ const actionLabels: Record<AuditAction, { label: string; color: string }> = {
     logout: { label: 'ออกจากระบบ', color: 'text-muted-foreground' },
     export: { label: 'ส่งออก', color: 'text-info' },
     import: { label: 'นำเข้า', color: 'text-info' },
+    view: { label: 'เข้าดู', color: 'text-info' },
+    relationship: { label: 'ความสัมพันธ์', color: 'text-primary' },
 };
 
 const severityIcons: Record<AuditSeverity, React.ElementType> = {

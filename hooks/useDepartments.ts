@@ -15,6 +15,8 @@ function transformDepartment(mockDept: MockDept): Department {
         nameTh: mockDept.name,
         head: mockDept.head,
         memberCount: mockDept.memberCount,
+        userCount: mockDept.memberCount,
+        status: 'active',
     };
 }
 

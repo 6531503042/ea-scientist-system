@@ -81,6 +81,8 @@ interface UsersTableProps {
     onEditUser: (user: User) => void;
     onDeleteUser: (userId: string) => void;
     onResetPassword: (userId: string) => void;
+    searchQuery?: string;
+    onSearchChange?: (value: string) => void;
 }
 
 export function UsersTable({
@@ -90,9 +92,15 @@ export function UsersTable({
     onEditUser,
     onDeleteUser,
     onResetPassword,
+    searchQuery,
+    onSearchChange,
 }: UsersTableProps) {
     // State
-    const [filterValue, setFilterValue] = useState('');
+    const [internalFilterValue, setInternalFilterValue] = useState('');
+
+    const filterValue = searchQuery !== undefined ? searchQuery : internalFilterValue;
+    const handleSearchChange = onSearchChange || setInternalFilterValue;
+
     const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set([]));
     const [visibleColumns, setVisibleColumns] = useState<Set<string>>(new Set(INITIAL_VISIBLE_COLUMNS));
     const [statusFilter, setStatusFilter] = useState('all');
@@ -279,7 +287,7 @@ export function UsersTable({
             columns={headerColumns}
             renderCell={renderCell}
             filterValue={filterValue}
-            onSearchChange={setFilterValue}
+            onSearchChange={handleSearchChange}
             visibleColumns={visibleColumns}
             setVisibleColumns={setVisibleColumns}
             allColumns={columns}

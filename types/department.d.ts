@@ -12,6 +12,8 @@ export type Department = {
     parent?: Department | string;
     head?: string;
     memberCount?: number;
+    userCount?: number; // Aliased to memberCount in hooks
+    status?: 'active' | 'inactive';
     createdAt?: string;
     updatedAt?: string;
 };

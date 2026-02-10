@@ -89,7 +89,7 @@ export function RolesTable({ roles, onEditRole, onDeleteRole }: RolesTableProps)
                         </thead>
                         <tbody>
                             {roles.map((role, index) => {
-                                const roleKey = role.code || role.name.toLowerCase().replace(/\s+/g, '_');
+                                const roleKey = role._id;
                                 const colors = roleColors[roleKey] || roleColors.viewer;
                                 const isSystemRole = role.isSystemRole || ['admin', 'administrator'].includes(role.name.toLowerCase());
                                 const permissions = Array.isArray(role.permissions) ? role.permissions : [];
@@ -199,7 +199,7 @@ export function RolesTable({ roles, onEditRole, onDeleteRole }: RolesTableProps)
             <Dialog open={!!selectedRole} onOpenChange={() => setSelectedRole(null)}>
                 <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                     {selectedRole && (() => {
-                        const roleKey = selectedRole.code || selectedRole.name.toLowerCase().replace(/\s+/g, '_');
+                        const roleKey = selectedRole._id;
                         const colors = roleColors[roleKey] || roleColors.viewer;
                         const isSystemRole = selectedRole.isSystemRole || ['admin', 'administrator'].includes(selectedRole.name.toLowerCase());
                         const permissions = Array.isArray(selectedRole.permissions) ? selectedRole.permissions : [];

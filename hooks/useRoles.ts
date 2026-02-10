@@ -14,7 +14,9 @@ function transformRole(mockRole: MockRole): Role {
         nameTh: mockRole.name, // Can be localized later
         description: mockRole.description,
         permissions: mockRole.permissions,
-        isDefault: false,
+        isDefault: true,
+        isSystemRole: true,
+        userCount: mockRole.userCount,
     };
 }
 
