@@ -1,10 +1,11 @@
 /**
  * Artefact Templates Data
- * Pre-defined templates for each EA artefact type
+ * Pre-defined templates for each EA artefact type.
+ * Used by both CreateArtefactModal and EditArtefactModal.
  */
 
 import type { ArtefactType } from '@/types/artefact';
-import type { ArtefactTemplate } from './config';
+import type { ArtefactTemplate } from '@/data/artefact-config';
 
 // Enhanced Templates for each EA type with detailed defaults and type-specific fields
 export const templates: Record<ArtefactType, ArtefactTemplate[]> = {

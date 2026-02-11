@@ -14,8 +14,8 @@ import type { ArtefactType } from '@/types/artefact';
 import { bestPracticeExamples } from '@/data/bestPractices';
 
 // Import extracted configs and templates
-import { typeIcons, typeColors, togafLabels, togafTypeFields, typeOrder } from './create-artefact/config';
-import { templates } from './create-artefact/templates';
+import { typeIcons, typeColors, togafLabels, togafTypeFields, typeOrder } from '@/data/artefact-config';
+import { templates } from '@/data/artefact-templates';
 
 /**
  * Map frontend status to Prisma LifecycleStatus.

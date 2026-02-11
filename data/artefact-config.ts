@@ -1,6 +1,7 @@
 /**
- * Templates and Configuration for CreateArtefactModal
- * Extracted to reduce main component file size
+ * Artefact Configuration
+ * Shared TOGAF type icons, colors, labels, field definitions, and type interfaces.
+ * Used by both CreateArtefactModal and EditArtefactModal.
  */
 
 import type { ArtefactType } from '@/types/artefact';
