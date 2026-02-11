@@ -1,6 +1,6 @@
 # Enterprise Architecture System - Next.js
 
-Next.js 15 migration ของระบบจัดการสถาปัตยกรรมองค์กร
+Next.js 15 ของระบบจัดการสถาปัตยกรรมองค์กร
 
 ## 🚀 Getting Started
 
@@ -54,12 +54,3 @@ frontend-next/
 - ✅ Framer Motion for animations
 - ✅ Authentication & Authorization
 - ✅ Multi-language support (TH/EN)
-
-## 📝 Migration Notes
-
-- Migrated from React Router to Next.js App Router
-- Changed `useNavigate` → `useRouter` from `next/navigation`
-- Changed `Link` from `react-router-dom` → `next/link`
-- Changed `useLocation` → `usePathname` from `next/navigation`
-- All pages are now Server/Client Components
-- Middleware handles authentication
