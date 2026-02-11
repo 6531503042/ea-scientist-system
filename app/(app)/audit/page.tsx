@@ -1,20 +1,52 @@
 'use client';
 
+import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { AuditTable } from './_components/AuditTable';
-import { mockAuditLogs } from '@/data/mockAuditLogs';
-
-const usageStats = [
-  { category: 'User/Login', count: 49, percentage: 69, color: 'hsl(199, 89%, 48%)' },
-  { category: 'Export', count: 20, percentage: 28.2, color: 'hsl(168, 76%, 42%)' },
-  { category: 'Audit trail', count: 2, percentage: 2.8, color: 'hsl(38, 92%, 50%)' },
-];
+import { useAudit } from '@/hooks/useAudit';
+import { AuditLogTable } from './_components/AuditLogTable';
 
 export default function AuditPage() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const { logs, loading } = useAudit();
+
+  const stats = useMemo(() => {
+    const total = logs.length;
+    const loginCount = logs.filter(log => log.action === 'login').length;
+    const exportCount = logs.filter(log => log.action === 'export' || log.action === 'import').length;
+    const auditTrailCount = total - loginCount - exportCount;
+
+    return {
+      total,
+      loginCount,
+      exportCount,
+      auditTrailCount,
+      usage: [
+        {
+          category: 'User/Login',
+          count: loginCount,
+          percentage: total ? Math.round((loginCount / total) * 100) : 0,
+          color: 'hsl(199, 89%, 48%)',
+        },
+        {
+          category: 'Export / Import',
+          count: exportCount,
+          percentage: total ? Math.round((exportCount / total) * 100) : 0,
+          color: 'hsl(168, 76%, 42%)',
+        },
+        {
+          category: 'Audit trail อื่น ๆ',
+          count: auditTrailCount,
+          percentage: total ? Math.max(0, 100 - Math.round((loginCount + exportCount) / total * 100)) : 0,
+          color: 'hsl(38, 92%, 50%)',
+        },
+      ],
+    };
+  }, [logs]);
+
   return (
     <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
       {/* Subtitle */}
-      <p className="text-sm text-muted-foreground">แสดงข้อมูลการใช้งานของผู้ใช้ในระบบ</p>
+      <p className="text-sm text-muted-foreground">แสดงข้อมูลการใช้งานของผู้ใช้ในระบบ (ดึงจาก Audit Logs API จริง)</p>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -24,7 +56,7 @@ export default function AuditPage() {
           className="p-5 bg-card rounded-xl border border-border"
         >
           <p className="text-sm text-muted-foreground">จำนวน Log ทั้งหมด</p>
-          <p className="text-3xl font-bold text-info mt-1">71</p>
+          <p className="text-3xl font-bold text-info mt-1">{stats.total}</p>
         </motion.div>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -32,8 +64,8 @@ export default function AuditPage() {
           transition={{ delay: 0.1 }}
           className="p-5 bg-card rounded-xl border border-border"
         >
-          <p className="text-sm text-muted-foreground">Log เดือนนี้</p>
-          <p className="text-3xl font-bold text-info mt-1">71</p>
+          <p className="text-sm text-muted-foreground">User/Login</p>
+          <p className="text-3xl font-bold text-info mt-1">{stats.loginCount}</p>
         </motion.div>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -41,8 +73,8 @@ export default function AuditPage() {
           transition={{ delay: 0.2 }}
           className="p-5 bg-card rounded-xl border border-border"
         >
-          <p className="text-sm text-muted-foreground">จำนวนผู้ใช้งานที่ Active</p>
-          <p className="text-3xl font-bold text-success mt-1">30</p>
+          <p className="text-sm text-muted-foreground">Export / Audit อื่น ๆ</p>
+          <p className="text-3xl font-bold text-success mt-1">{stats.exportCount + stats.auditTrailCount}</p>
         </motion.div>
       </div>
 
@@ -53,9 +85,9 @@ export default function AuditPage() {
         transition={{ delay: 0.3 }}
         className="p-6 bg-card rounded-xl border border-border"
       >
-        <h3 className="font-semibold text-foreground mb-4">สถิติการใช้งาน</h3>
+        <h3 className="font-semibold text-foreground mb-4">สถิติการใช้งานจาก Audit Logs</h3>
         <div className="space-y-4">
-          {usageStats.map((stat, index) => (
+          {stats.usage.map((stat, index) => (
             <div key={stat.category} className="space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -83,8 +115,13 @@ export default function AuditPage() {
         </div>
       </motion.div>
 
-      {/* Table */}
-      <AuditTable initialData={mockAuditLogs} />
+      {/* Audit Log Table (API-backed) */}
+      <AuditLogTable
+        logs={logs}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        loading={loading}
+      />
     </div>
   );
 }

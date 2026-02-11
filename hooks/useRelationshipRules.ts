@@ -1,6 +1,8 @@
+'use client';
+
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/components/ui/use-toast';
-import type { ApiCategory, RelType } from './types';
+import type { ApiCategory, RelType } from '@/types/relationship-rule';
 
 /**
  * Feature hook for Relationship Types + Rule Pairs.

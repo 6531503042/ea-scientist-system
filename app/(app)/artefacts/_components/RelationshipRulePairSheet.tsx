@@ -10,9 +10,9 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
-import { useRelationshipRules } from './rule-pairs/use-relationship-rules';
-import type { AllowedPair, ApiCategory, RelType } from './rule-pairs/types';
-import { getLoc } from './rule-pairs/types';
+import { useRelationshipRules } from '@/hooks/useRelationshipRules';
+import type { AllowedPair, ApiCategory, RelType } from '@/types/relationship-rule';
+import { getLoc } from '@/types/relationship-rule';
 
 // ── Props ───────────────────────────────────────────────────────
 interface RelationshipRulePairSheetProps {
