@@ -55,8 +55,8 @@ model Department {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  // Self-relation for hierarchy
-  parent   Department?  @relation("DepartmentHierarchy", fields: [parentId], references: [id])
+  // Self-relation for hierarchy (when parent deleted, child's parentId → null)
+  parent   Department?  @relation("DepartmentHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
   children Department[] @relation("DepartmentHierarchy")
 
   // Reverse relations
@@ -99,9 +99,9 @@ model User {
   createdAt         DateTime  @default(now()) @map("created_at")
   updatedAt         DateTime  @updatedAt @map("updated_at")
 
-  // Relations
-  role       Role        @relation(fields: [roleId], references: [id])
-  department Department? @relation(fields: [departmentId], references: [id])
+  // Relations (Role: Restrict = cannot delete role if users exist; Department: SetNull on delete)
+  role       Role        @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  department Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
 
   // Reverse relations
   artefactsResponsible Artefact[]  @relation("ArtefactResponsibleUser")
@@ -154,14 +154,14 @@ model ArchitectureLayer {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Reverse relations
-  artifactCategories ArtifactCategory[]
+  artefactCategories ArtefactCategory[]
   artefacts          Artefact[]
 
   @@map("architecture_layers")
 }
 
 /// Sub-categories within each layer (e.g., Business → Capability / Process)
-model ArtifactCategory {
+model ArtefactCategory {
   id                  Int      @id @default(autoincrement())
   architectureLayerId Int      @map("architecture_layer_id")
   categoryName        Json     @map("category_name") // { th: "...", en: "..." }
@@ -180,7 +180,7 @@ model ArtifactCategory {
 
   @@unique([architectureLayerId, categoryName])
   @@index([architectureLayerId])
-  @@map("artifact_categories")
+  @@map("artefact_categories")
 }
 
 /// Dynamic field definitions for each category (used to render UI forms)
@@ -198,7 +198,7 @@ model AttributeDefinition {
   updatedAt  DateTime  @updatedAt @map("updated_at")
 
   // Relations
-  category ArtifactCategory @relation(fields: [categoryId], references: [id])
+  category ArtefactCategory @relation(fields: [categoryId], references: [id])
 
   // Reverse relations
   artefactAttributes ArtefactAttribute[]
@@ -224,9 +224,9 @@ model Artefact {
 
   // Relations
   architectureLayer ArchitectureLayer? @relation(fields: [architectureLayerId], references: [id])
-  category          ArtifactCategory   @relation(fields: [categoryId], references: [id])
-  ownerDepartment   Department?        @relation("ArtefactOwnerDepartment", fields: [ownerDepartmentId], references: [id])
-  responsibleBy     User?              @relation("ArtefactResponsibleUser", fields: [responsibleById], references: [id])
+  category          ArtefactCategory   @relation(fields: [categoryId], references: [id])
+  ownerDepartment   Department?        @relation("ArtefactOwnerDepartment", fields: [ownerDepartmentId], references: [id], onDelete: SetNull)
+  responsibleBy     User?              @relation("ArtefactResponsibleUser", fields: [responsibleById], references: [id], onDelete: SetNull)
 
   // Reverse relations
   artefactAttributes ArtefactAttribute[]
@@ -335,7 +335,7 @@ model ArtefactTemplate {
   updatedAt      DateTime @updatedAt @map("updated_at")
 
   // Relations
-  category ArtifactCategory @relation(fields: [categoryId], references: [id])
+  category ArtefactCategory @relation(fields: [categoryId], references: [id])
 
   @@unique([categoryId, templateName])
   @@index([categoryId])
@@ -377,9 +377,9 @@ model Notification {
   createdAt        DateTime           @default(now()) @map("created_at")
   updatedAt        DateTime           @updatedAt @map("updated_at")
 
-  // Relations
-  role       Role?       @relation(fields: [roleId], references: [id])
-  department Department? @relation(fields: [departmentId], references: [id])
+  // Relations (SetNull when role/department deleted so notification row remains)
+  role       Role?       @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  department Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
 
   @@index([roleId])
   @@index([departmentId])
@@ -422,8 +422,8 @@ model AuditLog {
   id          Int      @id @default(autoincrement())
   userId      Int      @map("user_id")
   requestId   String?  @map("request_id") @db.VarChar(255)
-  ipAddress   String?  @map("ip_address") @db.VarChar(45)
-  userAgent   String?  @map("user_agent") @db.VarChar(500)
+  ipAddress   String?  @map("ip_address") @db.VarChar(45)   // IPv4/IPv6 max 45 chars
+  userAgent   String?  @map("user_agent") @db.VarChar(1000) // Browser UA strings can be long
   action      String   @db.VarChar(100)   // LOGIN / EXPORT / IMPORT / BULK_UPDATE
   operation   String?  @db.VarChar(50)    // CREATE / UPDATE / DELETE / LINK / UNLINK / DOWNLOAD
   summary     String?  @db.Text
@@ -432,8 +432,8 @@ model AuditLog {
   entityLabel String?  @map("entity_label") @db.VarChar(500)
   createdAt   DateTime @default(now()) @map("created_at")
 
-  // Relations
-  user User @relation(fields: [userId], references: [id])
+  // Relations (Restrict: cannot delete user while audit logs reference them)
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
 
   @@index([userId])
   @@index([requestId])

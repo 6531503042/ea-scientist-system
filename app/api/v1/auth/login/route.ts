@@ -7,8 +7,26 @@ import {
     getTokenExpiration,
 } from "@/lib/auth/jwt";
 import { setAuthCookies } from "@/lib/auth/cookies";
+import { AuditLogsRepository } from "@/lib/repositories/audit-logs/audit-logs-repository";
 
 const authService = new AuthService();
+const auditLogsRepository = new AuditLogsRepository();
+
+/** Get client IP from request (supports proxies). Max 45 chars for DB. */
+function getClientIp(request: Request): string | null {
+    const forwarded = request.headers.get("x-forwarded-for");
+    const realIp = request.headers.get("x-real-ip");
+    const raw = forwarded?.split(",")[0]?.trim() || realIp || null;
+    if (!raw) return null;
+    return raw.length > 45 ? raw.slice(0, 45) : raw;
+}
+
+/** Get User-Agent from request. Max 1000 chars for DB. */
+function getUserAgent(request: Request): string | null {
+    const ua = request.headers.get("user-agent");
+    if (!ua) return null;
+    return ua.length > 1000 ? ua.slice(0, 1000) : ua;
+}
 
 export async function POST(request: Request) {
     try {
@@ -38,6 +56,17 @@ export async function POST(request: Request) {
                 { status: 401 }
             );
         }
+
+        // Audit trail: LOGIN (backend-only, with IP and User-Agent)
+        const ipAddress = getClientIp(request);
+        const userAgent = getUserAgent(request);
+        await auditLogsRepository.create({
+            userId: user.id,
+            action: "LOGIN",
+            summary: "Login success",
+            ipAddress: ipAddress ?? undefined,
+            userAgent: userAgent ?? undefined,
+        });
 
         // Generate tokens
         const payload = {
