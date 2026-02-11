@@ -10,7 +10,7 @@ export async function GET() {
         const layers = await prisma.architectureLayer.findMany({
             where: { isActive: true },
             include: {
-                artifactCategories: {
+                artefactCategories: {
                     where: { isActive: true },
                     select: { id: true, categoryName: true },
                     orderBy: { id: "asc" },

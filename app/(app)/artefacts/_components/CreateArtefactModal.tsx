@@ -41,7 +41,7 @@ const getLoc = (val: any, lang: 'th' | 'en' = 'en'): string => {
 interface ApiLayer {
     id: number;
     layerName: { en: string; th: string } | string;
-    artifactCategories: ApiCategory[];
+    artefactCategories: ApiCategory[];
 }
 
 /** Type returned from /api/v1/categories */
@@ -128,7 +128,7 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
     const layer = layers.find(l => getLoc(l.layerName, 'en').toLowerCase().includes(keyword));
     if (!layer) return {};
     // Pick the first category under this layer
-    const category = layer.artifactCategories?.[0];
+    const category = layer.artefactCategories?.[0];
     return { layerId: layer.id, categoryId: category?.id };
   };
 

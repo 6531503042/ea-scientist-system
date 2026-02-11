@@ -16,10 +16,8 @@ import {
   AlertTriangle,
   Server,
   HardDrive,
-  GitBranch,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { RelationshipTypeManager } from './_components/RelationshipTypeManager';
 
 interface SettingSection {
   id: string;
@@ -29,7 +27,6 @@ interface SettingSection {
 
 const sections: SettingSection[] = [
   { id: 'general', title: 'ทั่วไป', icon: Settings },
-  { id: 'relationships', title: 'ประเภทความสัมพันธ์', icon: GitBranch },
   { id: 'notifications', title: 'การแจ้งเตือน', icon: Bell },
   { id: 'security', title: 'ความปลอดภัย', icon: Shield },
   { id: 'data', title: 'ข้อมูล', icon: Database },
@@ -152,10 +149,6 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 </div>
-              )}
-
-              {activeSection === 'relationships' && (
-                <RelationshipTypeManager />
               )}
 
               {activeSection === 'notifications' && (

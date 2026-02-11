@@ -23,13 +23,21 @@ import {
 import { Button } from '@/components/ui/button';
 import type { User as UserType } from '@/types/user';
 
+const TABS = [
+  { id: 'users', icon: UsersIcon, label: 'ผู้ใช้งาน' },
+  { id: 'roles', icon: Lock, label: 'บทบาท' },
+  { id: 'departments', icon: Building2, label: 'หน่วยงาน' },
+] as const;
+
+type TabId = typeof TABS[number]['id'];
+
 export default function UsersPage() {
   const { users, loading: usersLoading } = useUsers();
   const { roles, loading: rolesLoading } = useRoles();
   const { departments, loading: deptsLoading } = useDepartments();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'users' | 'roles' | 'departments'>('users');
+  const [activeTab, setActiveTab] = useState<TabId>('users');
   const [selectedRole, setSelectedRole] = useState('all');
 
   // Modal states
@@ -115,75 +123,66 @@ export default function UsersPage() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header Row - Description + Tab-specific Button */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 sm:p-6 pb-0 sm:pb-0">
-        <p className="text-sm text-muted-foreground">จัดการข้อมูลผู้ใช้งาน บทบาท และสิทธิการเข้าถึงเมนูต่างๆ ในระบบ</p>
-        <div className="flex gap-2">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 sm:px-6 pt-4 sm:pt-5 pb-3">
+        <div>
+          <p className="text-sm text-muted-foreground">
+            จัดการข้อมูลผู้ใช้งาน บทบาท และสิทธิการเข้าถึงเมนูต่างๆ ในระบบ
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          {/* Tabs - integrated into header */}
+          <div className="flex items-center gap-0.5 p-1 bg-muted/80 rounded-lg">
+            {TABS.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "relative flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all whitespace-nowrap",
+                  activeTab === tab.id
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <tab.icon className="w-3.5 h-3.5" />
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Tab-specific action button */}
           <AnimatePresence mode="wait">
             {activeTab === 'users' && (
               <motion.div
                 key="users-btn"
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                transition={{ duration: 0.15 }}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.12 }}
               >
-                <Button className="gap-2" onClick={() => setIsCreateUserModalOpen(true)}>
-                  <Plus className="w-4 h-4" />
-                  เพิ่มผู้ใช้งาน
+                <Button size="sm" className="gap-1.5 h-8" onClick={() => setIsCreateUserModalOpen(true)}>
+                  <Plus className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">เพิ่มผู้ใช้งาน</span>
+                  <span className="sm:hidden">เพิ่ม</span>
                 </Button>
               </motion.div>
             )}
             {activeTab === 'roles' && (
               <motion.div
                 key="roles-btn"
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                transition={{ duration: 0.15 }}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.12 }}
               >
-                <Button className="gap-2" onClick={() => setIsCreateRoleModalOpen(true)}>
-                  <Plus className="w-4 h-4" />
-                  เพิ่มบทบาท
+                <Button size="sm" className="gap-1.5 h-8" onClick={() => setIsCreateRoleModalOpen(true)}>
+                  <Plus className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">เพิ่มบทบาท</span>
+                  <span className="sm:hidden">เพิ่ม</span>
                 </Button>
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="overflow-x-auto px-4 sm:px-6 py-4 scrollbar-hide">
-        <div className="flex items-center gap-1 p-1 bg-muted rounded-xl w-fit min-w-max">
-          {[
-            { id: 'users', icon: UsersIcon, label: 'ผู้ใช้งาน', shortLabel: 'ผู้ใช้' },
-            { id: 'roles', icon: Lock, label: 'สิทธิ', shortLabel: 'สิทธิ' },
-            { id: 'departments', icon: Building2, label: 'หน่วยงาน', shortLabel: 'หน่วยงาน' },
-          ].map((tab) => (
-            <motion.button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as typeof activeTab)}
-              className={cn(
-                "relative flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap",
-                activeTab === tab.id
-                  ? "text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              {activeTab === tab.id && (
-                <motion.div
-                  layoutId="activeTabBg"
-                  className="absolute inset-0 bg-card shadow-sm rounded-lg"
-                  transition={{ type: "spring", duration: 0.4, bounce: 0.15 }}
-                />
-              )}
-              <tab.icon className="w-4 h-4 relative z-10" />
-              <span className="hidden xs:inline relative z-10">{tab.label}</span>
-              <span className="xs:hidden relative z-10">{tab.shortLabel}</span>
-            </motion.button>
-          ))}
         </div>
       </div>
 
@@ -192,14 +191,14 @@ export default function UsersPage() {
         {activeTab === 'users' && (
           <motion.div
             key="users-content"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-            className="flex flex-1 overflow-hidden h-full"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="flex flex-1 overflow-hidden border-t border-border"
           >
             {/* Filter Sidebar - Desktop only */}
-            <div className="hidden lg:block border-r border-border">
+            <div className="hidden lg:block">
               {isUsersLoading ? (
                 <FilterSidebarSkeleton />
               ) : (
@@ -214,7 +213,7 @@ export default function UsersPage() {
             </div>
 
             {/* Users Table */}
-            <div className="flex-1 overflow-auto p-4 sm:p-6 pt-0 sm:pt-0">
+            <div className="flex-1 overflow-auto p-4 sm:p-5">
               {isUsersLoading ? (
                 <UsersTableSkeleton />
               ) : (
@@ -236,11 +235,11 @@ export default function UsersPage() {
         {activeTab === 'roles' && (
           <motion.div
             key="roles-content"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-            className="flex-1 overflow-auto p-4 sm:p-6 pt-0 sm:pt-0"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="flex-1 overflow-auto p-4 sm:p-5 border-t border-border"
           >
             {isRolesLoading ? (
               <RolesTableSkeleton />
@@ -257,11 +256,11 @@ export default function UsersPage() {
         {activeTab === 'departments' && (
           <motion.div
             key="departments-content"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-            className="flex-1 overflow-auto p-4 sm:p-6 pt-0 sm:pt-0"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="flex-1 overflow-auto p-4 sm:p-5 border-t border-border"
           >
             {isDepartmentsLoading ? (
               <DepartmentsTableSkeleton />

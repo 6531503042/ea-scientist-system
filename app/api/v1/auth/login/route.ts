@@ -61,7 +61,7 @@ export async function POST(request: Request) {
         const ipAddress = getClientIp(request);
         const userAgent = getUserAgent(request);
         await auditLogsRepository.create({
-            userId: user.id,
+            user: { connect: { id: user.id } },
             action: "LOGIN",
             summary: "Login success",
             ipAddress: ipAddress ?? undefined,

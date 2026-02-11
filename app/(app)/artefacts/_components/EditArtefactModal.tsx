@@ -34,7 +34,7 @@ interface ApiDepartment { id: number; shortName: string; fullName: string }
 interface ApiLayer {
     id: number;
     layerName: { en: string; th: string } | string;
-    artifactCategories: { id: number; categoryName: { en: string; th: string } | string }[];
+    artefactCategories: { id: number; categoryName: { en: string; th: string } | string }[];
 }
 
 interface EditArtefactModalProps {
@@ -89,7 +89,7 @@ export function EditArtefactModal({ artefact, onClose, onSubmit }: EditArtefactM
         const keyword = type.toLowerCase();
         const layer = layers.find(l => getLoc(l.layerName).toLowerCase().includes(keyword));
         if (!layer) return {};
-        const cat = layer.artifactCategories?.[0];
+        const cat = layer.artefactCategories?.[0];
         return { layerId: layer.id, categoryId: cat?.id };
     };
 

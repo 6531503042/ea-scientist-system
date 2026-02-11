@@ -22,6 +22,7 @@ echo "3) Run App ONLY (Requires external DB or running DB)"
 echo "4) Build App Image (No cache)"
 echo "5) Stop All Containers"
 echo "6) View Logs"
+echo "7) Fresh Start (Rebuild ALL + Reset DB + Seed)"
 echo "exit) Exit"
 echo ""
 read -p "Enter choice: " choice
@@ -57,6 +58,33 @@ case $choice in
     6)
         echo -e "${BLUE}Streaming logs... (Ctrl+C to exit)${NC}"
         docker compose -f docker-compose.yml logs -f
+        ;;
+    7)
+        echo -e "${YELLOW}=== Fresh Start: Rebuilding everything from scratch ===${NC}"
+        echo -e "${RED}Stopping and removing all containers, volumes...${NC}"
+        docker compose -f docker-compose.yml down -v
+        echo ""
+        echo -e "${YELLOW}Rebuilding ALL images (no cache)...${NC}"
+        docker compose -f docker-compose.yml build --no-cache
+        echo ""
+        echo -e "${GREEN}Starting Fresh Stack (DB + Migration + Seed + App)...${NC}"
+        docker compose -f docker-compose.yml up -d
+        echo ""
+        echo -e "${BLUE}Waiting for services to initialize...${NC}"
+        sleep 5
+        echo -e "${BLUE}Migration & Seed logs:${NC}"
+        docker compose logs migrate
+        echo ""
+        echo -e "${GREEN}=================================================${NC}"
+        echo -e "${GREEN}  Fresh Start Complete!${NC}"
+        echo -e "${GREEN}  App:     http://localhost:3000${NC}"
+        echo -e "${GREEN}  pgAdmin: http://localhost:5050${NC}"
+        echo -e "${GREEN}=================================================${NC}"
+        echo -e "${BLUE}Test accounts (password: password123):${NC}"
+        echo "  admin@dss.go.th       → Admin"
+        echo "  somchai@dss.go.th     → Architect"
+        echo "  director@dss.go.th    → Executive"
+        echo "  suree@dss.go.th       → User"
         ;;
     exit)
         exit 0

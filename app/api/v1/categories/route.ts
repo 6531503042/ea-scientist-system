@@ -10,7 +10,7 @@ export async function GET(request: Request) {
         const { searchParams } = new URL(request.url);
         const layerId = searchParams.get("layerId");
 
-        const categories = await prisma.artifactCategory.findMany({
+        const categories = await prisma.artefactCategory.findMany({
             where: {
                 isActive: true,
                 ...(layerId ? { architectureLayerId: Number(layerId) } : {}),

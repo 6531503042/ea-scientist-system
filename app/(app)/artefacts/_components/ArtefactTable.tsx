@@ -9,6 +9,7 @@ import { ArtefactDetailModal } from './ArtefactDetailModal';
 import { CreateArtefactModal } from './CreateArtefactModal';
 import { EditArtefactModal } from './EditArtefactModal';
 import { ExportImportModal } from './ExportImportModal';
+import { RelationshipRulePairSheet } from './RelationshipRulePairSheet';
 import { useToast } from '@/components/ui/use-toast';
 import type { Artefact, ArtefactType, ArtefactStatus } from '@/types/artefact';
 
@@ -34,6 +35,7 @@ export function ArtefactTable({ initialData, onRefresh }: ArtefactTableProps) {
     const [editingArtefact, setEditingArtefact] = useState<Artefact | null>(null);
     const [exportModalOpen, setExportModalOpen] = useState(false);
     const [importModalOpen, setImportModalOpen] = useState(false);
+    const [rulePairSheetOpen, setRulePairSheetOpen] = useState(false);
 
     const ITEMS_PER_PAGE = 10;
 
@@ -139,6 +141,7 @@ export function ArtefactTable({ initialData, onRefresh }: ArtefactTableProps) {
                         setExportModalOpen(true);
                     }}
                     onImport={() => setImportModalOpen(true)}
+                    onRulePairs={() => setRulePairSheetOpen(true)}
                     totalCount={initialData.length}
                     filteredCount={filteredData.length}
                 />
@@ -215,6 +218,11 @@ export function ArtefactTable({ initialData, onRefresh }: ArtefactTableProps) {
                 isOpen={importModalOpen}
                 onClose={() => setImportModalOpen(false)}
                 mode="import"
+            />
+
+            <RelationshipRulePairSheet
+                open={rulePairSheetOpen}
+                onOpenChange={setRulePairSheetOpen}
             />
         </div>
     );

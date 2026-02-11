@@ -12,7 +12,8 @@ import {
     ArrowUpDown,
     FileSpreadsheet,
     FileText,
-    X
+    X,
+    GitBranch,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ArtefactStatus } from '@/types/artefact';
@@ -28,6 +29,7 @@ interface ArtefactFiltersProps {
     onAdd: () => void;
     onExport: (format: 'excel' | 'pdf') => void;
     onImport: () => void;
+    onRulePairs?: () => void;
     totalCount: number;
     filteredCount: number;
 }
@@ -56,6 +58,7 @@ export function ArtefactFilters({
     onAdd,
     onExport,
     onImport,
+    onRulePairs,
     totalCount,
     filteredCount
 }: ArtefactFiltersProps) {
@@ -182,6 +185,18 @@ export function ArtefactFilters({
                             )}
                         </AnimatePresence>
                     </div>
+
+                    {/* Rule Pairs */}
+                    {onRulePairs && (
+                        <button
+                            onClick={onRulePairs}
+                            className="flex items-center gap-2 px-3 py-2 text-sm border border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary rounded-lg transition-colors"
+                            title="Relationship Rule Pairs"
+                        >
+                            <GitBranch className="w-4 h-4" />
+                            <span>Rule Pairs</span>
+                        </button>
+                    )}
 
                     <div className="h-6 w-px bg-border hidden sm:block" />
 

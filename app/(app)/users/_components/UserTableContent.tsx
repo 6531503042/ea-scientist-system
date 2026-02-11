@@ -8,7 +8,6 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-    TableFooter,
 } from '@/components/ui/table';
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -23,26 +22,25 @@ interface UserTableContentProps {
     totalUsers: number;
 
     // State
-    filterValue?: string; // Changed from searchQuery to match usage
-    onSearchChange?: (value: string) => void; // Optional if handled via filterValue effect
+    filterValue?: string;
+    onSearchChange?: (value: string) => void;
 
     visibleColumns: Set<string>;
     setVisibleColumns: (columns: Set<string>) => void;
 
     sortDescriptor?: { column: string; direction: 'ascending' | 'descending' };
     setSortDescriptor?: (descriptor: { column: string; direction: 'ascending' | 'descending' }) => void;
-    // Legacy props support or updated names
     sortField?: string | null;
     sortDirection?: 'asc' | 'desc' | null;
     onSort?: (field: string) => void;
 
     currentPage?: number;
-    page: number; // New standard
+    page: number;
     totalPages?: number;
-    pages: number; // New standard
+    pages: number;
 
-    onPageChange?: (page: number) => void; // Legacy
-    setPage: (page: number | ((p: number) => number)) => void; // New standard
+    onPageChange?: (page: number) => void;
+    setPage: (page: number | ((p: number) => number)) => void;
     onNextPage?: () => void;
     onPreviousPage?: () => void;
 
@@ -57,8 +55,8 @@ interface UserTableContentProps {
     renderCell: (user: User, columnKey: string) => ReactNode;
 
     // Columns
-    columns: Column[]; // The filtered visible columns
-    allColumns: Column[]; // All available columns for the header dropdown
+    columns: Column[];
+    allColumns: Column[];
 }
 
 export function UserTableContent({
@@ -77,14 +75,14 @@ export function UserTableContent({
 
     page,
     pages,
-    currentPage, // Legacy fallback
-    totalPages, // Legacy fallback
+    currentPage,
+    totalPages,
     setPage,
 
     rowsPerPage,
     renderCell,
-    columns, // These are the visible ones
-    allColumns, // Needed for the header options
+    columns,
+    allColumns,
 }: UserTableContentProps) {
 
     const handleSort = (columnUid: string) => {
@@ -110,24 +108,23 @@ export function UserTableContent({
                 columns={allColumns}
             />
 
-            <div className="rounded-md border flex-1 overflow-auto bg-background">
+            <div className="rounded-xl border border-border flex-1 overflow-auto bg-card shadow-sm">
                 <Table>
-                    <TableHeader className="sticky top-0 bg-background z-10">
-                        <TableRow>
+                    <TableHeader className="sticky top-0 z-10">
+                        <TableRow className="bg-muted/30 hover:bg-muted/30">
                             {columns.map((column) => (
                                 <TableHead
                                     key={column.uid}
                                     className={cn(
-                                        "whitespace-nowrap bg-background",
+                                        "whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-muted-foreground",
                                         column.align === 'end' ? 'text-right' :
                                             column.align === 'center' ? 'text-center' : 'text-left'
                                     )}
-                                // style={{ width: column.width }}
                                 >
                                     {column.sortable ? (
                                         <div
                                             className={cn(
-                                                "flex items-center gap-2 cursor-pointer select-none hover:text-foreground transition-colors",
+                                                "flex items-center gap-1.5 cursor-pointer select-none hover:text-foreground transition-colors",
                                                 column.align === 'end' && "justify-end",
                                                 column.align === 'center' && "justify-center"
                                             )}
@@ -137,11 +134,11 @@ export function UserTableContent({
                                             {currentSortColumn === column.uid ? (
                                                 currentSortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
                                             ) : (
-                                                <ArrowUpDown className="w-3 h-3 opacity-50" />
+                                                <ArrowUpDown className="w-3 h-3 opacity-40" />
                                             )}
                                         </div>
                                     ) : (
-                                        <div>{column.name}</div>
+                                        <span>{column.name}</span>
                                     )}
                                 </TableHead>
                             ))}
@@ -150,17 +147,21 @@ export function UserTableContent({
                     <TableBody>
                         {users.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={columns.length} className="h-24 text-center">
-                                    ไม่พบข้อมูลผู้ใช้งาน
+                                <TableCell colSpan={columns.length} className="h-32 text-center">
+                                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                                        <span className="text-sm">ไม่พบข้อมูลผู้ใช้งาน</span>
+                                        <span className="text-xs">ลองค้นหาด้วยคำค้นอื่น</span>
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         ) : (
                             users.map((user) => (
-                                <TableRow key={user._id}>
+                                <TableRow key={user._id} className="hover:bg-muted/30 transition-colors">
                                     {columns.map((column) => (
                                         <TableCell
                                             key={`${user._id}-${column.uid}`}
                                             className={cn(
+                                                "py-3",
                                                 column.align === 'end' ? 'text-right' :
                                                     column.align === 'center' ? 'text-center' : 'text-left'
                                             )}
@@ -184,4 +185,3 @@ export function UserTableContent({
         </div>
     );
 }
-

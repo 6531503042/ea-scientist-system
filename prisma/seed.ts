@@ -256,7 +256,7 @@ async function main() {
         { layerEn: 'Integration Architecture', en: 'Integration Pattern', th: 'รูปแบบการเชื่อมโยง' },
     ];
 
-    const categories: Record<string, Awaited<ReturnType<typeof prisma.artifactCategory.create>>> = {};
+    const categories: Record<string, Awaited<ReturnType<typeof prisma.artefactCategory.create>>> = {};
 
     for (const c of categoryData) {
         const layer = layers[c.layerEn];
@@ -264,13 +264,13 @@ async function main() {
 
         const catName = { en: c.en, th: c.th };
         const cat = await findOrCreate(
-            () => prisma.artifactCategory.findFirst({
+            () => prisma.artefactCategory.findFirst({
                 where: {
                     architectureLayerId: layer.id,
                     categoryName: { equals: catName },
                 },
             }),
-            () => prisma.artifactCategory.create({
+            () => prisma.artefactCategory.create({
                 data: {
                     architectureLayerId: layer.id,
                     categoryName: catName,

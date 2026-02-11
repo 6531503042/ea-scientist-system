@@ -2,10 +2,10 @@
 
 import {
     Search,
-    Settings2
+    Settings2,
+    X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
     DropdownMenu,
     DropdownMenuCheckboxItem,
@@ -41,40 +41,46 @@ export function UserTableHeader({
     };
 
     return (
-        <div className="flex items-center justify-between pb-4">
-            <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
+        <div className="flex items-center justify-between gap-3">
+            <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                    type="text"
                     placeholder="ค้นหาชื่อ, อีเมล..."
-                    className="pl-9"
                     value={searchQuery}
                     onChange={(e) => onSearchChange(e.target.value)}
+                    className="w-full h-9 pl-10 pr-10 text-sm bg-muted/50 border border-transparent rounded-lg focus:bg-background focus:border-primary/30 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                 />
+                {searchQuery && (
+                    <button
+                        onClick={() => onSearchChange('')}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-muted"
+                    >
+                        <X className="w-3.5 h-3.5 text-muted-foreground" />
+                    </button>
+                )}
             </div>
 
-            <div className="flex items-center gap-2">
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" className="ml-auto hidden h-8 lg:flex">
-                            <Settings2 className="mr-2 h-4 w-4" />
-                            มุมมอง
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-[150px]">
-                        {columns.map((column) => (
-                            <DropdownMenuCheckboxItem
-                                key={column.uid}
-                                className="capitalize"
-                                checked={visibleColumns.has(column.uid)}
-                                onCheckedChange={() => toggleColumn(column.uid)}
-                            >
-                                {column.name}
-                            </DropdownMenuCheckboxItem>
-                        ))}
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-9 gap-2 text-xs">
+                        <Settings2 className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">มุมมอง</span>
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-[150px]">
+                    {columns.map((column) => (
+                        <DropdownMenuCheckboxItem
+                            key={column.uid}
+                            className="capitalize text-xs"
+                            checked={visibleColumns.has(column.uid)}
+                            onCheckedChange={() => toggleColumn(column.uid)}
+                        >
+                            {column.name}
+                        </DropdownMenuCheckboxItem>
+                    ))}
+                </DropdownMenuContent>
+            </DropdownMenu>
         </div>
     );
 }
-
