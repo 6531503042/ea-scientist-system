@@ -1,0 +1,35 @@
+services:
+  app:
+    # Use the same build context
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: deps
+      # We target the 'deps' stage or similar base to ensure we have the environment,
+      # but we'll override the command to run dev server
+
+      # Override command to run Next.js in dev mode with hot reload
+    command: sh -c "bun install && bunx prisma generate && bun run dev"
+
+    # Set to development environment (HOSTNAME=0.0.0.0 needed for Docker access)
+    environment:
+      - NODE_ENV=development
+      - HOSTNAME=0.0.0.0
+
+    # Mount the source code from host to container
+    volumes:
+      - .:/app
+      - app_node_modules:/app/node_modules # Keep node_modules in container (avoids host arch conflicts)
+      - app_next_cache:/app/.next # Keep build cache inside container
+      # Keep the existing uploads volumes
+      - ./public/uploads:/app/public/uploads
+      - ./public/signatures:/app/public/signatures
+      - ./file/uploads:/app/file/uploads
+
+    # Standard ports
+    ports:
+      - "3000:3000"
+
+volumes:
+  app_node_modules:
+  app_next_cache:

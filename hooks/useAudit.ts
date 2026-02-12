@@ -9,20 +9,36 @@ function transformApiLog(apiLog: any): AuditLog {
         timestamp: apiLog.createdAt,
         userId: apiLog.userId?.toString(),
         userName: apiLog.user ? `${apiLog.user.firstName} ${apiLog.user.lastName}` : 'System',
-        userRole: apiLog.user?.role?.roleName || 'unknown',
-        action: apiLog.action?.toLowerCase(), // LOGIN / EXPORT / IMPORT
+        userEmail: apiLog.user?.email,
+        userRole: apiLog.user?.role?.roleName ?? 'unknown',
+        action: apiLog.action?.toLowerCase(),
         module: apiLog.entityType || 'system',
         description: apiLog.summary || apiLog.action,
         ipAddress: apiLog.ipAddress || '-',
-        severity: 'info', // Mock severity for now as schema doesn't have it
+        userAgent: apiLog.userAgent,
+        sessionId: apiLog.requestId,
+        severity: 'info',
         resourceType: apiLog.entityType,
         resourceId: apiLog.entityId?.toString(),
         resourceName: apiLog.entityLabel,
     };
 }
 
+export interface AuditStats {
+    total: number;
+    thisMonth: number;
+    activeUsers: number;
+    usage: {
+        category: string;
+        count: number;
+        percentage: number;
+        color: string;
+    }[];
+}
+
 export function useAudit() {
     const [logs, setLogs] = useState<AuditLog[]>([]);
+    const [stats, setStats] = useState<AuditStats | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [filter, setFilter] = useState<AuditLogFilter>({});
@@ -55,6 +71,20 @@ export function useAudit() {
         }
     }, [filter]);
 
+    const fetchStats = useCallback(async () => {
+        try {
+            const response = await fetch('/api/v1/audit-logs/stats');
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success) {
+                    setStats(result.data);
+                }
+            }
+        } catch (error) {
+            console.error('Failed to fetch audit stats:', error);
+        }
+    }, []);
+
     const updateFilter = useCallback((newFilter: AuditLogFilter) => {
         setFilter(newFilter);
     }, []);
@@ -65,14 +95,17 @@ export function useAudit() {
 
     useEffect(() => {
         fetchLogs();
-    }, [fetchLogs]);
+        fetchStats();
+    }, [fetchLogs, fetchStats]);
 
     return {
         logs,
+        stats,
         loading,
         error,
         filter,
         fetchLogs,
+        fetchStats,
         updateFilter,
         clearFilter,
     };

@@ -57,15 +57,17 @@ export async function POST(request: Request) {
             );
         }
 
-        // Audit trail: LOGIN (backend-only, with IP and User-Agent)
+        // Audit trail: LOGIN (backend-only, with IP, User-Agent, Session)
         const ipAddress = getClientIp(request);
         const userAgent = getUserAgent(request);
+        const requestId = crypto.randomUUID();
         await auditLogsRepository.create({
             user: { connect: { id: user.id } },
             action: "LOGIN",
             summary: "Login success",
             ipAddress: ipAddress ?? undefined,
             userAgent: userAgent ?? undefined,
+            requestId,
         });
 
         // Generate tokens

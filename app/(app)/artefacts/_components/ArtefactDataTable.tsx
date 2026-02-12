@@ -18,7 +18,7 @@ interface ArtefactDataTableProps {
 // Table columns - removed Updated, System, Usage columns per user request
 const COLUMNS = [
     { key: 'name', labelEn: 'Artefact Name', labelTh: 'ชื่อ Artefact', className: '' },
-    { key: 'department', labelEn: 'Department', labelTh: 'หน่วยงาน', className: 'hidden md:table-cell' },
+    { key: 'department', labelEn: 'Department', labelTh: 'หน่วยงาน', className: 'hidden lg:table-cell' },
     { key: 'owner', labelEn: 'Owner', labelTh: 'เจ้าของ', className: 'hidden lg:table-cell' },
     { key: 'status', labelEn: 'Status', labelTh: 'สถานะ', className: 'hidden sm:table-cell' },
     { key: 'actions', labelEn: 'Actions', labelTh: '', className: 'text-right w-28' },

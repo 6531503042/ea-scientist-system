@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { artefacts } from '@/data/mockData';
 import type { Artefact, ArtefactType, ArtefactStatus as Status } from '@/types/artefact';
+import { useAuth } from '@/context/AuthContext';
 
 interface ExportImportModalProps {
     isOpen: boolean;
@@ -44,12 +45,32 @@ const formatOptions = [
 ];
 
 export function ExportImportModal({ isOpen, onClose, mode }: ExportImportModalProps) {
+    const { user } = useAuth();
     const [selectedType, setSelectedType] = useState<ArtefactType | 'all'>('all');
     const [selectedStatus, setSelectedStatus] = useState<Status | 'all'>('all');
     const [selectedFormat, setSelectedFormat] = useState<'csv' | 'xlsx'>('csv');
     const [isProcessing, setIsProcessing] = useState(false);
     const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
     const [dragOver, setDragOver] = useState(false);
+
+    const logAudit = async (action: string, summary: string, entityLabel?: string) => {
+        if (!user) return;
+        try {
+            await fetch('/api/v1/audit-logs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: user.id,
+                    action,
+                    summary,
+                    entityType: 'ARTEFACT',
+                    entityLabel,
+                }),
+            });
+        } catch (error) {
+            console.error('Failed to create audit log', error);
+        }
+    };
 
     const handleExport = () => {
         setIsProcessing(true);
@@ -96,6 +117,9 @@ export function ExportImportModal({ isOpen, onClose, mode }: ExportImportModalPr
             link.click();
             URL.revokeObjectURL(url);
 
+            // Log Audit
+            logAudit('EXPORT', `Exported artefacts (${filtered.length} items) as ${selectedFormat.toUpperCase()}`, 'Bulk Export');
+
             setIsProcessing(false);
             setResult({
                 success: true,
@@ -126,6 +150,9 @@ export function ExportImportModal({ isOpen, onClose, mode }: ExportImportModalPr
 
         // Simulate import processing
         setTimeout(() => {
+            // Log Audit
+            logAudit('IMPORT', `Imported artefacts from ${file.name}`, file.name);
+
             setIsProcessing(false);
             setResult({
                 success: true,

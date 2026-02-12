@@ -30,6 +30,7 @@ interface ArtefactFiltersProps {
     onExport: (format: 'excel' | 'pdf') => void;
     onImport: () => void;
     onRulePairs?: () => void;
+    onOpenSidebar?: () => void;
     totalCount: number;
     filteredCount: number;
 }
@@ -59,6 +60,7 @@ export function ArtefactFilters({
     onExport,
     onImport,
     onRulePairs,
+    onOpenSidebar,
     totalCount,
     filteredCount
 }: ArtefactFiltersProps) {
@@ -87,34 +89,44 @@ export function ArtefactFilters({
     return (
         <div className="flex flex-col gap-4 p-4 bg-white border-b border-border">
             {/* Row 1: Search + Filters + Actions */}
-            <div className="flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between">
-                {/* Search */}
-                <div className="relative flex-1 max-w-md">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <input
-                        type="text"
-                        placeholder={language === 'th' ? 'ค้นหา Artefact...' : 'Search Artefact...'}
-                        value={searchQuery}
-                        onChange={(e) => onSearchChange(e.target.value)}
-                        className="w-full h-10 pl-10 pr-10 text-sm bg-muted/50 border border-transparent rounded-lg focus:bg-background focus:border-primary/30 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                    />
-                    {searchQuery && (
+            <div className="flex flex-col xl:flex-row gap-3 xl:items-center xl:justify-between">
+                {/* Search - Full width on mobile/tablet, fixed width on desktop */}
+                <div className="flex gap-2 relative flex-1 w-full xl:max-w-md">
+                    {onOpenSidebar && (
                         <button
-                            onClick={() => onSearchChange('')}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-muted"
+                            onClick={onOpenSidebar}
+                            className="xl:hidden flex items-center justify-center w-10 h-10 rounded-lg border border-border bg-background hover:bg-muted transition-colors flex-shrink-0"
                         >
-                            <X className="w-3.5 h-3.5 text-muted-foreground" />
+                            <SlidersHorizontal className="w-5 h-5 text-muted-foreground" />
                         </button>
                     )}
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <input
+                            type="text"
+                            placeholder={language === 'th' ? 'ค้นหา Artefact...' : 'Search Artefact...'}
+                            value={searchQuery}
+                            onChange={(e) => onSearchChange(e.target.value)}
+                            className="w-full h-10 pl-10 pr-10 text-sm bg-muted/50 border border-transparent rounded-lg focus:bg-background focus:border-primary/30 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                        />
+                        {searchQuery && (
+                            <button
+                                onClick={() => onSearchChange('')}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-muted"
+                            >
+                                <X className="w-3.5 h-3.5 text-muted-foreground" />
+                            </button>
+                        )}
+                    </div>
                 </div>
 
-                {/* Filter Controls */}
-                <div className="flex flex-wrap items-center gap-2">
+                {/* Filter Controls - Scrollable on very small screens, wrapped on tablets */}
+                <div className="flex flex-wrap items-center gap-2 overflow-x-auto pb-1 xl:pb-0">
                     {/* Status Filter */}
                     <div ref={statusRef} className="relative">
                         <button
                             onClick={() => setShowStatusMenu(!showStatusMenu)}
-                            className="flex items-center gap-2 px-3 py-2 text-sm bg-muted/50 hover:bg-muted border border-transparent rounded-lg transition-colors"
+                            className="flex items-center gap-2 px-3 py-2 text-sm bg-muted/50 hover:bg-muted border border-transparent rounded-lg transition-colors whitespace-nowrap"
                         >
                             <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
                             <span>{language === 'th' ? currentStatus?.labelTh : currentStatus?.labelEn}</span>
@@ -152,7 +164,7 @@ export function ArtefactFilters({
                     <div ref={sortRef} className="relative">
                         <button
                             onClick={() => setShowSortMenu(!showSortMenu)}
-                            className="flex items-center gap-2 px-3 py-2 text-sm bg-muted/50 hover:bg-muted border border-transparent rounded-lg transition-colors"
+                            className="flex items-center gap-2 px-3 py-2 text-sm bg-muted/50 hover:bg-muted border border-transparent rounded-lg transition-colors whitespace-nowrap"
                         >
                             <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
                             <span>{language === 'th' ? currentSort?.labelTh : currentSort?.labelEn}</span>
@@ -190,11 +202,11 @@ export function ArtefactFilters({
                     {onRulePairs && (
                         <button
                             onClick={onRulePairs}
-                            className="flex items-center gap-2 px-3 py-2 text-sm border border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary rounded-lg transition-colors"
+                            className="flex items-center gap-2 px-3 py-2 text-sm border border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary rounded-lg transition-colors whitespace-nowrap"
                             title="Relationship Rule Pairs"
                         >
                             <GitBranch className="w-4 h-4" />
-                            <span>Rule Pairs</span>
+                            <span className="hidden sm:inline">Rule Pairs</span>
                         </button>
                     )}
 
@@ -203,7 +215,7 @@ export function ArtefactFilters({
                     {/* Import */}
                     <button
                         onClick={onImport}
-                        className="flex items-center gap-2 px-3 py-2 text-sm border border-border bg-card hover:bg-muted rounded-lg transition-colors"
+                        className="flex items-center gap-2 px-3 py-2 text-sm border border-border bg-card hover:bg-muted rounded-lg transition-colors whitespace-nowrap"
                     >
                         <Upload className="w-4 h-4 text-muted-foreground" />
                         <span className="hidden sm:inline">{t('artefacts.import')}</span>
@@ -213,7 +225,7 @@ export function ArtefactFilters({
                     <div ref={exportRef} className="relative">
                         <button
                             onClick={() => setShowExportMenu(!showExportMenu)}
-                            className="flex items-center gap-2 px-3 py-2 text-sm border border-border bg-card hover:bg-muted rounded-lg transition-colors"
+                            className="flex items-center gap-2 px-3 py-2 text-sm border border-border bg-card hover:bg-muted rounded-lg transition-colors whitespace-nowrap"
                         >
                             <Download className="w-4 h-4 text-muted-foreground" />
                             <span className="hidden sm:inline">{t('artefacts.export')}</span>
@@ -251,7 +263,7 @@ export function ArtefactFilters({
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={onAdd}
-                        className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap ml-auto xl:ml-0"
                     >
                         <Plus className="w-4 h-4" />
                         <span className="hidden sm:inline">{t('artefacts.addArtefact')}</span>

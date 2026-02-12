@@ -71,15 +71,15 @@ export function ArtefactDetailModal({ artefact, onClose, onEdit }: ArtefactDetai
           >
             {/* Header */}
             <div className="sticky top-0 bg-card/95 backdrop-blur border-b border-border p-6 z-10">
-              <div className="flex items-start justify-between mb-6">
+              <div className="flex flex-col sm:flex-row items-start justify-between mb-6 gap-4 sm:gap-0">
                 <div className="flex items-start gap-4">
-                  <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10">
+                  <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 flex-shrink-0">
                     <TypeIcon className="w-7 h-7 text-primary" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-foreground mb-1">{artefact.name}</h2>
-                    <p className="text-base text-muted-foreground">{artefact.nameTh}</p>
-                    <div className="flex items-center gap-3 mt-3">
+                    <h2 className="text-xl font-bold text-foreground mb-1 break-words">{artefact.name}</h2>
+                    <p className="text-base text-muted-foreground break-words">{artefact.nameTh}</p>
+                    <div className="flex flex-wrap items-center gap-3 mt-3">
                       <span className={cn(
                         "px-3 py-1 text-sm font-medium rounded-full capitalize",
                         STATUS_COLORS[artefact.status]
@@ -99,7 +99,7 @@ export function ArtefactDetailModal({ artefact, onClose, onEdit }: ArtefactDetai
                 </div>
                 <button
                   onClick={onClose}
-                  className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-muted transition-colors"
+                  className="absolute right-6 top-6 sm:static flex items-center justify-center w-8 h-8 rounded-full hover:bg-muted transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>

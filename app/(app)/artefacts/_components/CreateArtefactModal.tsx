@@ -23,32 +23,32 @@ import { templates } from '@/data/artefact-templates';
  * Only explicitly deprecated/archived → RETIRED.
  */
 const STATUS_MAP: Record<string, string> = {
-    draft: 'ACTIVE',
-    active: 'ACTIVE',
-    planned: 'ACTIVE',
-    deprecated: 'INACTIVE',
-    archived: 'RETIRED',
+  draft: 'ACTIVE',
+  active: 'ACTIVE',
+  planned: 'ACTIVE',
+  deprecated: 'INACTIVE',
+  archived: 'RETIRED',
 };
 
 /** Localized name helper */
 const getLoc = (val: any, lang: 'th' | 'en' = 'en'): string => {
-    if (!val) return '';
-    if (typeof val === 'string') return val;
-    return val[lang] || val['en'] || val['th'] || '';
+  if (!val) return '';
+  if (typeof val === 'string') return val;
+  return val[lang] || val['en'] || val['th'] || '';
 };
 
 /** Type returned from /api/v1/architecture-layers */
 interface ApiLayer {
-    id: number;
-    layerName: { en: string; th: string } | string;
-    artefactCategories: ApiCategory[];
+  id: number;
+  layerName: { en: string; th: string } | string;
+  artefactCategories: ApiCategory[];
 }
 
 /** Type returned from /api/v1/categories */
 interface ApiCategory {
-    id: number;
-    categoryName: { en: string; th: string } | string;
-    architectureLayerId?: number;
+  id: number;
+  categoryName: { en: string; th: string } | string;
+  architectureLayerId?: number;
 }
 
 interface CreateArtefactModalProps {
@@ -267,13 +267,13 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
           </div>
 
           {/* Two-column layout */}
-          <div className="flex flex-1 overflow-hidden">
+          <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
             {/* Left Column: Type & Template Selection */}
-            <div className="w-56 border-r bg-muted/30 flex flex-col overflow-hidden">
+            <div className="w-full md:w-56 border-b md:border-b-0 md:border-r bg-muted/30 flex flex-col md:overflow-hidden max-h-[200px] md:max-h-none overflow-y-auto">
               {/* Type Selection */}
               <div className="p-3 border-b">
                 <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2">ประเภท</h3>
-                <div className="space-y-1">
+                <div className="flex flex-row md:flex-col overflow-x-auto md:overflow-x-visible gap-1 md:gap-0 md:space-y-1 pb-2 md:pb-0">
                   {typeOrder.map((type) => {
                     const Icon = typeIcons[type];
                     const isSelected = selectedType === type;
@@ -282,7 +282,7 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
                         key={type}
                         onClick={() => selectType(type)}
                         className={cn(
-                          "w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-medium transition-all",
+                          "flex-shrink-0 md:w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-medium transition-all whitespace-nowrap",
                           isSelected
                             ? "bg-primary text-primary-foreground"
                             : "hover:bg-muted text-foreground"
@@ -295,7 +295,7 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
                           <Icon className="w-3.5 h-3.5" />
                         </div>
                         <span>{togafLabels[type].short}</span>
-                        {isSelected && <Check className="w-3 h-3 ml-auto" />}
+                        {isSelected && <Check className="w-3 h-3 ml-auto hidden md:block" />}
                       </button>
                     );
                   })}

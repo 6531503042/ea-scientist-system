@@ -10,6 +10,7 @@ import { CreateArtefactModal } from './CreateArtefactModal';
 import { EditArtefactModal } from './EditArtefactModal';
 import { ExportImportModal } from './ExportImportModal';
 import { RelationshipRulePairSheet } from './RelationshipRulePairSheet';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { useToast } from '@/components/ui/use-toast';
 import type { Artefact, ArtefactType, ArtefactStatus } from '@/types/artefact';
 
@@ -36,6 +37,7 @@ export function ArtefactTable({ initialData, onRefresh }: ArtefactTableProps) {
     const [exportModalOpen, setExportModalOpen] = useState(false);
     const [importModalOpen, setImportModalOpen] = useState(false);
     const [rulePairSheetOpen, setRulePairSheetOpen] = useState(false);
+    const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
     const ITEMS_PER_PAGE = 10;
 
@@ -98,6 +100,7 @@ export function ArtefactTable({ initialData, onRefresh }: ArtefactTableProps) {
     const handleTypeChange = (val: ArtefactType | 'all') => {
         setSelectedType(val);
         setCurrentPage(1);
+        setIsMobileSidebarOpen(false); // Close sidebar on selection
     };
 
     const handleStatusFilter = (val: ArtefactStatus | 'all') => {
@@ -116,8 +119,8 @@ export function ArtefactTable({ initialData, onRefresh }: ArtefactTableProps) {
 
     return (
         <div className="flex h-full bg-background">
-            {/* Sidebar */}
-            <aside className="hidden lg:block border-r border-border bg-card/50">
+            {/* Sidebar - Desktop */}
+            <aside className="hidden xl:block border-r border-border bg-card/50">
                 <ArtefactSidebar
                     selectedType={selectedType}
                     onTypeChange={handleTypeChange}
@@ -142,6 +145,7 @@ export function ArtefactTable({ initialData, onRefresh }: ArtefactTableProps) {
                     }}
                     onImport={() => setImportModalOpen(true)}
                     onRulePairs={() => setRulePairSheetOpen(true)}
+                    onOpenSidebar={() => setIsMobileSidebarOpen(true)}
                     totalCount={initialData.length}
                     filteredCount={filteredData.length}
                 />
@@ -224,6 +228,19 @@ export function ArtefactTable({ initialData, onRefresh }: ArtefactTableProps) {
                 open={rulePairSheetOpen}
                 onOpenChange={setRulePairSheetOpen}
             />
+
+            {/* Mobile Sidebar Sheet */}
+            <Sheet open={isMobileSidebarOpen} onOpenChange={setIsMobileSidebarOpen}>
+                <SheetContent side="left" className="p-0 w-72">
+                    <div className="h-full pt-6">
+                        <ArtefactSidebar
+                            selectedType={selectedType}
+                            onTypeChange={handleTypeChange}
+                            counts={counts}
+                        />
+                    </div>
+                </SheetContent>
+            </Sheet>
         </div>
     );
 }

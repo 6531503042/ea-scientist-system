@@ -28,6 +28,7 @@ export type AuditLog = {
     user?: string;
     userId: string;
     userName: string; // Used in components
+    userEmail?: string; // E-mail for display
     userRole: string;
     department?: string;
     details?: string;
@@ -37,8 +38,8 @@ export type AuditLog = {
     resourceId?: string;
     resourceName?: string;
     ipAddress: string;
-    userAgent?: string;
-    sessionId?: string;
+    userAgent?: string; // เบราว์เซอร์/อุปกรณ์
+    sessionId?: string; // requestId from backend
     severity: AuditSeverity;
     metadata?: Record<string, unknown>;
 };
