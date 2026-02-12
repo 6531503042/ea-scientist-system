@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { useMemo } from 'react';
 import {
     Search,
     Filter,
@@ -64,14 +64,19 @@ export function AuditLogTable({
         window.open(url.toString(), '_blank');
     };
     const q = searchQuery.toLowerCase();
-    const filteredLogs = logs.filter(log =>
-        log.description.toLowerCase().includes(q) ||
-        log.userName.toLowerCase().includes(q) ||
-        log.module.toLowerCase().includes(q) ||
-        (log.userEmail ?? '').toLowerCase().includes(q) ||
-        (log.ipAddress ?? '').toLowerCase().includes(q) ||
-        (log.userAgent ?? '').toLowerCase().includes(q) ||
-        (log.sessionId ?? '').toLowerCase().includes(q)
+    const filteredLogs = useMemo(
+        () =>
+            logs.filter(
+                (log) =>
+                    log.description.toLowerCase().includes(q) ||
+                    log.userName.toLowerCase().includes(q) ||
+                    log.module.toLowerCase().includes(q) ||
+                    (log.userEmail ?? '').toLowerCase().includes(q) ||
+                    (log.ipAddress ?? '').toLowerCase().includes(q) ||
+                    (log.userAgent ?? '').toLowerCase().includes(q) ||
+                    (log.sessionId ?? '').toLowerCase().includes(q)
+            ),
+        [logs, q]
     );
 
     return (
@@ -136,7 +141,7 @@ export function AuditLogTable({
                                         </td>
                                     </tr>
                                 ) : (
-                                filteredLogs.map((log, index) => {
+                                filteredLogs.map((log) => {
                                     const SeverityIcon = severityIcons[log.severity];
                                     const actionLabel = actionLabels[log.action] ?? {
                                         label: log.action,
@@ -144,11 +149,8 @@ export function AuditLogTable({
                                     };
 
                                     return (
-                                        <motion.tr
+                                        <tr
                                             key={log._id}
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ delay: index * 0.02 }}
                                             className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
                                         >
                                             <td className="px-5 py-4">
@@ -208,7 +210,7 @@ export function AuditLogTable({
                                                     <SeverityIcon className="w-4 h-4" />
                                                 </div>
                                             </td>
-                                        </motion.tr>
+                                        </tr>
                                     );
                                 })
                                 )}

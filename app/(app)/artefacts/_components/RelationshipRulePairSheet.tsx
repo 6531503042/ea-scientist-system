@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
 import { useRelationshipRules } from '@/hooks/useRelationshipRules';
 import type { AllowedPair, ApiCategory, RelType } from '@/types/relationship-rule';
@@ -236,7 +236,7 @@ export function RelationshipRulePairSheet({ open, onOpenChange }: RelationshipRu
     // ── Render ──────────────────────────────────────────────────
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
-            <SheetContent className="w-full sm:max-w-xl p-0 flex flex-col">
+            <SheetContent className="w-full sm:max-w-xl p-0 flex flex-col" hideCloseButton>
                 {/* Fixed Header */}
                 <div className="px-4 sm:px-6 pt-5 pb-3">
                     <SheetHeader>
@@ -420,6 +420,15 @@ export function RelationshipRulePairSheet({ open, onOpenChange }: RelationshipRu
                             )}
                         </div>
                     )}
+                </div>
+
+                {/* Fixed Footer with Close button */}
+                <div className="shrink-0 px-4 sm:px-6 py-4 border-t border-border bg-background">
+                    <SheetClose asChild>
+                        <Button variant="outline" className="w-full sm:w-auto min-w-[140px]">
+                            ปิด
+                        </Button>
+                    </SheetClose>
                 </div>
             </SheetContent>
         </Sheet>

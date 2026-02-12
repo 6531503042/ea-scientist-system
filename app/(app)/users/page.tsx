@@ -51,15 +51,15 @@ export default function UsersPage() {
   const isRolesLoading = rolesLoading;
   const isDepartmentsLoading = deptsLoading;
 
-  // Calculate user counts per role
+  // Calculate user counts per role (match by role name or _id)
   const userCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     users.forEach(user => {
       const roleKey = typeof user.role === 'string' ? user.role : 'viewer';
       const matchingRole = roles.find(r =>
         r._id === roleKey ||
-        r.name.toLowerCase() === roleKey.toLowerCase() ||
-        r.name.toLowerCase().replace(/\s+/g, '_') === roleKey.toLowerCase()
+        r.name?.toLowerCase() === roleKey.toLowerCase() ||
+        (r.name?.toLowerCase() ?? '').replace(/\s+/g, '_') === roleKey.toLowerCase()
       );
       if (matchingRole) {
         counts[matchingRole._id] = (counts[matchingRole._id] || 0) + 1;
@@ -124,8 +124,9 @@ export default function UsersPage() {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 sm:px-6 pt-4 sm:pt-5 pb-3">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 px-4 sm:px-6 pt-5 sm:pt-6 pb-4">
+        <div className="space-y-0.5">
+          <h1 className="text-xl font-semibold text-foreground">จัดการผู้ใช้งาน</h1>
           <p className="text-sm text-muted-foreground">
             จัดการข้อมูลผู้ใช้งาน บทบาท และสิทธิการเข้าถึงเมนูต่างๆ ในระบบ
           </p>

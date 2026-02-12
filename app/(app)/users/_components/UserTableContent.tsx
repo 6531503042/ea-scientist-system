@@ -108,7 +108,7 @@ export function UserTableContent({
                 columns={allColumns}
             />
 
-            <div className="rounded-xl border border-border flex-1 overflow-auto bg-card shadow-sm">
+            <div className="rounded-xl border border-border flex-1 overflow-auto bg-card">
                 <Table>
                     <TableHeader className="sticky top-0 z-10">
                         <TableRow className="bg-muted/30 hover:bg-muted/30">

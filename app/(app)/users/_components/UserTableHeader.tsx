@@ -41,38 +41,39 @@ export function UserTableHeader({
     };
 
     return (
-        <div className="flex items-center justify-between gap-3">
-            <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="relative flex-1 min-w-[200px] max-w-md">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
                     type="text"
                     placeholder="ค้นหาชื่อ, อีเมล..."
                     value={searchQuery}
                     onChange={(e) => onSearchChange(e.target.value)}
-                    className="w-full h-9 pl-10 pr-10 text-sm bg-muted/50 border border-transparent rounded-lg focus:bg-background focus:border-primary/30 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                    className="w-full h-10 pl-10 pr-10 text-sm bg-background border border-border rounded-xl focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground"
                 />
                 {searchQuery && (
                     <button
                         onClick={() => onSearchChange('')}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-muted"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-lg hover:bg-muted transition-colors"
+                        aria-label="ล้างการค้นหา"
                     >
-                        <X className="w-3.5 h-3.5 text-muted-foreground" />
+                        <X className="w-4 h-4 text-muted-foreground" />
                     </button>
                 )}
             </div>
 
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-9 gap-2 text-xs">
-                        <Settings2 className="w-3.5 h-3.5" />
+                    <Button variant="outline" size="sm" className="h-10 gap-2 text-sm px-4 rounded-xl shrink-0">
+                        <Settings2 className="w-4 h-4" />
                         <span className="hidden sm:inline">มุมมอง</span>
                     </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-[150px]">
+                <DropdownMenuContent align="end" className="w-[180px]">
                     {columns.map((column) => (
                         <DropdownMenuCheckboxItem
                             key={column.uid}
-                            className="capitalize text-xs"
+                            className="text-sm py-2"
                             checked={visibleColumns.has(column.uid)}
                             onCheckedChange={() => toggleColumn(column.uid)}
                         >

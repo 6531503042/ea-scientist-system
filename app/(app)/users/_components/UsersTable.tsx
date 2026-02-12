@@ -47,19 +47,23 @@ const roleColors: Record<string, { bg: string; text: string }> = {
     admin: { bg: 'bg-red-500/10', text: 'text-red-600' },
     administrator: { bg: 'bg-red-500/10', text: 'text-red-600' },
     architect: { bg: 'bg-blue-500/10', text: 'text-blue-600' },
+    executive: { bg: 'bg-amber-500/10', text: 'text-amber-600' },
     manager: { bg: 'bg-violet-500/10', text: 'text-violet-600' },
+    user: { bg: 'bg-emerald-500/10', text: 'text-emerald-600' },
     business_owner: { bg: 'bg-emerald-500/10', text: 'text-emerald-600' },
     data_owner: { bg: 'bg-sky-500/10', text: 'text-sky-600' },
     data_steward: { bg: 'bg-teal-500/10', text: 'text-teal-600' },
     auditor: { bg: 'bg-amber-500/10', text: 'text-amber-600' },
-    viewer: { bg: 'bg-gray-500/10', text: 'text-gray-600' },
+    viewer: { bg: 'bg-slate-500/10', text: 'text-slate-600' },
 };
 
 const roleLabels: Record<string, { label: string; labelTh: string }> = {
     admin: { label: 'Admin', labelTh: 'ผู้ดูแลระบบ' },
     administrator: { label: 'Administrator', labelTh: 'ผู้ดูแลระบบ' },
-    architect: { label: 'Architect', labelTh: 'Enterprise Architect' },
-    manager: { label: 'Manager', labelTh: 'ผู้บริหาร' },
+    architect: { label: 'Architect', labelTh: 'สถาปนิก' },
+    executive: { label: 'Executive', labelTh: 'ผู้บริหาร' },
+    manager: { label: 'Manager', labelTh: 'ผู้จัดการ' },
+    user: { label: 'User', labelTh: 'ผู้ใช้' },
     business_owner: { label: 'Business Owner', labelTh: 'เจ้าของกระบวนการ' },
     data_owner: { label: 'Data Owner', labelTh: 'เจ้าของข้อมูล' },
     data_steward: { label: 'Data Steward', labelTh: 'ผู้ดูแลข้อมูล' },
@@ -151,8 +155,12 @@ export function UsersTable({
             case 'department':
                 const deptName = typeof user.department === 'string'
                     ? user.department
-                    : user.department?.name || '-';
-                return <span className="text-sm text-foreground">{deptName}</span>;
+                    : (user.department as { name?: string })?.name;
+                return (
+                    <span className="text-sm text-muted-foreground">
+                        {deptName || '-'}
+                    </span>
+                );
 
             case 'status':
                 const status = user.status || 'active';
@@ -166,15 +174,19 @@ export function UsersTable({
                 );
 
             case 'lastLogin':
+                const lastLoginDate = user.lastLogin ? new Date(user.lastLogin) : null;
+                const isValidDate = lastLoginDate && !isNaN(lastLoginDate.getTime());
                 return (
                     <span className="text-sm text-muted-foreground">
-                        {user.lastLogin ? new Date(user.lastLogin).toLocaleString('th-TH', {
-                            year: 'numeric',
-                            month: '2-digit',
-                            day: '2-digit',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        }) : '-'}
+                        {isValidDate
+                            ? lastLoginDate.toLocaleString('th-TH', {
+                                  year: 'numeric',
+                                  month: '2-digit',
+                                  day: '2-digit',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                              })
+                            : '-'}
                     </span>
                 );
 
