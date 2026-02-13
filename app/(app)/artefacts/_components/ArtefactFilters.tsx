@@ -120,8 +120,8 @@ export function ArtefactFilters({
                     </div>
                 </div>
 
-                {/* Filter Controls - Scrollable on very small screens, wrapped on tablets */}
-                <div className="flex flex-wrap items-center gap-2 overflow-x-auto pb-1 xl:pb-0">
+                {/* Filter Controls - Wrap to multiple rows when needed, no horizontal scroll */}
+                <div className="flex flex-1 flex-wrap items-center gap-2 min-w-0 xl:justify-end">
                     {/* Status Filter */}
                     <div ref={statusRef} className="relative">
                         <button

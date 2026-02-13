@@ -105,7 +105,7 @@ export function AppSidebar() {
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+                <nav className="flex-1 min-h-0 px-3 py-4 space-y-1 overflow-y-auto scrollbar-thin">
                   <div className="mb-2">
                     <span className="px-3 text-xs font-medium uppercase tracking-wider text-sidebar-foreground/40">
                       {t('nav.main')}
@@ -211,8 +211,8 @@ export function AppSidebar() {
         </button>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+      {/* Navigation - min-h-0 for flex shrink, scrollbar-thin for subtle scrollbar */}
+      <nav className="flex-1 min-h-0 px-3 py-4 space-y-1 overflow-y-auto scrollbar-thin">
         <AnimatePresence>
           {!collapsed && (
             <motion.div

@@ -30,7 +30,7 @@ const rawNavMenuItems: NavSection[] = [
     section: 'Main',
     sectionTh: 'หลัก',
     items: [
-      { icon: LayoutDashboard, label: 'Dashboard', labelTh: 'แดชบอร์ด', href: '/' },
+      { icon: LayoutDashboard, label: 'Dashboard', labelTh: 'แดชบอร์ด', href: '/dashboard' },
       { icon: Layers, label: 'Artefacts', labelTh: 'รายการ Artefact', href: '/artefacts', permission: 'artefacts:read' },
       { icon: Network, label: 'Architecture Map', labelTh: 'แผนผังสถาปัตยกรรม', href: '/graph', permission: 'graph:read' },
     ],

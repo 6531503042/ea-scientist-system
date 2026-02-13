@@ -6,7 +6,8 @@ import { AppHeader } from '@/components/layout/AppHeader';
 
 const getHeaderInfo = (path: string) => {
   switch (path) {
-    case '/': return { title: 'ภาพรวมสถาปัตยกรรมองค์กร', subtitle: '' };
+    case '/':
+    case '/dashboard': return { title: 'ภาพรวมสถาปัตยกรรมองค์กร', subtitle: '' };
     case '/graph': return { title: 'แผนผังสถาปัตยกรรม', subtitle: '' };
     case '/artefacts': return { title: 'Artefacts ทั้งหมด', subtitle: '' };
     case '/users': return { title: 'จัดการผู้ใช้งาน', subtitle: '' };
