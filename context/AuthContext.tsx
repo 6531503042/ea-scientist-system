@@ -1,11 +1,11 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 
 interface AuthContextType {
     user: any;
-    role: 'admin' | 'architect' | 'executive' | 'user';
-    login: (token: string, user: any) => void; // Token arg kept for signature compatibility but unused
+    role: 'admin' | 'architect' | 'executive' | 'user' | 'viewer';
+    login: (token: string, user: any) => void;
     logout: () => Promise<void>;
     isAuthenticated: boolean;
     loading: boolean;
@@ -17,26 +17,46 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
-    // Check for existing session on mount
-    useEffect(() => {
-        const checkSession = async () => {
-            try {
-                const response = await fetch('/api/v1/auth/me');
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.success) {
-                        setUser(data.data);
-                    }
+    const checkSession = useCallback(async () => {
+        try {
+            const response = await fetch('/api/v1/auth/me');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    setUser(data.data);
+                } else {
+                    setUser(null);
                 }
-            } catch (error) {
-                console.error("Session check failed:", error);
-            } finally {
-                setLoading(false);
+            } else {
+                setUser(null);
+                // Don't redirect if we're already on login page (prevents infinite reload loop)
+                if (typeof window !== 'undefined' && response.status === 401 && !window.location.pathname.startsWith('/login')) {
+                    window.location.href = '/login';
+                }
+            }
+        } catch (error) {
+            console.error("Session check failed:", error);
+            setUser(null);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        checkSession();
+    }, [checkSession]);
+
+    // Refetch session when tab becomes visible (fixes sidebar not loading after switching browsers/tabs)
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                checkSession();
             }
         };
 
-        checkSession();
-    }, []);
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }, [checkSession]);
 
     const login = (token: string, newUser: any) => {
         // Token is now handled by httpOnly cookies, so we just set the user state

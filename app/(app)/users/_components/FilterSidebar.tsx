@@ -74,7 +74,7 @@ export function FilterSidebar({
                 )}
                 <button
                     onClick={toggleCollapse}
-                    className="p-2 rounded-lg hover:bg-muted/80 transition-colors shrink-0"
+                    className="p-2 rounded-lg hover:bg-muted/40 transition-colors shrink-0"
                     title={isCollapsed ? "ขยาย" : "ย่อ"}
                     aria-label={isCollapsed ? "ขยาย" : "ย่อ"}
                 >
@@ -94,13 +94,16 @@ export function FilterSidebar({
                         "w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200",
                         isCollapsed ? "justify-center" : "justify-between",
                         selectedRole === 'all'
-                            ? "bg-primary text-primary-foreground shadow-md"
-                            : "hover:bg-muted/80 text-foreground"
+                            ? "bg-primary/10 text-primary ring-1 ring-primary/20"
+                            : "text-foreground hover:bg-muted/40"
                     )}
                     title="ทุกบทบาท"
                 >
                     <div className="flex items-center gap-3 min-w-0">
-                        <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary/20 shrink-0">
+                        <div className={cn(
+                            "flex items-center justify-center w-9 h-9 rounded-lg shrink-0",
+                            selectedRole === 'all' ? "bg-primary/20" : "bg-primary/10"
+                        )}>
                             <Users className="w-5 h-5 text-primary" />
                         </div>
                         {!isCollapsed && <span className="font-medium truncate">ทุกบทบาท</span>}
@@ -108,7 +111,7 @@ export function FilterSidebar({
                     {!isCollapsed && (
                         <span className={cn(
                             countBadgeClass,
-                            selectedRole === 'all' ? "bg-white/25 text-white" : "bg-muted text-muted-foreground"
+                            selectedRole === 'all' ? "bg-primary/20 text-primary font-semibold" : "bg-muted/60 text-muted-foreground"
                         )}>
                             {totalUsers}
                         </span>
@@ -143,8 +146,8 @@ export function FilterSidebar({
                                 "w-full flex items-center gap-3 p-2.5 rounded-xl text-sm transition-all duration-200 relative overflow-hidden",
                                 isCollapsed ? "justify-center" : "justify-between",
                                 isSelected
-                                    ? "bg-muted font-medium text-foreground"
-                                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                                    ? "bg-muted/60 font-medium text-foreground"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
                             )}
                         >
                             {isSelected && (
@@ -170,7 +173,7 @@ export function FilterSidebar({
                             {!isCollapsed && (
                                 <span className={cn(
                                     countBadgeClass,
-                                    isSelected ? "bg-foreground/10 text-foreground font-semibold" : "bg-muted/80 text-muted-foreground"
+                                    isSelected ? "bg-primary/15 text-primary font-semibold" : "bg-muted/50 text-muted-foreground"
                                 )}>
                                     {count}
                                 </span>

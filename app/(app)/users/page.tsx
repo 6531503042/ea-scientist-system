@@ -32,9 +32,9 @@ const TABS = [
 type TabId = typeof TABS[number]['id'];
 
 export default function UsersPage() {
-  const { users, loading: usersLoading } = useUsers();
-  const { roles, loading: rolesLoading } = useRoles();
-  const { departments, loading: deptsLoading } = useDepartments();
+  const { users, loading: usersLoading, createUser, updateUser, deleteUser } = useUsers();
+  const { roles, loading: rolesLoading, createRole, updateRole, deleteRole } = useRoles();
+  const { departments, loading: deptsLoading, createDepartment, updateDepartment, deleteDepartment } = useDepartments();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<TabId>('users');
@@ -100,13 +100,34 @@ export default function UsersPage() {
     setIsEditUserModalOpen(true);
   };
 
-  const handleEditUserSubmit = (data: Partial<UserType>) => {
-    console.log('Edit user:', data);
-    setIsEditUserModalOpen(false);
-    setEditingUser(null);
+  const handleEditUserSubmit = async (data: Partial<UserType>) => {
+    if (!editingUser?._id) return;
+    const roleMatch = roles.find(
+      (r) =>
+        r.name?.toLowerCase() === (data.role as string)?.toLowerCase() ||
+        r._id === (data.role as string)
+    );
+    const deptMatch = departments.find(
+      (d) =>
+        d.code === data.department ||
+        d.name === data.department ||
+        (typeof data.department === 'string' && d.name?.includes(data.department))
+    );
+    const updated = await updateUser(editingUser._id, {
+      firstName: data.name?.first,
+      lastName: data.name?.last,
+      email: data.email,
+      roleId: roleMatch ? Number(roleMatch._id) : undefined,
+      departmentId: deptMatch ? Number(deptMatch._id) : undefined,
+      isActive: data.status === 'active',
+    });
+    if (updated) {
+      setIsEditUserModalOpen(false);
+      setEditingUser(null);
+    }
   };
 
-  const handleCreateRole = (data: {
+  const handleCreateRole = async (data: {
     code: string;
     name: string;
     nameTh: string;
@@ -114,11 +135,73 @@ export default function UsersPage() {
     permissions: string[];
     isSystemRole: boolean;
   }) => {
-    console.log('Create role:', data);
+    const created = await createRole({
+      name: data.name,
+      description: data.description,
+      permissions: data.permissions,
+    });
+    if (created) setIsCreateRoleModalOpen(false);
   };
 
   const handleEditRole = (role: typeof roles[0]) => {
+    // TODO: Add EditRoleModal - for now keep console
     console.log('Edit role:', role);
+  };
+
+  const handleDeleteRole = async (roleId: string) => {
+    await deleteRole(roleId);
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    await deleteUser(userId);
+  };
+
+  const handleCreateUser = async (data: Partial<import('@/types/user').CreateUserInput>) => {
+    const roleMatch = roles.find(
+      (r) =>
+        r.name?.toLowerCase() === (data.role as string)?.toLowerCase() ||
+        r._id === (data.role as string)
+    );
+    const deptMatch = data.department
+      ? departments.find(
+          (d) =>
+            d.code === data.department ||
+            d.name === data.department ||
+            (typeof data.department === 'string' && d.name?.includes(data.department))
+        )
+      : null;
+    if (!roleMatch) return;
+    const created = await createUser({
+      firstName: data.name?.first ?? '',
+      lastName: data.name?.last ?? '',
+      email: data.email ?? '',
+      username: data.username ?? data.email?.split('@')[0] ?? 'user',
+      password: data.password ?? 'password123',
+      roleId: Number(roleMatch._id),
+      departmentId: deptMatch ? Number(deptMatch._id) : undefined,
+    } as import('@/types/user').CreateUserInput);
+    if (created) setIsCreateUserModalOpen(false);
+  };
+
+  const handleDepartmentCreate = async (data: Partial<import('@/types/department').Department> & { code?: string; name?: string }) => {
+    await createDepartment({
+      code: data.code ?? '',
+      name: data.name ?? '',
+    });
+  };
+
+  const handleDepartmentUpdate = async (
+    id: string,
+    data: Partial<import('@/types/department').Department>
+  ) => {
+    await updateDepartment(id, {
+      code: data.code,
+      name: data.name,
+    });
+  };
+
+  const handleDepartmentDelete = async (id: string) => {
+    await deleteDepartment(id);
   };
 
   return (
@@ -223,10 +306,8 @@ export default function UsersPage() {
                   users={searchedUsers}
                   searchQuery={searchQuery}
                   onSearchChange={setSearchQuery}
-                  onViewUser={(user) => console.log('View:', user)}
                   onEditUser={handleEditUser}
-                  onDeleteUser={(id) => console.log('Delete:', id)}
-                  onResetPassword={(id) => console.log('Reset password:', id)}
+                  onDeleteUser={handleDeleteUser}
                 />
               )}
             </div>
@@ -248,7 +329,7 @@ export default function UsersPage() {
               <RolesTable
                 roles={roles}
                 onEditRole={handleEditRole}
-                onDeleteRole={(id) => console.log('Delete role:', id)}
+                onDeleteRole={handleDeleteRole}
               />
             )}
           </motion.div>
@@ -268,9 +349,9 @@ export default function UsersPage() {
             ) : (
               <DepartmentsTable
                 departments={departments}
-                onCreate={(data) => console.log('Create department:', data)}
-                onUpdate={(id, data) => console.log('Update department:', id, data)}
-                onDelete={(id) => console.log('Delete department:', id)}
+                onCreate={handleDepartmentCreate}
+                onUpdate={handleDepartmentUpdate}
+                onDelete={handleDepartmentDelete}
               />
             )}
           </motion.div>
@@ -281,10 +362,7 @@ export default function UsersPage() {
       <CreateUserModal
         isOpen={isCreateUserModalOpen}
         onClose={() => setIsCreateUserModalOpen(false)}
-        onSubmit={(data) => {
-          console.log('New User:', data);
-          setIsCreateUserModalOpen(false);
-        }}
+        onSubmit={handleCreateUser}
       />
 
       <EditUserModal

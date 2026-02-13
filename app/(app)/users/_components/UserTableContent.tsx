@@ -109,22 +109,23 @@ export function UserTableContent({
             />
 
             <div className="rounded-xl border border-border flex-1 overflow-auto bg-card">
-                <Table>
-                    <TableHeader className="sticky top-0 z-10">
-                        <TableRow className="bg-muted/30 hover:bg-muted/30">
+                <Table className="min-w-[900px]">
+                    <TableHeader className="sticky top-0 z-10 bg-muted/50">
+                        <TableRow className="border-b border-border hover:bg-transparent">
                             {columns.map((column) => (
                                 <TableHead
                                     key={column.uid}
                                     className={cn(
-                                        "whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-muted-foreground",
+                                        "whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-muted-foreground px-5 py-4",
                                         column.align === 'end' ? 'text-right' :
-                                            column.align === 'center' ? 'text-center' : 'text-left'
+                                            column.align === 'center' ? 'text-center' : 'text-left',
+                                        column.widthClass
                                     )}
                                 >
                                     {column.sortable ? (
                                         <div
                                             className={cn(
-                                                "flex items-center gap-1.5 cursor-pointer select-none hover:text-foreground transition-colors",
+                                                "inline-flex items-center gap-1.5 cursor-pointer select-none hover:text-foreground transition-colors",
                                                 column.align === 'end' && "justify-end",
                                                 column.align === 'center' && "justify-center"
                                             )}
@@ -132,9 +133,9 @@ export function UserTableContent({
                                         >
                                             {column.name}
                                             {currentSortColumn === column.uid ? (
-                                                currentSortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                                                currentSortDirection === 'asc' ? <ArrowUp className="w-3 h-3 shrink-0" /> : <ArrowDown className="w-3 h-3 shrink-0" />
                                             ) : (
-                                                <ArrowUpDown className="w-3 h-3 opacity-40" />
+                                                <ArrowUpDown className="w-3 h-3 opacity-40 shrink-0" />
                                             )}
                                         </div>
                                     ) : (
@@ -147,7 +148,7 @@ export function UserTableContent({
                     <TableBody>
                         {users.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={columns.length} className="h-32 text-center">
+                                <TableCell colSpan={columns.length} className="h-40 text-center align-middle">
                                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
                                         <span className="text-sm">ไม่พบข้อมูลผู้ใช้งาน</span>
                                         <span className="text-xs">ลองค้นหาด้วยคำค้นอื่น</span>
@@ -156,14 +157,15 @@ export function UserTableContent({
                             </TableRow>
                         ) : (
                             users.map((user) => (
-                                <TableRow key={user._id} className="hover:bg-muted/30 transition-colors">
+                                <TableRow key={user._id} className="hover:bg-muted/20 transition-colors border-b border-border/50">
                                     {columns.map((column) => (
                                         <TableCell
                                             key={`${user._id}-${column.uid}`}
                                             className={cn(
-                                                "py-3",
+                                                "px-5 py-4 align-middle",
                                                 column.align === 'end' ? 'text-right' :
-                                                    column.align === 'center' ? 'text-center' : 'text-left'
+                                                    column.align === 'center' ? 'text-center' : 'text-left',
+                                                column.widthClass
                                             )}
                                         >
                                             {renderCell(user, column.uid)}

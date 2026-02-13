@@ -41,10 +41,11 @@ export function CreateUserModal({ isOpen, onClose, onSubmit }: CreateUserModalPr
             },
             email: formData.email,
             username: formData.email.split('@')[0],
+            password: formData.password,
             role: formData.role,
             department: formData.department,
             status: 'pending',
-        });
+        } as any);
         onClose();
         setFormData({
             firstName: '',

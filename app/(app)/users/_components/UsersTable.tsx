@@ -3,24 +3,14 @@
 import { useState, useMemo, useCallback, ReactNode } from 'react';
 import {
     Shield,
-    Eye,
     Edit,
     Trash2,
-    Key,
     CheckCircle2,
     XCircle,
-    MoreHorizontal
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { UserTableContent } from './UserTableContent';
 import type { User } from '@/types/user';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 
 // ============= Column Definitions =============
@@ -29,15 +19,16 @@ export type Column = {
     name: string;
     sortable?: boolean;
     align?: 'start' | 'center' | 'end';
+    widthClass?: string;
 };
 
 export const columns: Column[] = [
-    { uid: 'name', name: 'User', sortable: true },
-    { uid: 'role', name: 'Role' },
-    { uid: 'department', name: 'Department', sortable: true },
-    { uid: 'status', name: 'Status' },
-    { uid: 'lastLogin', name: 'Last Login', sortable: true },
-    { uid: 'actions', name: 'Actions', align: 'end' },
+    { uid: 'name', name: 'ผู้ใช้', sortable: true, widthClass: 'min-w-[200px]' },
+    { uid: 'role', name: 'บทบาท', widthClass: 'min-w-[120px]' },
+    { uid: 'department', name: 'หน่วยงาน', sortable: true, widthClass: 'min-w-[100px]' },
+    { uid: 'status', name: 'สถานะ', widthClass: 'min-w-[100px]' },
+    { uid: 'lastLogin', name: 'เข้าสู่ระบบล่าสุด', sortable: true, widthClass: 'min-w-[140px]' },
+    { uid: 'actions', name: 'การดำเนินการ', align: 'end', widthClass: 'w-[100px]' },
 ];
 
 const INITIAL_VISIBLE_COLUMNS = ['name', 'role', 'department', 'status', 'lastLogin', 'actions'];
@@ -81,10 +72,8 @@ const statusConfig = {
 interface UsersTableProps {
     users: User[];
     isLoading: boolean;
-    onViewUser: (user: User) => void;
     onEditUser: (user: User) => void;
     onDeleteUser: (userId: string) => void;
-    onResetPassword: (userId: string) => void;
     searchQuery?: string;
     onSearchChange?: (value: string) => void;
 }
@@ -92,10 +81,8 @@ interface UsersTableProps {
 export function UsersTable({
     users,
     isLoading,
-    onViewUser,
     onEditUser,
     onDeleteUser,
-    onResetPassword,
     searchQuery,
     onSearchChange,
 }: UsersTableProps) {
@@ -130,13 +117,13 @@ export function UsersTable({
         switch (columnKey) {
             case 'name':
                 return (
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm shrink-0">
                             {displayName.charAt(0).toUpperCase()}
                         </div>
-                        <div>
-                            <p className="font-medium text-foreground">{displayName}</p>
-                            <p className="text-xs text-muted-foreground">{user.email}</p>
+                        <div className="min-w-0 flex flex-col gap-0.5">
+                            <p className="font-medium text-foreground truncate">{displayName}</p>
+                            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                         </div>
                     </div>
                 );
@@ -144,11 +131,11 @@ export function UsersTable({
             case 'role':
                 return (
                     <div className={cn(
-                        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium",
+                        "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium w-fit",
                         colors.bg, colors.text
                     )}>
-                        <Shield className="w-3.5 h-3.5" />
-                        {labels.labelTh || labels.label}
+                        <Shield className="w-3.5 h-3.5 shrink-0" />
+                        <span className="whitespace-nowrap">{labels.labelTh || labels.label}</span>
                     </div>
                 );
 
@@ -167,9 +154,9 @@ export function UsersTable({
                 const info = statusConfig[status as keyof typeof statusConfig] || statusConfig.active;
                 const Icon = info.icon;
                 return (
-                    <div className={cn("flex items-center gap-1.5 text-sm", info.color)}>
-                        <Icon className="w-4 h-4" />
-                        {info.label}
+                    <div className={cn("inline-flex items-center gap-1.5 text-sm", info.color)}>
+                        <Icon className="w-4 h-4 shrink-0" />
+                        <span>{info.label}</span>
                     </div>
                 );
 
@@ -192,41 +179,32 @@ export function UsersTable({
 
             case 'actions':
                 return (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <MoreHorizontal className="w-4 h-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => onViewUser?.(user)}>
-                                <Eye className="w-4 h-4 mr-2" />
-                                ดูรายละเอียด
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => onEditUser?.(user)}>
-                                <Edit className="w-4 h-4 mr-2" />
-                                แก้ไข
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => onResetPassword?.(user._id)}>
-                                <Key className="w-4 h-4 mr-2" />
-                                รีเซ็ตรหัสผ่าน
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                                className="text-destructive focus:text-destructive"
-                                onClick={() => onDeleteUser?.(user._id)}
-                            >
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                ลบผู้ใช้
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div className="flex items-center gap-0.5 justify-end shrink-0">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                            onClick={() => onEditUser?.(user)}
+                            title="แก้ไข"
+                        >
+                            <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                            onClick={() => onDeleteUser?.(user._id)}
+                            title="ลบผู้ใช้"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                        </Button>
+                    </div>
                 );
 
             default:
                 return null;
         }
-    }, [onViewUser, onEditUser, onDeleteUser, onResetPassword]);
+    }, [onEditUser, onDeleteUser]);
 
     // Filtering
     const headerColumns = useMemo(() => {

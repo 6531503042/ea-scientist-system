@@ -14,10 +14,10 @@ function transformApiUser(apiUser: any): User {
         displayName: `${apiUser.firstName} ${apiUser.lastName}`,
         username: apiUser.username || apiUser.email.split('@')[0],
         email: apiUser.email,
-        role: apiUser.role?.name || 'viewer', // Fallback
-        department: apiUser.department?.shortName || '-',
+        role: apiUser.roleName || apiUser.role?.name || 'viewer',
+        department: apiUser.departmentName || apiUser.department?.shortName || undefined,
         status: apiUser.isActive ? 'active' : 'inactive',
-        lastLogin: apiUser.lastLoginAt ? new Date(apiUser.lastLoginAt).toLocaleString('th-TH') : '-',
+        lastLogin: apiUser.lastLoginAt ? (typeof apiUser.lastLoginAt === 'string' ? apiUser.lastLoginAt : new Date(apiUser.lastLoginAt).toISOString()) : undefined,
     };
 }
 

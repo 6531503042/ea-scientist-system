@@ -23,35 +23,38 @@ export async function GET(
     }
 }
 
-export async function PUT(
+async function handleUpdate(
     request: Request,
-    { params }: { params: Promise<{ id: string }> }
+    params: Promise<{ id: string }>
 ) {
-    try {
-        const { id } = UserIdSchema.parse(await params);
-        const body = await request.json();
-
-        const result = UpdateUserSchema.safeParse(body);
-        if (!result.success) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    error: "Validation failed",
-                    details: result.error.flatten().fieldErrors,
-                },
-                { status: 400 }
-            );
-        }
-
-        const user = await usersService.update(id, result.data);
-        return NextResponse.json({ success: true, data: user });
-    } catch (error) {
-        const message =
-            error instanceof Error ? error.message : "Failed to update user";
+    const { id } = UserIdSchema.parse(await params);
+    const body = await request.json();
+    const result = UpdateUserSchema.safeParse(body);
+    if (!result.success) {
         return NextResponse.json(
-            { success: false, error: message },
-            { status: 500 }
+            { success: false, error: "Validation failed", details: result.error.flatten().fieldErrors },
+            { status: 400 }
         );
+    }
+    const user = await usersService.update(id, result.data);
+    return NextResponse.json({ success: true, data: user });
+}
+
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+    try {
+        return await handleUpdate(request, params);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : "Failed to update user";
+        return NextResponse.json({ success: false, error: message }, { status: 500 });
+    }
+}
+
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+    try {
+        return await handleUpdate(request, params);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : "Failed to update user";
+        return NextResponse.json({ success: false, error: message }, { status: 500 });
     }
 }
 
