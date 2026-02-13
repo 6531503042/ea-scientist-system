@@ -89,12 +89,7 @@ export function UsersTableSkeleton() {
 // Roles Table Skeleton
 export function RolesTableSkeleton() {
     return (
-        <div className="space-y-6">
-            {/* Stats Cards */}
-            <StatsCardsSkeleton />
-
-            {/* Roles Table */}
-            <div className="bg-card rounded-xl border border-border overflow-hidden">
+        <div className="bg-card rounded-xl border border-border overflow-hidden">
                 <table className="w-full">
                     <thead>
                         <tr className="border-b border-border bg-muted/30">
@@ -144,7 +139,6 @@ export function RolesTableSkeleton() {
                         ))}
                     </tbody>
                 </table>
-            </div>
         </div>
     );
 }
@@ -220,6 +214,29 @@ export function DepartmentsTableSkeleton() {
     );
 }
 
+// Role Stats Sidebar Skeleton
+export function RoleStatsSidebarSkeleton() {
+    return (
+        <aside className="w-56 bg-card/80 border-r border-border p-4 space-y-3">
+            <div className="flex items-center justify-between">
+                <Skeleton className="h-5 w-24" />
+                <Skeleton className="h-6 w-6 rounded" />
+            </div>
+            {[...Array(4)].map((_, i) => (
+                <div key={i} className="p-3 rounded-xl border border-border/50">
+                    <div className="flex items-center gap-3">
+                        <Skeleton className="w-9 h-9 rounded-lg" />
+                        <div className="space-y-1">
+                            <Skeleton className="h-3 w-16" />
+                            <Skeleton className="h-6 w-8" />
+                        </div>
+                    </div>
+                </div>
+            ))}
+        </aside>
+    );
+}
+
 // Filter Sidebar Skeleton
 export function FilterSidebarSkeleton() {
     return (
@@ -283,8 +300,13 @@ export function UserManagementSkeleton({ activeTab = 'users' }: { activeTab?: 'u
                     </div>
                 </div>
             ) : activeTab === 'roles' ? (
-                <div className="flex-1 p-4 sm:p-6 pt-0">
-                    <RolesTableSkeleton />
+                <div className="flex flex-1 overflow-hidden">
+                    <div className="hidden lg:block">
+                        <RoleStatsSidebarSkeleton />
+                    </div>
+                    <div className="flex-1 p-4 sm:p-6 pt-0">
+                        <RolesTableSkeleton />
+                    </div>
                 </div>
             ) : (
                 <div className="flex-1 p-4 sm:p-6 pt-0">

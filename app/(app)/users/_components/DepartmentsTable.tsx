@@ -4,38 +4,25 @@ import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
     Building2,
-    Plus,
     Search,
     Edit2,
     Trash2,
     Users,
     CheckCircle2,
     XCircle,
-    Save,
-    Loader2,
     X,
     ChevronLeft,
     ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Department } from '@/types/department';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 
 interface DepartmentsTableProps {
     departments: Department[];
     searchQuery?: string;
-    onCreate?: (data: Partial<Department>) => void;
-    onUpdate?: (id: string, data: Partial<Department>) => void;
+    onEdit?: (department: Department) => void;
     onDelete?: (id: string) => void;
 }
 
@@ -44,22 +31,11 @@ const ITEMS_PER_PAGE = 10;
 export function DepartmentsTable({
     departments,
     searchQuery: externalSearchQuery,
-    onCreate,
-    onUpdate,
+    onEdit,
     onDelete,
 }: DepartmentsTableProps) {
     const [internalSearchQuery, setInternalSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [editingDepartment, setEditingDepartment] = useState<Department | null>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [formData, setFormData] = useState({
-        name: '',
-        code: '',
-        description: '',
-        status: 'active' as 'active' | 'inactive',
-    });
 
     const searchQuery = externalSearchQuery ?? internalSearchQuery;
 
@@ -94,35 +70,8 @@ export function DepartmentsTable({
         return pages;
     };
 
-    const handleCreate = async () => {
-        setIsSubmitting(true);
-        await new Promise(resolve => setTimeout(resolve, 500));
-        onCreate?.(formData);
-        setIsSubmitting(false);
-        setIsCreateModalOpen(false);
-        resetForm();
-    };
-
-    const handleUpdate = async () => {
-        if (!editingDepartment) return;
-        setIsSubmitting(true);
-        await new Promise(resolve => setTimeout(resolve, 500));
-        onUpdate?.(editingDepartment._id, formData);
-        setIsSubmitting(false);
-        setIsEditModalOpen(false);
-        setEditingDepartment(null);
-        resetForm();
-    };
-
     const handleEdit = (dept: Department) => {
-        setEditingDepartment(dept);
-        setFormData({
-            name: dept.name,
-            code: dept.code || '',
-            description: dept.description || '',
-            status: dept.status || 'active',
-        });
-        setIsEditModalOpen(true);
+        onEdit?.(dept);
     };
 
     const handleDelete = (id: string) => {
@@ -131,19 +80,11 @@ export function DepartmentsTable({
         }
     };
 
-    const resetForm = () => {
-        setFormData({ name: '', code: '', description: '', status: 'active' });
-    };
-
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
                 <p className="text-sm text-muted-foreground">จัดการหน่วยงานและโครงสร้างองค์กร</p>
-                <Button className="gap-2" onClick={() => setIsCreateModalOpen(true)}>
-                    <Plus className="w-4 h-4" />
-                    เพิ่มหน่วยงาน
-                </Button>
             </div>
 
             {/* Search */}
@@ -326,135 +267,6 @@ export function DepartmentsTable({
                     </div>
                 )}
             </div>
-
-            {/* Create Modal */}
-            <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-                <DialogContent className="max-w-lg">
-                    <DialogHeader>
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-primary/20 rounded-lg">
-                                <Building2 className="w-5 h-5 text-primary" />
-                            </div>
-                            <div>
-                                <DialogTitle className="text-xl font-bold">เพิ่มหน่วยงาน</DialogTitle>
-                                <DialogDescription className="mt-1">เพิ่มหน่วยงานใหม่ในระบบ</DialogDescription>
-                            </div>
-                        </div>
-                    </DialogHeader>
-                    <div className="space-y-4 mt-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="name">ชื่อหน่วยงาน *</Label>
-                            <Input
-                                id="name"
-                                value={formData.name}
-                                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                                placeholder="เช่น กองบริการห้องปฏิบัติการ"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="code">รหัสหน่วยงาน *</Label>
-                            <Input
-                                id="code"
-                                value={formData.code}
-                                onChange={(e) => setFormData(prev => ({ ...prev, code: e.target.value.toUpperCase() }))}
-                                placeholder="เช่น LAB"
-                                className="font-mono"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="description">คำอธิบาย</Label>
-                            <Textarea
-                                id="description"
-                                value={formData.description}
-                                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                                placeholder="อธิบายหน่วยงาน..."
-                                rows={2}
-                            />
-                        </div>
-                    </div>
-                    <div className="flex justify-end gap-2 mt-6">
-                        <Button variant="outline" onClick={() => { setIsCreateModalOpen(false); resetForm(); }}>
-                            ยกเลิก
-                        </Button>
-                        <Button onClick={handleCreate} disabled={isSubmitting || !formData.name || !formData.code} className="gap-2">
-                            {isSubmitting ? (
-                                <>
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                    กำลังบันทึก...
-                                </>
-                            ) : (
-                                <>
-                                    <Plus className="w-4 h-4" />
-                                    เพิ่มหน่วยงาน
-                                </>
-                            )}
-                        </Button>
-                    </div>
-                </DialogContent>
-            </Dialog>
-
-            {/* Edit Modal */}
-            <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-                <DialogContent className="max-w-lg">
-                    <DialogHeader>
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-primary/20 rounded-lg">
-                                <Building2 className="w-5 h-5 text-primary" />
-                            </div>
-                            <div>
-                                <DialogTitle className="text-xl font-bold">แก้ไขหน่วยงาน</DialogTitle>
-                                <DialogDescription className="mt-1">แก้ไขข้อมูล: {editingDepartment?.name}</DialogDescription>
-                            </div>
-                        </div>
-                    </DialogHeader>
-                    <div className="space-y-4 mt-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="edit-name">ชื่อหน่วยงาน *</Label>
-                            <Input
-                                id="edit-name"
-                                value={formData.name}
-                                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="edit-code">รหัสหน่วยงาน *</Label>
-                            <Input
-                                id="edit-code"
-                                value={formData.code}
-                                onChange={(e) => setFormData(prev => ({ ...prev, code: e.target.value.toUpperCase() }))}
-                                className="font-mono"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="edit-description">คำอธิบาย</Label>
-                            <Textarea
-                                id="edit-description"
-                                value={formData.description}
-                                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                                rows={2}
-                            />
-                        </div>
-                    </div>
-                    <div className="flex justify-end gap-2 mt-6">
-                        <Button variant="outline" onClick={() => { setIsEditModalOpen(false); setEditingDepartment(null); resetForm(); }}>
-                            ยกเลิก
-                        </Button>
-                        <Button onClick={handleUpdate} disabled={isSubmitting || !formData.name} className="gap-2">
-                            {isSubmitting ? (
-                                <>
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                    กำลังบันทึก...
-                                </>
-                            ) : (
-                                <>
-                                    <Save className="w-4 h-4" />
-                                    บันทึกการเปลี่ยนแปลง
-                                </>
-                            )}
-                        </Button>
-                    </div>
-                </DialogContent>
-            </Dialog>
         </div>
     );
 }

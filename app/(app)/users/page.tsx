@@ -14,6 +14,8 @@ import { DepartmentsTable } from './_components/DepartmentsTable';
 import { CreateUserModal } from './_components/CreateUserModal';
 import { EditUserModal } from './_components/EditUserModal';
 import { CreateRoleModal } from './_components/CreateRoleModal';
+import { CreateDepartmentModal } from './_components/CreateDepartmentModal';
+import { EditDepartmentModal } from './_components/EditDepartmentModal';
 import {
   UsersTableSkeleton,
   RolesTableSkeleton,
@@ -45,6 +47,9 @@ export default function UsersPage() {
   const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserType | null>(null);
   const [isCreateRoleModalOpen, setIsCreateRoleModalOpen] = useState(false);
+  const [isCreateDepartmentModalOpen, setIsCreateDepartmentModalOpen] = useState(false);
+  const [isEditDepartmentModalOpen, setIsEditDepartmentModalOpen] = useState(false);
+  const [editingDepartment, setEditingDepartment] = useState<import('@/types/department').Department | null>(null);
 
   // Loading states per tab
   const isUsersLoading = usersLoading || rolesLoading;
@@ -184,10 +189,11 @@ export default function UsersPage() {
   };
 
   const handleDepartmentCreate = async (data: Partial<import('@/types/department').Department> & { code?: string; name?: string }) => {
-    await createDepartment({
+    const result = await createDepartment({
       code: data.code ?? '',
       name: data.name ?? '',
     });
+    if (result) setIsCreateDepartmentModalOpen(false);
   };
 
   const handleDepartmentUpdate = async (
@@ -198,6 +204,8 @@ export default function UsersPage() {
       code: data.code,
       name: data.name,
     });
+    setIsEditDepartmentModalOpen(false);
+    setEditingDepartment(null);
   };
 
   const handleDepartmentDelete = async (id: string) => {
@@ -262,6 +270,21 @@ export default function UsersPage() {
                 <Button size="sm" className="gap-1.5 h-8" onClick={() => setIsCreateRoleModalOpen(true)}>
                   <Plus className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">เพิ่มบทบาท</span>
+                  <span className="sm:hidden">เพิ่ม</span>
+                </Button>
+              </motion.div>
+            )}
+            {activeTab === 'departments' && (
+              <motion.div
+                key="departments-btn"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.12 }}
+              >
+                <Button size="sm" className="gap-1.5 h-8" onClick={() => setIsCreateDepartmentModalOpen(true)}>
+                  <Plus className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">เพิ่มหน่วยงาน</span>
                   <span className="sm:hidden">เพิ่ม</span>
                 </Button>
               </motion.div>
@@ -349,8 +372,10 @@ export default function UsersPage() {
             ) : (
               <DepartmentsTable
                 departments={departments}
-                onCreate={handleDepartmentCreate}
-                onUpdate={handleDepartmentUpdate}
+                onEdit={(dept) => {
+                  setEditingDepartment(dept);
+                  setIsEditDepartmentModalOpen(true);
+                }}
                 onDelete={handleDepartmentDelete}
               />
             )}
@@ -379,6 +404,22 @@ export default function UsersPage() {
         isOpen={isCreateRoleModalOpen}
         onClose={() => setIsCreateRoleModalOpen(false)}
         onSubmit={handleCreateRole}
+      />
+
+      <CreateDepartmentModal
+        isOpen={isCreateDepartmentModalOpen}
+        onClose={() => setIsCreateDepartmentModalOpen(false)}
+        onSubmit={handleDepartmentCreate}
+      />
+
+      <EditDepartmentModal
+        isOpen={isEditDepartmentModalOpen}
+        onClose={() => {
+          setIsEditDepartmentModalOpen(false);
+          setEditingDepartment(null);
+        }}
+        department={editingDepartment}
+        onSubmit={handleDepartmentUpdate}
       />
     </div>
   );
