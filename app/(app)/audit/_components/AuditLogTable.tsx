@@ -12,6 +12,7 @@ import {
     AlertCircle,
     Download,
 } from 'lucide-react';
+import { AuditLogTableSkeleton } from './AuditLogTableSkeleton';
 import { cn } from '@/lib/utils';
 import type { AuditLog, AuditAction, AuditSeverity } from '@/types/audit';
 
@@ -110,12 +111,10 @@ export function AuditLogTable({
             </div>
 
             {/* Table */}
+            {loading ? (
+                <AuditLogTableSkeleton />
+            ) : (
             <div className="bg-card rounded-xl border border-border overflow-hidden">
-                {loading ? (
-                    <div className="flex items-center justify-center py-12">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                    </div>
-                ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead>
@@ -217,8 +216,8 @@ export function AuditLogTable({
                             </tbody>
                         </table>
                     </div>
-                )}
             </div>
+            )}
         </>
     );
 }

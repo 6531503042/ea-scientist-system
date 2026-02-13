@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Plus, Pencil, Trash2, Save, X, ArrowRight, Loader2, GitBranch, ChevronDown, ChevronUp, Settings2, Link2, SlidersHorizontal } from 'lucide-react';
+import { Plus, Pencil, Trash2, Save, X, ArrowRight, GitBranch, ChevronDown, ChevronUp, Settings2, Link2, SlidersHorizontal } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -264,9 +265,23 @@ export function RelationshipRulePairSheet({ open, onOpenChange }: RelationshipRu
                 {/* Scrollable Content */}
                 <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
                     {loading ? (
-                        <div className="flex flex-col items-center justify-center py-16 gap-2">
-                            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-                            <span className="text-xs text-muted-foreground">กำลังโหลด...</span>
+                        <div className="space-y-3">
+                            {[...Array(4)].map((_, i) => (
+                                <div key={i} className="rounded-xl border border-border overflow-hidden p-4">
+                                    <div className="flex items-center gap-3 mb-3">
+                                        <Skeleton className="w-10 h-10 rounded-lg" />
+                                        <div className="flex-1 space-y-2">
+                                            <Skeleton className="h-4 w-32" />
+                                            <Skeleton className="h-3 w-24" />
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2 flex-wrap">
+                                        {[...Array(3)].map((_, j) => (
+                                            <Skeleton key={j} className="h-8 w-20 rounded-lg" />
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     ) : (
                         <div className="space-y-3">
