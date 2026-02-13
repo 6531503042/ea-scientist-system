@@ -105,7 +105,7 @@ export default function UsersPage() {
     setIsEditUserModalOpen(true);
   };
 
-  const handleEditUserSubmit = async (data: Partial<UserType>) => {
+  const handleEditUserSubmit = async (data: Partial<UserType> & { password?: string }) => {
     if (!editingUser?._id) return;
     const roleMatch = roles.find(
       (r) =>
@@ -122,6 +122,7 @@ export default function UsersPage() {
       firstName: data.name?.first,
       lastName: data.name?.last,
       email: data.email,
+      ...(data.password && { password: data.password }),
       roleId: roleMatch ? Number(roleMatch._id) : undefined,
       departmentId: deptMatch ? Number(deptMatch._id) : undefined,
       isActive: data.status === 'active',
@@ -181,10 +182,10 @@ export default function UsersPage() {
       lastName: data.name?.last ?? '',
       email: data.email ?? '',
       username: data.username ?? data.email?.split('@')[0] ?? 'user',
-      password: data.password ?? 'password123',
+      password: (data as { password?: string }).password ?? 'password123',
       roleId: Number(roleMatch._id),
       departmentId: deptMatch ? Number(deptMatch._id) : undefined,
-    } as import('@/types/user').CreateUserInput);
+    });
     if (created) setIsCreateUserModalOpen(false);
   };
 

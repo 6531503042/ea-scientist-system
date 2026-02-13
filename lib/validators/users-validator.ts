@@ -42,6 +42,11 @@ export const UpdateUserSchema = z.object({
         .transform((v) => v.trim().toLowerCase())
         .optional(),
     username: z.string().min(3).max(255).optional(),
+    password: z
+        .string()
+        .optional()
+        .transform((v) => (v === "" ? undefined : v))
+        .refine((v) => !v || (v.length >= 8 && v.length <= 128), "รหัสผ่านต้องมี 8-128 ตัวอักษร"),
     isActive: z.boolean().optional(),
 });
 

@@ -1,3 +1,4 @@
+import bcrypt from "bcryptjs";
 import { UsersRepository } from "@/lib/repositories/users/users-repository";
 import type { CreateUserInput, UpdateUserInput } from "@/lib/validators/users-validator";
 
@@ -64,7 +65,7 @@ export class UsersService {
         const user = await this.repository.findById(id);
         if (!user) throw new Error("ไม่พบผู้ใช้");
 
-        return this.repository.update(id, {
+        const updateData: Record<string, unknown> = {
             ...(data.firstName && { firstName: data.firstName }),
             ...(data.lastName && { lastName: data.lastName }),
             ...(data.email && { email: data.email }),
@@ -76,7 +77,15 @@ export class UsersService {
                     ? { connect: { id: data.departmentId } }
                     : { disconnect: true },
             }),
-        });
+        };
+
+        if (data.password) {
+            const hashedPassword = await bcrypt.hash(data.password, 10);
+            updateData.password = hashedPassword;
+            updateData.passwordChangedAt = new Date();
+        }
+
+        return this.repository.update(id, updateData as Parameters<UsersRepository["update"]>[1]);
     }
 
     async delete(id: number) {

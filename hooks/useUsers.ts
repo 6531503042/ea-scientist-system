@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import type { User, CreateUserInput, UpdateUserInput } from '@/types/user';
+import type { User } from '@/types/user';
+import type { CreateUserInput, UpdateUserInput } from '@/lib/validators/users-validator';
 
 // Helper to transform API user to Frontend User type
 function transformApiUser(apiUser: any): User {
