@@ -10,32 +10,25 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
+import { useLocale } from '@/hooks/useLocale';
 import type { Artefact, ArtefactType } from '@/types/artefact';
+import type { ApiLayer } from '@/types/artefact-api';
+import { useArtefactFormOptions } from '@/hooks/useArtefactFormOptions';
+import { getLocalizedName } from '@/lib/utils';
 
 import { typeIcons, typeColors, togafLabels, togafTypeFields, typeOrder } from '@/data/artefact-config';
 import { templates } from '@/data/artefact-templates';
 
-/** Localized name helper */
-const getLoc = (v: any, lang: 'en' | 'th' = 'en'): string => {
-    if (!v) return '';
-    if (typeof v === 'string') return v;
-    return v[lang] || v['en'] || v['th'] || '';
-};
+const getLoc = (v: unknown, lang: 'en' | 'th' = 'en') =>
+    getLocalizedName(v as { en?: string; th?: string } | string | null, lang);
 
 /** Status mapping: frontend → backend */
 const STATUS_MAP: Record<string, string> = {
     draft: 'ACTIVE', active: 'ACTIVE', planned: 'ACTIVE',
     deprecated: 'INACTIVE', archived: 'RETIRED',
 };
-
-interface ApiUser { id: number; firstName: string; lastName: string }
-interface ApiDepartment { id: number; shortName: string; fullName: string }
-interface ApiLayer {
-    id: number;
-    layerName: { en: string; th: string } | string;
-    artefactCategories: { id: number; categoryName: { en: string; th: string } | string }[];
-}
 
 interface EditArtefactModalProps {
     artefact: Artefact;
@@ -45,44 +38,39 @@ interface EditArtefactModalProps {
 
 export function EditArtefactModal({ artefact, onClose, onSubmit }: EditArtefactModalProps) {
     const { toast } = useToast();
+    const loc = useLocale('artefacts');
+    const detail = useLocale('detail');
     const [loading, setLoading] = useState(false);
     const [selectedType, setSelectedType] = useState<ArtefactType>(artefact.type);
     const [selectedTemplateIndex, setSelectedTemplateIndex] = useState<number | null>(null);
 
-    // Dropdown data from API
-    const [users, setUsers] = useState<ApiUser[]>([]);
-    const [departments, setDepartments] = useState<ApiDepartment[]>([]);
-    const [layers, setLayers] = useState<ApiLayer[]>([]);
+    const { users, departments, layers, loading: optionsLoading } = useArtefactFormOptions();
 
-    // Form data
-    const [formData, setFormData] = useState({
+    // Form data - initialize from artefact
+    const [formData, setFormData] = useState(() => ({
         name: artefact.name,
         nameTh: artefact.nameTh || '',
         description: artefact.description || '',
-        ownerId: '',
-        departmentId: '',
+        ownerId: artefact.ownerId ? String(artefact.ownerId) : '',
+        departmentId: artefact.departmentId ? String(artefact.departmentId) : '',
         version: artefact.version || '1',
         status: artefact.status || 'active',
         typeSpecificFields: {} as Record<string, string>,
-    });
+    }));
 
-    // Fetch real data from API
+    // Sync form when artefact changes (e.g. user opens edit for another artefact)
     useEffect(() => {
-        const fetchOptions = async () => {
-            try {
-                const [uRes, dRes, lRes] = await Promise.all([
-                    fetch('/api/v1/users'),
-                    fetch('/api/v1/departments'),
-                    fetch('/api/v1/architecture-layers'),
-                ]);
-                const [uJson, dJson, lJson] = await Promise.all([uRes.json(), dRes.json(), lRes.json()]);
-                if (uJson.success) setUsers(uJson.data);
-                if (dJson.success) setDepartments(dJson.data);
-                if (lJson.success) setLayers(lJson.data);
-            } catch { /* silent */ }
-        };
-        fetchOptions();
-    }, []);
+        setFormData({
+            name: artefact.name,
+            nameTh: artefact.nameTh || '',
+            description: artefact.description || '',
+            ownerId: artefact.ownerId ? String(artefact.ownerId) : '',
+            departmentId: artefact.departmentId ? String(artefact.departmentId) : '',
+            version: artefact.version || '1',
+            status: artefact.status || 'active',
+            typeSpecificFields: {},
+        });
+    }, [artefact.id, artefact.name, artefact.nameTh, artefact.description, artefact.ownerId, artefact.departmentId, artefact.version, artefact.status]);
 
     // Resolve layerId + categoryId from type
     const resolveIds = (type: ArtefactType) => {
@@ -188,6 +176,57 @@ export function EditArtefactModal({ artefact, onClose, onSubmit }: EditArtefactM
 
                     {/* Two-column layout matching Create modal */}
                     <div className="flex flex-1 overflow-hidden">
+                        {optionsLoading ? (
+                            /* Skeleton - matches form layout (equal widths for 2-col rows) */
+                            <>
+                                <div className="w-56 border-r bg-muted/30 flex flex-col overflow-hidden">
+                                    <div className="p-3 border-b">
+                                        <Skeleton className="h-3 w-12 mb-2" />
+                                        <div className="space-y-1">
+                                            {[1, 2, 3, 4, 5, 6].map(i => (
+                                                <Skeleton key={i} className="h-9 w-full rounded-lg" />
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="flex-1 p-3">
+                                        <Skeleton className="h-3 w-14 mb-2" />
+                                        <div className="space-y-1">
+                                            {[1, 2, 3, 4].map(i => (
+                                                <Skeleton key={i} className="h-12 w-full rounded-lg" />
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex-1 flex flex-col overflow-hidden">
+                                    <div className="flex-1 overflow-y-auto p-5 space-y-4">
+                                        <Skeleton className="h-10 w-full rounded-lg" />
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <Skeleton className="h-9 flex-1 min-w-0 rounded-md" />
+                                            <Skeleton className="h-9 flex-1 min-w-0 rounded-md" />
+                                        </div>
+                                        <Skeleton className="h-20 w-full rounded-md" />
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <Skeleton className="h-9 flex-1 min-w-0 rounded-md" />
+                                            <Skeleton className="h-9 flex-1 min-w-0 rounded-md" />
+                                        </div>
+                                        <div className="pt-3 border-t space-y-3">
+                                            <Skeleton className="h-9 w-full rounded-md" />
+                                            <Skeleton className="h-16 w-full rounded-md" />
+                                            <Skeleton className="h-9 w-full rounded-md" />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3 pt-2">
+                                            <Skeleton className="h-9 flex-1 min-w-0 rounded-md" />
+                                            <Skeleton className="h-9 flex-1 min-w-0 rounded-md" />
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-3 p-4 border-t bg-muted/30">
+                                        <Skeleton className="h-9 flex-1 rounded-md" />
+                                        <Skeleton className="h-9 flex-1 rounded-md" />
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            <>
                         {/* Left Column: Type & Template Selection */}
                         <div className="w-56 border-r bg-muted/30 flex flex-col overflow-hidden">
                             {/* Type Selection */}
@@ -285,9 +324,9 @@ export function EditArtefactModal({ artefact, onClose, onSubmit }: EditArtefactM
                                     {/* Owner & Department */}
                                     <div className="grid grid-cols-2 gap-3">
                                         <div className="space-y-1.5">
-                                            <Label className="text-xs">ผู้รับผิดชอบ</Label>
-                                            <Select value={formData.ownerId} onValueChange={v => handleChange('ownerId', v)}>
-                                                <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="เลือกผู้รับผิดชอบ" /></SelectTrigger>
+                                            <Label className="text-xs">{detail.owner}</Label>
+                                            <Select value={formData.ownerId || undefined} onValueChange={v => handleChange('ownerId', v)}>
+                                                <SelectTrigger className="h-9 text-sm"><SelectValue placeholder={loc.selectOwner} /></SelectTrigger>
                                                 <SelectContent className="max-h-[200px]">
                                                     {users.map(u => (
                                                         <SelectItem key={u.id} value={String(u.id)}>{u.firstName} {u.lastName}</SelectItem>
@@ -296,9 +335,9 @@ export function EditArtefactModal({ artefact, onClose, onSubmit }: EditArtefactM
                                             </Select>
                                         </div>
                                         <div className="space-y-1.5">
-                                            <Label className="text-xs">หน่วยงาน</Label>
-                                            <Select value={formData.departmentId} onValueChange={v => handleChange('departmentId', v)}>
-                                                <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="เลือกหน่วยงาน" /></SelectTrigger>
+                                            <Label className="text-xs">{detail.department}</Label>
+                                            <Select value={formData.departmentId || undefined} onValueChange={v => handleChange('departmentId', v)}>
+                                                <SelectTrigger className="h-9 text-sm"><SelectValue placeholder={loc.selectDepartment} /></SelectTrigger>
                                                 <SelectContent className="max-h-[200px]">
                                                     {departments.map(d => (
                                                         <SelectItem key={d.id} value={String(d.id)}>{d.fullName || d.shortName}</SelectItem>
@@ -373,6 +412,8 @@ export function EditArtefactModal({ artefact, onClose, onSubmit }: EditArtefactM
                                 </div>
                             </form>
                         </div>
+                            </>
+                        )}
                     </div>
                 </motion.div>
             </div>

@@ -12,6 +12,7 @@ import { ExportImportModal } from './ExportImportModal';
 import { RelationshipRulePairSheet } from './RelationshipRulePairSheet';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { useToast } from '@/components/ui/use-toast';
+import { useArtefactFormOptions } from '@/hooks/useArtefactFormOptions';
 import type { Artefact, ArtefactType, ArtefactStatus } from '@/types/artefact';
 
 // TOGAF Order - Business → Application → Data → Technology → Security → Integration
@@ -24,6 +25,7 @@ interface ArtefactTableProps {
 
 export function ArtefactTable({ initialData, onRefresh }: ArtefactTableProps) {
     const { toast } = useToast();
+    useArtefactFormOptions(); // Prefetch users, departments, layers on page load
 
     // State
     const [searchQuery, setSearchQuery] = useState('');
@@ -154,7 +156,6 @@ export function ArtefactTable({ initialData, onRefresh }: ArtefactTableProps) {
                 <div className="flex-1 overflow-auto p-4">
                     <ArtefactDataTable
                         data={paginatedData}
-                        onView={(artefact) => setSelectedArtefact(artefact)}
                         onEdit={(artefact) => setEditingArtefact(artefact)}
                         onDelete={async (artefact) => {
                             if (!confirm(`ต้องการลบ "${artefact.name}" หรือไม่?`)) return;

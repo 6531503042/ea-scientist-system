@@ -11,6 +11,9 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import type { ArtefactType } from '@/types/artefact';
+import type { ApiLayer, ApiCategory } from '@/types/artefact-api';
+import { useArtefactFormOptions } from '@/hooks/useArtefactFormOptions';
+import { getLocalizedName } from '@/lib/utils';
 import { bestPracticeExamples } from '@/data/bestPractices';
 
 // Import extracted configs and templates
@@ -30,26 +33,8 @@ const STATUS_MAP: Record<string, string> = {
   archived: 'RETIRED',
 };
 
-/** Localized name helper */
-const getLoc = (val: any, lang: 'th' | 'en' = 'en'): string => {
-  if (!val) return '';
-  if (typeof val === 'string') return val;
-  return val[lang] || val['en'] || val['th'] || '';
-};
-
-/** Type returned from /api/v1/architecture-layers */
-interface ApiLayer {
-  id: number;
-  layerName: { en: string; th: string } | string;
-  artefactCategories: ApiCategory[];
-}
-
-/** Type returned from /api/v1/categories */
-interface ApiCategory {
-  id: number;
-  categoryName: { en: string; th: string } | string;
-  architectureLayerId?: number;
-}
+/** Localized name helper - use getLocalizedName */
+const getLoc = (val: unknown, lang: 'th' | 'en' = 'en') => getLocalizedName(val as { en?: string; th?: string } | string | null, lang);
 
 interface CreateArtefactModalProps {
   isOpen: boolean;
@@ -57,27 +42,12 @@ interface CreateArtefactModalProps {
   onSubmit: (data: any) => void;
 }
 
-// Lightweight types for the dropdown options
-interface ApiUser {
-  id: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-}
-interface ApiDepartment {
-  id: number;
-  shortName: string;
-  fullName: string;
-}
-
 export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefactModalProps) {
   const [loading, setLoading] = useState(false);
   const [selectedType, setSelectedType] = useState<ArtefactType>('business');
   const [selectedTemplateIndex, setSelectedTemplateIndex] = useState<number | null>(null);
   const [showExamples, setShowExamples] = useState(false);
-  const [users, setUsers] = useState<ApiUser[]>([]);
-  const [departments, setDepartments] = useState<ApiDepartment[]>([]);
-  const [layers, setLayers] = useState<ApiLayer[]>([]);
+  const { users, departments, layers } = useArtefactFormOptions();
   const [formData, setFormData] = useState({
     name: '',
     nameTh: '',
@@ -91,29 +61,6 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
   });
 
   const { toast } = useToast();
-
-  // Fetch users, departments, and architecture layers from API when modal opens
-  useEffect(() => {
-    if (!isOpen) return;
-    const fetchOptions = async () => {
-      try {
-        const [usersRes, deptsRes, layersRes] = await Promise.all([
-          fetch('/api/v1/users'),
-          fetch('/api/v1/departments'),
-          fetch('/api/v1/architecture-layers'),
-        ]);
-        const [usersJson, deptsJson, layersJson] = await Promise.all([
-          usersRes.json(), deptsRes.json(), layersRes.json(),
-        ]);
-        if (usersJson.success && Array.isArray(usersJson.data)) setUsers(usersJson.data);
-        if (deptsJson.success && Array.isArray(deptsJson.data)) setDepartments(deptsJson.data);
-        if (layersJson.success && Array.isArray(layersJson.data)) setLayers(layersJson.data);
-      } catch {
-        // Silently fail – dropdowns will just be empty
-      }
-    };
-    fetchOptions();
-  }, [isOpen]);
 
   /**
    * Resolve layerId and categoryId from the selected TOGAF type.

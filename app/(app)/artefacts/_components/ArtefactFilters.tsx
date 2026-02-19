@@ -18,6 +18,7 @@ import {
 import { cn } from '@/lib/utils';
 import type { ArtefactStatus } from '@/types/artefact';
 import { useLanguage } from '@/context/LanguageContext';
+import { useLocale } from '@/hooks/useLocale';
 
 interface ArtefactFiltersProps {
     searchQuery: string;
@@ -64,7 +65,8 @@ export function ArtefactFilters({
     totalCount,
     filteredCount
 }: ArtefactFiltersProps) {
-    const { language, t } = useLanguage();
+    const { language } = useLanguage();
+    const loc = useLocale('artefacts');
     const [showExportMenu, setShowExportMenu] = useState(false);
     const [showSortMenu, setShowSortMenu] = useState(false);
     const [showStatusMenu, setShowStatusMenu] = useState(false);
@@ -218,7 +220,7 @@ export function ArtefactFilters({
                         className="flex items-center gap-2 px-3 py-2 text-sm border border-border bg-card hover:bg-muted rounded-lg transition-colors whitespace-nowrap"
                     >
                         <Upload className="w-4 h-4 text-muted-foreground" />
-                        <span className="hidden sm:inline">{t('artefacts.import')}</span>
+                        <span className="hidden sm:inline">{loc.import}</span>
                     </button>
 
                     {/* Export Dropdown */}
@@ -228,7 +230,7 @@ export function ArtefactFilters({
                             className="flex items-center gap-2 px-3 py-2 text-sm border border-border bg-card hover:bg-muted rounded-lg transition-colors whitespace-nowrap"
                         >
                             <Download className="w-4 h-4 text-muted-foreground" />
-                            <span className="hidden sm:inline">{t('artefacts.export')}</span>
+                            <span className="hidden sm:inline">{loc.export}</span>
                             <ChevronDown className={cn("w-3.5 h-3.5 text-muted-foreground transition-transform", showExportMenu && "rotate-180")} />
                         </button>
                         <AnimatePresence>
@@ -266,8 +268,8 @@ export function ArtefactFilters({
                         className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap ml-auto xl:ml-0"
                     >
                         <Plus className="w-4 h-4" />
-                        <span className="hidden sm:inline">{t('artefacts.addArtefact')}</span>
-                        <span className="sm:hidden">{t('artefacts.add')}</span>
+                        <span className="hidden sm:inline">{loc.addArtefact}</span>
+                        <span className="sm:hidden">{loc.add}</span>
                     </motion.button>
                 </div>
             </div>

@@ -30,7 +30,7 @@ export default function DashboardLayout({
       <AppSidebar />
       <main className="flex-1 flex flex-col overflow-hidden">
         <AppHeader title={header.title} subtitle={header.subtitle} />
-        <div className={`flex-1 bg-background ${['/graph', '/users'].includes(pathname) ? 'p-0 overflow-hidden' : 'p-6 overflow-y-auto'}`}>
+        <div className={`flex-1 bg-background ${['/graph', '/users', '/artefacts'].includes(pathname) ? 'p-0 overflow-hidden' : 'p-6 overflow-y-auto'}`}>
           {children}
         </div>
       </main>

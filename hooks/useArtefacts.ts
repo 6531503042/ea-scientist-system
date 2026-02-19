@@ -49,6 +49,8 @@ function transformApiArtefact(apiArtefact: any): Artefact {
             ? `${apiArtefact.responsibleBy.firstName} ${apiArtefact.responsibleBy.lastName}`
             : '-',
         department: apiArtefact.ownerDepartment?.fullName || '-',
+        ownerId: apiArtefact.responsibleBy?.id,
+        departmentId: apiArtefact.ownerDepartment?.id,
         version: apiArtefact.version?.toString() || '1.0',
         lastUpdated: apiArtefact.updatedAt || apiArtefact.createdAt || new Date().toISOString(),
         usageFrequency: apiArtefact.usageFrequency?.toLowerCase() || 'medium',

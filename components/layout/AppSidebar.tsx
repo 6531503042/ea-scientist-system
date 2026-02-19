@@ -15,6 +15,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { useLocale } from '@/hooks/useLocale';
 import { getMenuByRole, type NavItem } from '@/config/getMenuByRole';
 import { siteConfig } from '@/config/site';
 
@@ -24,7 +25,8 @@ export function AppSidebar() {
   const [isMobile, setIsMobile] = useState(false);
   const pathname = usePathname();
   const { user, logout, role } = useAuth();
-  const { language, t } = useLanguage();
+  const { language } = useLanguage();
+  const nav = useLocale('nav');
   const { main: navItems, admin: adminItems } = getMenuByRole(role);
 
   // Auto-collapse on smaller screens and detect mobile
@@ -108,7 +110,7 @@ export function AppSidebar() {
                 <nav className="flex-1 min-h-0 px-3 py-4 space-y-1 overflow-y-auto scrollbar-thin">
                   <div className="mb-2">
                     <span className="px-3 text-xs font-medium uppercase tracking-wider text-sidebar-foreground/40">
-                      {t('nav.main')}
+                      {nav.main}
                     </span>
                   </div>
                   {navItems.map((item) => (
@@ -123,7 +125,7 @@ export function AppSidebar() {
 
                   <div className="pt-4 mt-4 border-t border-sidebar-border">
                     <span className="px-3 text-xs font-medium uppercase tracking-wider text-sidebar-foreground/40">
-                      {t('nav.admin')}
+                      {nav.admin}
                     </span>
                   </div>
                   {adminItems.map((item) => (
@@ -147,7 +149,7 @@ export function AppSidebar() {
                       <p className="text-sm font-medium truncate">{user?.name || 'User'}</p>
                       <p className="text-xs text-sidebar-foreground/60 truncate">{user?.email || 'email@example.com'}</p>
                     </div>
-                    <button onClick={logout} className="ml-auto p-1 hover:text-destructive transition-colors" title={t('nav.signOut')}>
+                    <button onClick={logout} className="ml-auto p-1 hover:text-destructive transition-colors" title={nav.signOut}>
                       <LogOut className="w-4 h-4" />
                     </button>
                   </div>
@@ -223,7 +225,7 @@ export function AppSidebar() {
               className="mb-2"
             >
               <span className="px-3 text-xs font-medium uppercase tracking-wider text-sidebar-foreground/40">
-                {t('nav.main')}
+                {nav.main}
               </span>
             </motion.div>
           )}
@@ -248,7 +250,7 @@ export function AppSidebar() {
               className="pt-4 mt-4 border-t border-sidebar-border"
             >
               <span className="px-3 text-xs font-medium uppercase tracking-wider text-sidebar-foreground/40">
-                {t('nav.admin')}
+                {nav.admin}
               </span>
             </motion.div>
           )}
@@ -299,7 +301,7 @@ export function AppSidebar() {
                 transition={{ duration: 0.15 }}
                 onClick={logout}
                 className="ml-auto p-1 hover:text-destructive transition-colors shrink-0"
-                title={t('nav.signOut')}
+                title={nav.signOut}
               >
                 <LogOut className="w-4 h-4" />
               </motion.button>

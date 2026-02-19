@@ -25,6 +25,10 @@ export type Artefact = {
     description: string;
     owner: string;
     department: string;
+    /** ID of responsible user - for Edit form prefill */
+    ownerId?: number;
+    /** ID of owner department - for Edit form prefill */
+    departmentId?: number;
     status: ArtefactStatus;
     riskLevel: RiskLevel;
     lastUpdated: string; // ISO Date string

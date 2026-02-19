@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Plus, Pencil, Trash2, Save, X, ArrowRight, GitBranch, ChevronDown, ChevronUp, Settings2, Link2, SlidersHorizontal } from 'lucide-react';
+import { Plus, Pencil, Trash2, Save, X, ArrowRight, GitBranch, ChevronDown, ChevronUp, Settings2, Link2, SlidersHorizontal, Loader2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';

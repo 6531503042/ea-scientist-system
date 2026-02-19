@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, Edit, Trash2, Layers } from 'lucide-react';
+import { Edit, Trash2, Layers } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Artefact } from '@/types/artefact';
 import { ARTEFACT_TYPE_ICONS, ARTEFACT_TYPE_COLORS, STATUS_COLORS } from '@/config/ui-constants';
@@ -9,7 +9,6 @@ import { useLanguage } from '@/context/LanguageContext';
 
 interface ArtefactDataTableProps {
     data: Artefact[];
-    onView: (artefact: Artefact) => void;
     onEdit: (artefact: Artefact) => void;
     onDelete: (artefact: Artefact) => void;
     isLoading?: boolean;
@@ -24,7 +23,7 @@ const COLUMNS = [
     { key: 'actions', labelEn: 'Actions', labelTh: '', className: 'text-right w-28' },
 ];
 
-export function ArtefactDataTable({ data, onView, onEdit, onDelete, isLoading }: ArtefactDataTableProps) {
+export function ArtefactDataTable({ data, onEdit, onDelete, isLoading }: ArtefactDataTableProps) {
     const { language } = useLanguage();
 
     if (isLoading) {
@@ -115,13 +114,6 @@ export function ArtefactDataTable({ data, onView, onEdit, onDelete, isLoading }:
                                         {/* Actions - always visible */}
                                         <td className="px-4 py-3 text-right">
                                             <div className="flex items-center justify-end gap-1">
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); onView(artefact); }}
-                                                    className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                                                    title={language === 'th' ? 'ดู' : 'View'}
-                                                >
-                                                    <Eye className="w-4 h-4" />
-                                                </button>
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); onEdit(artefact); }}
                                                     className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-info transition-colors"

@@ -1,4 +1,6 @@
 'use client';
+
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
@@ -22,12 +24,14 @@ import { cn } from '@/lib/utils';
 import type { Artefact, ArtefactType } from '@/types/artefact';
 import { relationships, artefacts } from '@/data/mockData';
 import { useLanguage } from '@/context/LanguageContext';
+import { useLocale } from '@/hooks/useLocale';
 import {
   ARTEFACT_TYPE_ICONS,
   RISK_COLORS,
   RISK_LABELS,
   STATUS_COLORS
 } from '@/config/ui-constants';
+import { VersionHistoryDrawer } from './VersionHistoryDrawer';
 
 interface ArtefactDetailModalProps {
   artefact: Artefact | null;
@@ -36,7 +40,10 @@ interface ArtefactDetailModalProps {
 }
 
 export function ArtefactDetailModal({ artefact, onClose, onEdit }: ArtefactDetailModalProps) {
-  const { t, language } = useLanguage();
+  const { language } = useLanguage();
+  const detail = useLocale('detail');
+  const versionHistory = useLocale('versionHistory');
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
 
   if (!artefact) return null;
 
@@ -135,7 +142,7 @@ export function ArtefactDetailModal({ artefact, onClose, onEdit }: ArtefactDetai
               <div>
                 <h4 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
                   <Briefcase className="w-4 h-4" />
-                  {t('detail.details')}
+                  {detail.details}
                 </h4>
                 <div className="p-5 bg-muted/30 rounded-2xl border border-border/50">
                   <p className="text-base text-foreground leading-relaxed">{artefact.description}</p>
@@ -147,28 +154,28 @@ export function ArtefactDetailModal({ artefact, onClose, onEdit }: ArtefactDetai
                 <div className="p-4 bg-muted/30 rounded-2xl border border-border/50">
                   <div className="flex items-center gap-2 text-muted-foreground mb-2">
                     <User className="w-4 h-4" />
-                    <span className="text-xs font-semibold uppercase">{t('detail.owner')}</span>
+                    <span className="text-xs font-semibold uppercase">{detail.owner}</span>
                   </div>
                   <p className="text-sm font-medium text-foreground">{artefact.owner}</p>
                 </div>
                 <div className="p-4 bg-muted/30 rounded-2xl border border-border/50">
                   <div className="flex items-center gap-2 text-muted-foreground mb-2">
                     <Building className="w-4 h-4" />
-                    <span className="text-xs font-semibold uppercase">{t('detail.department')}</span>
+                    <span className="text-xs font-semibold uppercase">{detail.department}</span>
                   </div>
                   <p className="text-sm font-medium text-foreground">{artefact.department}</p>
                 </div>
                 <div className="p-4 bg-muted/30 rounded-2xl border border-border/50">
                   <div className="flex items-center gap-2 text-muted-foreground mb-2">
                     <GitBranch className="w-4 h-4" />
-                    <span className="text-xs font-semibold uppercase">{t('detail.version')}</span>
+                    <span className="text-xs font-semibold uppercase">{detail.version}</span>
                   </div>
                   <p className="text-sm font-medium text-foreground">{artefact.version}</p>
                 </div>
                 <div className="p-4 bg-muted/30 rounded-2xl border border-border/50">
                   <div className="flex items-center gap-2 text-muted-foreground mb-2">
                     <Calendar className="w-4 h-4" />
-                    <span className="text-xs font-semibold uppercase">{t('detail.updated')}</span>
+                    <span className="text-xs font-semibold uppercase">{detail.updated}</span>
                   </div>
                   <p className="text-sm font-medium text-foreground">{artefact.lastUpdated}</p>
                 </div>
@@ -203,7 +210,7 @@ export function ArtefactDetailModal({ artefact, onClose, onEdit }: ArtefactDetai
                   <div className="flex items-center gap-2 mb-4">
                     <ArrowDownRight className="w-5 h-5 text-info" />
                     <h4 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                      {t('detail.upstream')} ({upstream.length})
+                      {detail.upstream} ({upstream.length})
                     </h4>
                   </div>
                   <div className="space-y-2">
@@ -222,7 +229,7 @@ export function ArtefactDetailModal({ artefact, onClose, onEdit }: ArtefactDetai
                       );
                     }) : (
                       <div className="p-4 text-center border border-dashed border-border rounded-xl">
-                        <p className="text-sm text-muted-foreground">{t('detail.noUpstream')}</p>
+                        <p className="text-sm text-muted-foreground">{detail.noUpstream}</p>
                       </div>
                     )}
                   </div>
@@ -233,7 +240,7 @@ export function ArtefactDetailModal({ artefact, onClose, onEdit }: ArtefactDetai
                   <div className="flex items-center gap-2 mb-4">
                     <ArrowUpRight className="w-5 h-5 text-accent" />
                     <h4 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                      {t('detail.downstream')} ({downstream.length})
+                      {detail.downstream} ({downstream.length})
                     </h4>
                   </div>
                   <div className="space-y-2">
@@ -252,39 +259,53 @@ export function ArtefactDetailModal({ artefact, onClose, onEdit }: ArtefactDetai
                       );
                     }) : (
                       <div className="p-4 text-center border border-dashed border-border rounded-xl">
-                        <p className="text-sm text-muted-foreground">{t('detail.noDownstream')}</p>
+                        <p className="text-sm text-muted-foreground">{detail.noDownstream}</p>
                       </div>
                     )}
                   </div>
                 </div>
               </div>
 
-              {/* History */}
+              {/* Version History */}
               <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <History className="w-5 h-5 text-muted-foreground" />
-                  <h4 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                    History (Mock)
-                  </h4>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <History className="w-5 h-5 text-muted-foreground" />
+                    <h4 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                      {versionHistory.title}
+                    </h4>
+                  </div>
+                  <button
+                    onClick={() => setShowVersionHistory(true)}
+                    className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                  >
+                    {versionHistory.viewAll}
+                  </button>
                 </div>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 text-sm p-3 bg-muted/30 border border-border/50 rounded-xl">
-                    <div className="w-2 h-2 rounded-full bg-success flex-shrink-0" />
-                    <span className="text-muted-foreground flex-1">Updated version by {artefact.owner}</span>
-                    <span className="text-xs text-muted-foreground">2 days ago</span>
+                <button
+                  onClick={() => setShowVersionHistory(true)}
+                  className="w-full flex items-center gap-3 p-4 bg-muted/30 border border-border/50 rounded-xl hover:bg-muted/50 transition-colors text-left"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <History className="w-5 h-5 text-primary" />
                   </div>
-                  <div className="flex items-center gap-3 text-sm p-3 bg-muted/30 border border-border/50 rounded-xl">
-                    <div className="w-2 h-2 rounded-full bg-info flex-shrink-0" />
-                    <span className="text-muted-foreground flex-1">Added new relationship</span>
-                    <span className="text-xs text-muted-foreground">1 week ago</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground">
+                      {versionHistory.versionHistoryLabel}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {versionHistory.viewAllChanges}
+                    </p>
                   </div>
-                  <div className="flex items-center gap-3 text-sm p-3 bg-muted/30 border border-border/50 rounded-xl">
-                    <div className="w-2 h-2 rounded-full bg-warning flex-shrink-0" />
-                    <span className="text-muted-foreground flex-1">Changed risk level</span>
-                    <span className="text-xs text-muted-foreground">2 weeks ago</span>
-                  </div>
-                </div>
+                </button>
               </div>
+
+              <VersionHistoryDrawer
+                isOpen={showVersionHistory}
+                onClose={() => setShowVersionHistory(false)}
+                artefactId={artefact.id}
+                artefactName={artefact.name || artefact.nameTh || ''}
+              />
 
               {/* Impact Analysis Button */}
               <motion.button
@@ -292,7 +313,7 @@ export function ArtefactDetailModal({ artefact, onClose, onEdit }: ArtefactDetai
                 whileTap={{ scale: 0.98 }}
                 className="w-full px-4 py-3 bg-accent text-accent-foreground font-medium rounded-xl hover:bg-accent/90 transition-colors"
               >
-                🔍 {t('detail.analyzeImpact')}
+                🔍 {detail.analyzeImpact}
               </motion.button>
             </div>
           </motion.div>
