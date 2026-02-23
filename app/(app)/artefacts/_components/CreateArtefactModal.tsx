@@ -9,6 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { useToast } from "@/components/ui/use-toast";
 import type { ArtefactType } from '@/types/artefact';
 import type { ApiLayer, ApiCategory } from '@/types/artefact-api';
@@ -33,6 +36,18 @@ const STATUS_MAP: Record<string, string> = {
   archived: 'RETIRED',
 };
 
+const CreateArtefactModalSchema = z.object({
+  name: z.string().min(1, "กรุณากรอกชื่อ (English)"),
+  nameTh: z.string().min(1, "กรุณากรอกชื่อ (ไทย)"),
+  description: z.string().optional(),
+  ownerId: z.string().optional(),
+  departmentId: z.string().optional(),
+  version: z.string().min(1, "กรุณากรอกเวอร์ชัน"),
+  status: z.enum(['draft', 'active', 'planned', 'deprecated', 'archived']),
+});
+
+type CreateArtefactModalFormValues = z.infer<typeof CreateArtefactModalSchema>;
+
 /** Localized name helper - use getLocalizedName */
 const getLoc = (val: unknown, lang: 'th' | 'en' = 'en') => getLocalizedName(val as { en?: string; th?: string } | string | null, lang);
 
@@ -47,20 +62,31 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
   const [selectedType, setSelectedType] = useState<ArtefactType>('business');
   const [selectedTemplateIndex, setSelectedTemplateIndex] = useState<number | null>(null);
   const [showExamples, setShowExamples] = useState(false);
+  const [typeSpecificFields, setTypeSpecificFields] = useState<Record<string, string>>({});
   const { users, departments, layers } = useArtefactFormOptions();
-  const [formData, setFormData] = useState({
-    name: '',
-    nameTh: '',
-    type: 'business' as ArtefactType,
-    description: '',
-    ownerId: '',       // store user ID as string for Select
-    departmentId: '',  // store department ID as string for Select
-    version: '1.0',
-    status: 'draft',
-    typeSpecificFields: {} as Record<string, string>,
-  });
 
   const { toast } = useToast();
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    setValue,
+    reset,
+    formState: { errors, isValid }
+  } = useForm<CreateArtefactModalFormValues>({
+    resolver: zodResolver(CreateArtefactModalSchema),
+    defaultValues: {
+      name: '',
+      nameTh: '',
+      description: '',
+      ownerId: '',
+      departmentId: '',
+      version: '1.0',
+      status: 'draft',
+    },
+    mode: 'onChange',
+  });
 
   /**
    * Resolve layerId and categoryId from the selected TOGAF type.
@@ -79,8 +105,7 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
     return { layerId: layer.id, categoryId: category?.id };
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmitForm = async (data: CreateArtefactModalFormValues) => {
     setLoading(true);
 
     try {
@@ -91,17 +116,17 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
 
       const apiPayload = {
         artefactName: {
-          en: formData.name,
-          th: formData.nameTh,
+          en: data.name,
+          th: data.nameTh,
         },
-        description: formData.description
-          ? { en: formData.description, th: formData.description }
+        description: data.description
+          ? { en: data.description, th: data.description }
           : undefined,
         categoryId,
         architectureLayerId: layerId,
-        lifecycleStatus: STATUS_MAP[formData.status] || 'ACTIVE',
-        responsibleById: formData.ownerId ? Number(formData.ownerId) : undefined,
-        ownerDepartmentId: formData.departmentId ? Number(formData.departmentId) : undefined,
+        lifecycleStatus: STATUS_MAP[data.status] || 'ACTIVE',
+        responsibleById: data.ownerId ? Number(data.ownerId) : undefined,
+        ownerDepartmentId: data.departmentId ? Number(data.departmentId) : undefined,
       };
 
       const response = await fetch('/api/v1/artefacts', {
@@ -118,10 +143,10 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
 
       toast({
         title: "สร้าง Artefact สำเร็จ",
-        description: `${formData.name} ถูกสร้างเรียบร้อยแล้ว`,
+        description: `${data.name} ถูกสร้างเรียบร้อยแล้ว`,
       });
 
-      resetForm();
+      handleClose();
       onSubmit(result.data);
     } catch (error) {
       toast({
@@ -134,50 +159,40 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
     }
   };
 
-  const resetForm = () => {
-    setSelectedType('business');
-    setSelectedTemplateIndex(null);
-    setShowExamples(false);
-    setFormData({
-      name: '', nameTh: '', type: 'business', description: '', ownerId: '', departmentId: '', version: '1.0', status: 'draft',
-      typeSpecificFields: {},
+  const resetFormExceptType = () => {
+    reset({
+      name: '', nameTh: '', description: '', ownerId: '', departmentId: '', version: '1.0', status: 'draft'
     });
-  };
-
-  const handleChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setTypeSpecificFields({});
   };
 
   const selectType = (type: ArtefactType) => {
     setSelectedType(type);
     setSelectedTemplateIndex(null);
-    setFormData(prev => ({ ...prev, type, name: '', nameTh: '', description: '', ownerId: '', departmentId: '', typeSpecificFields: {} }));
+    resetFormExceptType();
   };
 
   const handleTypeSpecificChange = (key: string, value: string) => {
-    setFormData(prev => ({
+    setTypeSpecificFields(prev => ({
       ...prev,
-      typeSpecificFields: {
-        ...prev.typeSpecificFields,
-        [key]: value,
-      },
+      [key]: value,
     }));
   };
 
   const selectTemplate = (index: number) => {
     setSelectedTemplateIndex(index);
     const template = templates[selectedType][index];
-    setFormData(prev => ({
-      ...prev,
-      name: template.fields.name,
-      nameTh: template.fields.nameTh,
-      description: template.fields.description,
-      typeSpecificFields: template.typeSpecificFields || {}
-    }));
+    setValue('name', template.fields.name, { shouldValidate: true });
+    setValue('nameTh', template.fields.nameTh, { shouldValidate: true });
+    setValue('description', template.fields.description, { shouldValidate: true });
+    setTypeSpecificFields(template.typeSpecificFields || {});
   };
 
   const handleClose = () => {
-    resetForm();
+    setSelectedType('business');
+    setSelectedTemplateIndex(null);
+    setShowExamples(false);
+    resetFormExceptType();
     onClose();
   };
 
@@ -283,15 +298,10 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
                     </button>
                   ))}
                   <button
+                    type="button"
                     onClick={() => {
                       setSelectedTemplateIndex(null);
-                      setFormData(prev => ({
-                        ...prev,
-                        name: '',
-                        nameTh: '',
-                        description: '',
-                        typeSpecificFields: {}
-                      }));
+                      resetFormExceptType();
                     }}
                     className={cn(
                       "w-full px-2.5 py-2 rounded-lg text-xs text-left border border-dashed transition-all",
@@ -308,7 +318,7 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
 
             {/* Right Column: Form */}
             <div className="flex-1 flex flex-col overflow-hidden">
-              <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
+              <form onSubmit={handleSubmit(onSubmitForm)} className="flex-1 flex flex-col overflow-hidden">
                 <div className="flex-1 overflow-y-auto p-5 space-y-4">
                   {/* Type indicator */}
                   <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg border">
@@ -319,26 +329,28 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
                   {/* Form fields */}
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                      <Label htmlFor="name" className="text-xs">ชื่อ (English)</Label>
+                      <Label htmlFor="name" className="text-xs">
+                        ชื่อ (English) <span className="text-destructive">*</span>
+                      </Label>
                       <Input
                         id="name"
                         placeholder="e.g. HR System"
-                        value={formData.name}
-                        onChange={(e) => handleChange('name', e.target.value)}
-                        className="h-9 text-sm"
-                        required
+                        {...register('name')}
+                        className={cn("h-9 text-sm", errors.name && "border-destructive focus-visible:ring-destructive")}
                       />
+                      {errors.name && <p className="text-[10px] text-destructive">{errors.name.message}</p>}
                     </div>
                     <div className="space-y-1.5">
-                      <Label htmlFor="nameTh" className="text-xs">ชื่อ (ไทย)</Label>
+                      <Label htmlFor="nameTh" className="text-xs">
+                        ชื่อ (ไทย) <span className="text-destructive">*</span>
+                      </Label>
                       <Input
                         id="nameTh"
                         placeholder="e.g. ระบบทรัพยากรบุคคล"
-                        value={formData.nameTh}
-                        onChange={(e) => handleChange('nameTh', e.target.value)}
-                        className="h-9 text-sm"
-                        required
+                        {...register('nameTh')}
+                        className={cn("h-9 text-sm", errors.nameTh && "border-destructive focus-visible:ring-destructive")}
                       />
+                      {errors.nameTh && <p className="text-[10px] text-destructive">{errors.nameTh.message}</p>}
                     </div>
                   </div>
 
@@ -348,47 +360,58 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
                       id="description"
                       placeholder="คำอธิบายเกี่ยวกับ Artefact นี้..."
                       className="h-20 resize-none text-sm"
-                      value={formData.description}
-                      onChange={(e) => handleChange('description', e.target.value)}
+                      {...register('description')}
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
                       <Label htmlFor="owner" className="text-xs">ผู้รับผิดชอบ</Label>
-                      <Select
-                        value={formData.ownerId}
-                        onValueChange={(val) => handleChange('ownerId', val)}
-                      >
-                        <SelectTrigger className="h-9 text-sm" id="owner">
-                          <SelectValue placeholder="เลือกผู้รับผิดชอบ" />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-[200px]">
-                          {users.map(user => (
-                            <SelectItem key={user.id} value={String(user.id)}>
-                              {user.firstName} {user.lastName}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Controller
+                        name="ownerId"
+                        control={control}
+                        render={({ field }) => (
+                          <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
+                          >
+                            <SelectTrigger className="h-9 text-sm" id="owner">
+                              <SelectValue placeholder="เลือกผู้รับผิดชอบ" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-[200px]">
+                              {users.map(user => (
+                                <SelectItem key={user.id} value={String(user.id)}>
+                                  {user.firstName} {user.lastName}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
                     </div>
                     <div className="space-y-1.5">
                       <Label htmlFor="department" className="text-xs">หน่วยงาน</Label>
-                      <Select
-                        value={formData.departmentId}
-                        onValueChange={(val) => handleChange('departmentId', val)}
-                      >
-                        <SelectTrigger className="h-9 text-sm" id="department">
-                          <SelectValue placeholder="เลือกหน่วยงาน" />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-[200px]">
-                          {departments.map(dept => (
-                            <SelectItem key={dept.id} value={String(dept.id)}>
-                              {dept.fullName || dept.shortName}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Controller
+                        name="departmentId"
+                        control={control}
+                        render={({ field }) => (
+                          <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
+                          >
+                            <SelectTrigger className="h-9 text-sm" id="department">
+                              <SelectValue placeholder="เลือกหน่วยงาน" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-[200px]">
+                              {departments.map(dept => (
+                                <SelectItem key={dept.id} value={String(dept.id)}>
+                                  {dept.fullName || dept.shortName}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
                     </div>
                   </div>
 
@@ -418,7 +441,7 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
                             </Label>
                             {field.type === 'select' ? (
                               <Select
-                                value={formData.typeSpecificFields[field.key] || ''}
+                                value={typeSpecificFields[field.key] || ''}
                                 onValueChange={(val) => handleTypeSpecificChange(field.key, val)}
                               >
                                 <SelectTrigger className="h-9 text-sm" id={field.key}>
@@ -437,14 +460,14 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
                                 id={field.key}
                                 placeholder={field.placeholder}
                                 className="h-16 resize-none text-sm"
-                                value={formData.typeSpecificFields[field.key] || ''}
+                                value={typeSpecificFields[field.key] || ''}
                                 onChange={(e) => handleTypeSpecificChange(field.key, e.target.value)}
                               />
                             ) : (
                               <Input
                                 id={field.key}
                                 placeholder={field.placeholder}
-                                value={formData.typeSpecificFields[field.key] || ''}
+                                value={typeSpecificFields[field.key] || ''}
                                 onChange={(e) => handleTypeSpecificChange(field.key, e.target.value)}
                                 className="h-9 text-sm"
                               />
@@ -461,26 +484,32 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
                       <Input
                         id="version"
                         placeholder="1.0"
-                        value={formData.version}
-                        onChange={(e) => handleChange('version', e.target.value)}
-                        className="h-9 text-sm"
+                        {...register('version')}
+                        className={cn("h-9 text-sm", errors.version && "border-destructive focus-visible:ring-destructive")}
                       />
+                      {errors.version && <p className="text-[10px] text-destructive">{errors.version.message}</p>}
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-xs">สถานะ</Label>
-                      <Select
-                        value={formData.status}
-                        onValueChange={(val) => handleChange('status', val)}
-                      >
-                        <SelectTrigger className="h-9 text-sm">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="draft">Draft - ร่าง</SelectItem>
-                          <SelectItem value="active">Active - ใช้งาน</SelectItem>
-                          <SelectItem value="planned">Planned - วางแผน</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <Controller
+                        name="status"
+                        control={control}
+                        render={({ field }) => (
+                          <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
+                          >
+                            <SelectTrigger className="h-9 text-sm">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="draft">Draft - ร่าง</SelectItem>
+                              <SelectItem value="active">Active - ใช้งาน</SelectItem>
+                              <SelectItem value="planned">Planned - วางแผน</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
                     </div>
                   </div>
 
@@ -558,7 +587,7 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
                   <Button type="button" variant="outline" className="flex-1 h-9" onClick={handleClose}>
                     ยกเลิก
                   </Button>
-                  <Button type="submit" className="flex-1 h-9" disabled={loading || !formData.name}>
+                  <Button type="submit" className="flex-1 h-9" disabled={loading || !isValid}>
                     {loading ? 'กำลังสร้าง...' : 'สร้าง Artefact'}
                   </Button>
                 </div>

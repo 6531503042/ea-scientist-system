@@ -14,11 +14,11 @@ const OptionalLocalizedStringSchema = z
 
 export const CreateRelationshipSchema = z.object({
     sourceArtefactId: z
-        .number({ required_error: "กรุณาเลือก Artefact ต้นทาง" })
+        .number({ message: "กรุณาเลือก Artefact ต้นทาง" })
         .int()
         .positive(),
     targetArtefactId: z
-        .number({ required_error: "กรุณาเลือก Artefact ปลายทาง" })
+        .number({ message: "กรุณาเลือก Artefact ปลายทาง" })
         .int()
         .positive(),
     relationshipTypeId: z.number().int().positive().optional().nullable(),

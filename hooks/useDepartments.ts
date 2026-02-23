@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Department, CreateDepartmentInput, UpdateDepartmentInput } from '@/types/department';
+import { apiClient } from '@/lib/api-client';
+import { queryKeys } from '@/lib/query-keys';
 
 function transformApiDepartment(apiDept: any): Department {
     return {
@@ -9,7 +11,6 @@ function transformApiDepartment(apiDept: any): Department {
         code: apiDept.shortName, // Use shortName as code
         name: apiDept.fullName,
         nameTh: apiDept.fullName,
-        // Head needs to be mapped if available, currently API might not return head info directly or needs expansion
         head: '-',
         memberCount: apiDept.userCount || 0,
         userCount: apiDept.userCount || 0,
@@ -18,35 +19,21 @@ function transformApiDepartment(apiDept: any): Department {
 }
 
 export function useDepartments() {
-    const [departments, setDepartments] = useState<Department[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const queryClient = useQueryClient();
 
-    const fetchDepartments = useCallback(async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const response = await fetch('/api/v1/departments');
-            if (!response.ok) throw new Error('Failed to fetch departments');
-            const result = await response.json();
+    // Fetch Departments
+    const { data: departments = [], isLoading, error: queryError, refetch } = useQuery<Department[]>({
+        queryKey: queryKeys.departments.all,
+        queryFn: async () => {
+            const data = await apiClient.get<any[]>('/api/v1/departments');
+            return data.map(transformApiDepartment);
+        },
+        staleTime: 5 * 60 * 1000, // 5 minutes cache
+    });
 
-            if (result.success && Array.isArray(result.data)) {
-                setDepartments(result.data.map(transformApiDepartment));
-            } else {
-                setDepartments([]);
-            }
-        } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : 'Failed to fetch departments.');
-            setDepartments([]);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    const createDepartment = useCallback(async (data: CreateDepartmentInput) => {
-        setLoading(true);
-        setError(null);
-        try {
+    // Create Department
+    const createMutation = useMutation({
+        mutationFn: async (data: CreateDepartmentInput) => {
             const parentValue = typeof data.parent === 'string' ? data.parent : undefined;
             const apiData = {
                 shortName: data.code,
@@ -54,87 +41,61 @@ export function useDepartments() {
                 parentId: parentValue ? parseInt(parentValue) : undefined,
             };
 
-            const response = await fetch('/api/v1/departments', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(apiData),
-            });
+            const responseData = await apiClient.post<any>('/api/v1/departments', apiData);
+            return transformApiDepartment(responseData);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.departments.all });
+        },
+    });
 
-            if (!response.ok) {
-                const res = await response.json();
-                throw new Error(res.error || 'Failed to create department');
-            }
-
-            const result = await response.json();
-            const newDept = transformApiDepartment(result.data);
-            setDepartments(prev => [...prev, newDept]);
-            return newDept;
-        } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : 'Failed to create department.');
-            return null;
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    const updateDepartment = useCallback(async (id: string, data: UpdateDepartmentInput) => {
-        setLoading(true);
-        setError(null);
-        try {
+    // Update Department
+    const updateMutation = useMutation({
+        mutationFn: async ({ id, data }: { id: string; data: UpdateDepartmentInput }) => {
             const apiData: any = {};
             if (data.code) apiData.shortName = data.code;
             if (data.name) apiData.fullName = data.name;
-            // if (data.head) ...
 
-            const response = await fetch(`/api/v1/departments/${id}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(apiData),
-            });
-
-            if (!response.ok) throw new Error('Failed to update department');
-
-            await fetchDepartments();
+            await apiClient.put(`/api/v1/departments/${id}`, apiData);
             return true;
-        } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : 'Failed to update department.');
-            return false;
-        } finally {
-            setLoading(false);
-        }
-    }, [fetchDepartments]);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.departments.all });
+        },
+    });
 
-    const deleteDepartment = useCallback(async (id: string) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const response = await fetch(`/api/v1/departments/${id}`, {
-                method: 'DELETE',
-            });
-
-            if (!response.ok) throw new Error('Failed to delete department');
-
-            setDepartments(prev => prev.filter(d => d._id !== id));
+    // Delete Department
+    const deleteMutation = useMutation({
+        mutationFn: async (id: string) => {
+            await apiClient.delete(`/api/v1/departments/${id}`);
             return true;
-        } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : 'Failed to delete department.');
-            return false;
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.departments.all });
+        },
+    });
 
-    useEffect(() => {
-        fetchDepartments();
-    }, [fetchDepartments]);
+    // Derived error state combining query and mutation errors
+    const error = queryError?.message
+        || createMutation.error?.message
+        || updateMutation.error?.message
+        || deleteMutation.error?.message
+        || null;
+
+    // Derived loading state
+    const loading = isLoading
+        || createMutation.isPending
+        || updateMutation.isPending
+        || deleteMutation.isPending;
 
     return {
         departments,
         loading,
         error,
-        fetchDepartments,
-        createDepartment,
-        updateDepartment,
-        deleteDepartment,
+        fetchDepartments: refetch, // Backwards compatibility for existing components
+        createDepartment: createMutation.mutateAsync,
+        updateDepartment: (id: string, data: UpdateDepartmentInput) => updateMutation.mutateAsync({ id, data }),
+        deleteDepartment: deleteMutation.mutateAsync,
     };
 }
+

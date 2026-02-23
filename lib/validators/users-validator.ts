@@ -5,27 +5,27 @@ import { z } from "zod";
 // ============================================================
 
 export const CreateUserSchema = z.object({
-    roleId: z.number({ required_error: "กรุณาเลือกบทบาท" }).int().positive(),
+    roleId: z.number({ message: "กรุณาเลือกบทบาท" }).int().positive(),
     departmentId: z.number().int().positive().optional().nullable(),
     firstName: z
-        .string({ required_error: "กรุณากรอกชื่อ" })
+        .string({ message: "กรุณากรอกชื่อ" })
         .min(1, "ชื่อต้องไม่เป็นค่าว่าง")
         .max(255, "ชื่อต้องไม่เกิน 255 ตัวอักษร"),
     lastName: z
-        .string({ required_error: "กรุณากรอกนามสกุล" })
+        .string({ message: "กรุณากรอกนามสกุล" })
         .min(1, "นามสกุลต้องไม่เป็นค่าว่าง")
         .max(255, "นามสกุลต้องไม่เกิน 255 ตัวอักษร"),
     email: z
-        .string({ required_error: "กรุณากรอกอีเมล" })
+        .string({ message: "กรุณากรอกอีเมล" })
         .email("รูปแบบอีเมลไม่ถูกต้อง")
         .max(255, "อีเมลต้องไม่เกิน 255 ตัวอักษร")
         .transform((v) => v.trim().toLowerCase()),
     username: z
-        .string({ required_error: "กรุณากรอก username" })
+        .string({ message: "กรุณากรอก username" })
         .min(3, "Username ต้องมีอย่างน้อย 3 ตัวอักษร")
         .max(255, "Username ต้องไม่เกิน 255 ตัวอักษร"),
     password: z
-        .string({ required_error: "กรุณากรอกรหัสผ่าน" })
+        .string({ message: "กรุณากรอกรหัสผ่าน" })
         .min(8, "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร")
         .max(128, "รหัสผ่านยาวเกินไป"),
 });

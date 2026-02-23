@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { getLocalizedName } from '@/lib/utils';
+import { apiClient } from '@/lib/api-client';
+import { queryKeys } from '@/lib/query-keys';
 
 export interface VersionDisplay {
   id: string;
@@ -42,41 +44,22 @@ function mapApiVersionToDisplay(v: ApiVersion): VersionDisplay {
 }
 
 export function useArtefactVersions(artefactId: string | null, isOpen: boolean) {
-  const [versions, setVersions] = useState<VersionDisplay[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { data: versions = [], isLoading: loading, error: queryError, refetch: refresh } = useQuery<VersionDisplay[]>({
+    queryKey: queryKeys.artefactVersions.all(artefactId || undefined),
+    queryFn: async () => {
+      if (!artefactId) return [];
+      const data = await apiClient.get<any>(`/api/v1/artefacts/${artefactId}`);
+      const rawVersions = (data?.artefactVersions || []) as ApiVersion[];
+      return rawVersions.map(mapApiVersionToDisplay);
+    },
+    enabled: isOpen && !!artefactId,
+  });
 
-  const fetchVersions = useCallback(async () => {
-    if (!artefactId || !isOpen) {
-      setVersions([]);
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/v1/artefacts/${artefactId}`);
-      const json = await res.json();
-      if (!json.success || !json.data) {
-        setVersions([]);
-        return;
-      }
-      const rawVersions = (json.data.artefactVersions || []) as ApiVersion[];
-      setVersions(rawVersions.map(mapApiVersionToDisplay));
-    } catch {
-      setError('Failed to load versions');
-      setVersions([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [artefactId, isOpen]);
-
-  useEffect(() => {
-    if (isOpen && artefactId) {
-      fetchVersions();
-    } else {
-      setVersions([]);
-    }
-  }, [isOpen, artefactId, fetchVersions]);
-
-  return { versions, loading, error, refresh: fetchVersions };
+  return {
+    versions,
+    loading,
+    error: queryError?.message || null,
+    refresh
+  };
 }
+

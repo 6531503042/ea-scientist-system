@@ -24,7 +24,7 @@ const OptionalLocalizedStringSchema = z
 export const CreateArtefactSchema = z.object({
     architectureLayerId: z.number().int().positive().optional().nullable(),
     categoryId: z
-        .number({ required_error: "กรุณาเลือกหมวดหมู่" })
+        .number({ message: "กรุณาเลือกหมวดหมู่" })
         .int()
         .positive(),
     ownerDepartmentId: z.number().int().positive().optional().nullable(),

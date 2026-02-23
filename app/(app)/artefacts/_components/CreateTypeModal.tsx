@@ -118,6 +118,7 @@ export function CreateTypeModal({
             formData.descriptionEn || formData.descriptionTh
               ? { en: formData.descriptionEn, th: formData.descriptionTh }
               : undefined,
+          isActive: true,
         });
         if (ok) resetAndClose();
       } else {
@@ -132,6 +133,7 @@ export function CreateTypeModal({
             formData.descriptionEn || formData.descriptionTh
               ? { en: formData.descriptionEn, th: formData.descriptionTh }
               : undefined,
+          isActive: true,
         });
         if (ok) resetAndClose();
       }

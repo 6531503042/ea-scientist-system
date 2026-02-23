@@ -3,6 +3,7 @@ import type {
     CreateDepartmentInput,
     UpdateDepartmentInput,
 } from "@/lib/validators/departments-validator";
+import { NotFoundError } from "@/lib/utils/api-error";
 
 /**
  * Service for Department business logic
@@ -20,7 +21,7 @@ export class DepartmentsService {
 
     async getById(id: number) {
         const dept = await this.repository.findById(id);
-        if (!dept) throw new Error("ไม่พบหน่วยงาน");
+        if (!dept) throw new NotFoundError("ไม่พบหน่วยงาน");
         return dept;
     }
 
@@ -41,7 +42,7 @@ export class DepartmentsService {
 
     async update(id: number, data: UpdateDepartmentInput) {
         const dept = await this.repository.findById(id);
-        if (!dept) throw new Error("ไม่พบหน่วยงาน");
+        if (!dept) throw new NotFoundError("ไม่พบหน่วยงาน");
 
         return this.repository.update(id, {
             ...(data.shortName && { shortName: data.shortName }),
@@ -57,7 +58,7 @@ export class DepartmentsService {
 
     async delete(id: number) {
         const dept = await this.repository.findById(id);
-        if (!dept) throw new Error("ไม่พบหน่วยงาน");
+        if (!dept) throw new NotFoundError("ไม่พบหน่วยงาน");
         return this.repository.delete(id);
     }
 }

@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Role } from '@/types/role';
+import { apiClient } from '@/lib/api-client';
+import { queryKeys } from '@/lib/query-keys';
 
 function transformApiRole(apiRole: any): Role {
     return {
@@ -18,121 +20,78 @@ function transformApiRole(apiRole: any): Role {
 }
 
 export function useRoles() {
-    const [roles, setRoles] = useState<Role[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const queryClient = useQueryClient();
 
-    const fetchRoles = useCallback(async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const response = await fetch('/api/v1/roles');
-            if (!response.ok) throw new Error('Failed to fetch roles');
-            const result = await response.json();
+    const { data: roles = [], isLoading, error: queryError, refetch } = useQuery<Role[]>({
+        queryKey: queryKeys.roles.all,
+        queryFn: async () => {
+            const data = await apiClient.get<any[]>('/api/v1/roles');
+            return data.map(transformApiRole);
+        },
+        staleTime: 5 * 60 * 1000, // 5 minutes cache
+    });
 
-            if (result.success && Array.isArray(result.data)) {
-                setRoles(result.data.map(transformApiRole));
-            } else {
-                setRoles([]);
-            }
-        } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : 'Failed to fetch roles.');
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    const createRole = useCallback(async (roleData: Partial<Role>) => {
-        setLoading(true);
-        setError(null);
-        try {
+    const createMutation = useMutation({
+        mutationFn: async (roleData: Partial<Role>) => {
             const apiData = {
                 roleName: roleData.name,
                 description: roleData.description,
                 permissions: roleData.permissions,
             };
 
-            const response = await fetch('/api/v1/roles', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(apiData),
-            });
-
-            if (!response.ok) {
-                const res = await response.json();
-                throw new Error(res.error || 'Failed to create role');
-            }
-
-            const result = await response.json();
-            const newRole = transformApiRole(result.data);
-            setRoles(prev => [...prev, newRole]);
-            return newRole;
-        } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : 'Failed to create role.');
-            return null;
-        } finally {
-            setLoading(false);
+            const responseData = await apiClient.post<any>('/api/v1/roles', apiData);
+            return transformApiRole(responseData);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.roles.all });
         }
-    }, []);
+    });
 
-    const updateRole = useCallback(async (id: string, roleData: Partial<Role>) => {
-        setLoading(true);
-        setError(null);
-        try {
+    const updateMutation = useMutation({
+        mutationFn: async ({ id, roleData }: { id: string, roleData: Partial<Role> }) => {
             const apiData: any = {};
             if (roleData.name) apiData.roleName = roleData.name;
             if (roleData.description) apiData.description = roleData.description;
             if (roleData.permissions) apiData.permissions = roleData.permissions;
 
-            const response = await fetch(`/api/v1/roles/${id}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(apiData),
-            });
-
-            if (!response.ok) throw new Error('Failed to update role');
-
-            await fetchRoles();
+            await apiClient.put(`/api/v1/roles/${id}`, apiData);
             return true;
-        } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : 'Failed to update role.');
-            return false;
-        } finally {
-            setLoading(false);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.roles.all });
         }
-    }, [fetchRoles]);
+    });
 
-    const deleteRole = useCallback(async (id: string) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const response = await fetch(`/api/v1/roles/${id}`, {
-                method: 'DELETE',
-            });
-
-            if (!response.ok) throw new Error('Failed to delete role');
-
-            setRoles(prev => prev.filter(r => r._id !== id));
+    const deleteMutation = useMutation({
+        mutationFn: async (id: string) => {
+            await apiClient.delete(`/api/v1/roles/${id}`);
             return true;
-        } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : 'Failed to delete role.');
-            return false;
-        } finally {
-            setLoading(false);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.roles.all });
         }
-    }, []);
+    });
 
-    useEffect(() => {
-        fetchRoles();
-    }, [fetchRoles]);
+    // Derived error state combining query and mutation errors
+    const error = queryError?.message
+        || createMutation.error?.message
+        || updateMutation.error?.message
+        || deleteMutation.error?.message
+        || null;
+
+    // Derived loading state
+    const loading = isLoading
+        || createMutation.isPending
+        || updateMutation.isPending
+        || deleteMutation.isPending;
 
     return {
         roles,
         loading,
         error,
-        fetchRoles,
-        createRole,
-        updateRole,
-        deleteRole,
+        fetchRoles: refetch,
+        createRole: createMutation.mutateAsync,
+        updateRole: (id: string, roleData: Partial<Role>) => updateMutation.mutateAsync({ id, roleData }),
+        deleteRole: deleteMutation.mutateAsync,
     };
 }

@@ -9,13 +9,13 @@ import { z } from "zod";
  */
 export const loginSchema = z.object({
     email: z
-        .string({ required_error: "กรุณากรอกอีเมล" })
+        .string({ message: "กรุณากรอกอีเมล" })
         .min(1, "กรุณากรอกอีเมล")
         .email("รูปแบบอีเมลไม่ถูกต้อง")
         .max(255, "อีเมลยาวเกินไป")
         .transform((v) => v.trim().toLowerCase()),
     password: z
-        .string({ required_error: "กรุณากรอกรหัสผ่าน" })
+        .string({ message: "กรุณากรอกรหัสผ่าน" })
         .min(1, "กรุณากรอกรหัสผ่าน")
         .min(6, "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร")
         .max(128, "รหัสผ่านยาวเกินไป"),

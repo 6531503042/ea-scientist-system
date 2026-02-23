@@ -1,7 +1,10 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import type { AuditLog, AuditLogFilter } from '@/types/audit';
+import { apiClient } from '@/lib/api-client';
+import { queryKeys } from '@/lib/query-keys';
 
 function transformApiLog(apiLog: any): AuditLog {
     return {
@@ -37,66 +40,41 @@ export interface AuditStats {
 }
 
 export function useAudit() {
-    const [logs, setLogs] = useState<AuditLog[]>([]);
-    const [stats, setStats] = useState<AuditStats | null>(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
     const [filter, setFilter] = useState<AuditLogFilter>({});
 
-    const fetchLogs = useCallback(async (filterParams?: AuditLogFilter) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const activeFilter = filterParams || filter;
+    const { data: logs = [], isLoading: isLoadingLogs, error: logsError, refetch: fetchLogs } = useQuery<AuditLog[]>({
+        queryKey: queryKeys.audit.all(filter),
+        queryFn: async () => {
             const query = new URLSearchParams();
+            if (filter.userId) query.append('userId', filter.userId);
+            if (filter.action) query.append('action', filter.action);
+            if (filter.module) query.append('entityType', filter.module);
 
-            if (activeFilter.userId) query.append('userId', activeFilter.userId);
-            if (activeFilter.action) query.append('action', activeFilter.action);
-            if (activeFilter.module) query.append('entityType', activeFilter.module);
-
-            const response = await fetch(`/api/v1/audit-logs?${query.toString()}`);
-            if (!response.ok) throw new Error('Failed to fetch audit logs');
-
-            const result = await response.json();
-
-            if (result.success && Array.isArray(result.data)) {
-                setLogs(result.data.map(transformApiLog));
-            } else {
-                setLogs([]);
-            }
-        } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : 'Failed to fetch audit logs.');
-        } finally {
-            setLoading(false);
+            const data = await apiClient.get<any[]>(`/api/v1/audit-logs?${query.toString()}`);
+            return data.map((apiLog: any) => transformApiLog(apiLog));
         }
-    }, [filter]);
+    });
 
-    const fetchStats = useCallback(async () => {
-        try {
-            const response = await fetch('/api/v1/audit-logs/stats');
-            if (response.ok) {
-                const result = await response.json();
-                if (result.success) {
-                    setStats(result.data);
-                }
-            }
-        } catch (error) {
-            console.error('Failed to fetch audit stats:', error);
-        }
-    }, []);
+    const { data: stats = null, isLoading: isLoadingStats, error: statsError, refetch: fetchStats } = useQuery<AuditStats>({
+        queryKey: queryKeys.audit.stats,
+        queryFn: async () => {
+            const data = await apiClient.get<AuditStats>('/api/v1/audit-logs/stats');
+            return data || null;
+        },
+        staleTime: 5 * 60 * 1000 // Stats don't usually require ultra real-time reactivity without manual refresh
+    });
 
-    const updateFilter = useCallback((newFilter: AuditLogFilter) => {
+    const updateFilter = (newFilter: AuditLogFilter) => {
         setFilter(newFilter);
-    }, []);
+    };
 
-    const clearFilter = useCallback(() => {
+    const clearFilter = () => {
         setFilter({});
-    }, []);
+    };
 
-    useEffect(() => {
-        fetchLogs();
-        fetchStats();
-    }, [fetchLogs, fetchStats]);
+    // Derived error and loading state
+    const error = logsError?.message || statsError?.message || null;
+    const loading = isLoadingLogs || isLoadingStats;
 
     return {
         logs,

@@ -1,199 +1,106 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getLocalizedName } from '@/lib/utils';
 import type { ArchitectureLayer, ArtefactCategory } from '@/types/artefact-type';
 import type {
-  CreateArchitectureLayerInput,
-  UpdateArchitectureLayerInput,
-  CreateArtefactCategoryInput,
-  UpdateArtefactCategoryInput,
+    CreateArchitectureLayerInput,
+    UpdateArchitectureLayerInput,
+    CreateArtefactCategoryInput,
+    UpdateArtefactCategoryInput,
 } from '@/lib/validators/artefact-types-validator';
+import { apiClient } from '@/lib/api-client';
+import { queryKeys } from '@/lib/query-keys';
 
 export function useArtefactTypes() {
-    const [layers, setLayers] = useState<ArchitectureLayer[]>([]);
-    const [categories, setCategories] = useState<ArtefactCategory[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const queryClient = useQueryClient();
 
-    const fetchLayers = useCallback(async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const res = await fetch('/api/v1/architecture-layers');
-            const json = await res.json();
-            if (json.success && Array.isArray(json.data)) {
-                setLayers(json.data);
-            } else {
-                setLayers([]);
-            }
-        } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : 'Failed to fetch layers');
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+    // Fetch Layers
+    const { data: layers = [], isLoading: isLoadingLayers, error: layersError, refetch: fetchLayers } = useQuery<ArchitectureLayer[]>({
+        queryKey: queryKeys.architectureLayers.all,
+        queryFn: async () => {
+            return await apiClient.get<ArchitectureLayer[]>('/api/v1/architecture-layers');
+        },
+        staleTime: 5 * 60 * 1000, // 5 minutes cache
+    });
 
-    const fetchCategories = useCallback(async (layerId?: number) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const url = layerId ? `/api/v1/categories?layerId=${layerId}` : '/api/v1/categories';
-            const res = await fetch(url);
-            const json = await res.json();
-            if (json.success && Array.isArray(json.data)) {
-                setCategories(json.data);
-            } else {
-                setCategories([]);
-            }
-        } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : 'Failed to fetch categories');
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+    // Fetch Categories
+    const { data: categories = [], isLoading: isLoadingCategories, error: categoriesError, refetch: fetchCategories } = useQuery<ArtefactCategory[]>({
+        queryKey: queryKeys.categories.all,
+        queryFn: async () => {
+            return await apiClient.get<ArtefactCategory[]>('/api/v1/categories');
+        },
+        staleTime: 5 * 60 * 1000, // 5 minutes cache
+    });
 
-    const fetchAll = useCallback(async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const [layersRes, catsRes] = await Promise.all([
-                fetch('/api/v1/architecture-layers'),
-                fetch('/api/v1/categories'),
-            ]);
-            const [layersJson, catsJson] = await Promise.all([layersRes.json(), catsRes.json()]);
-            if (layersJson.success && Array.isArray(layersJson.data)) setLayers(layersJson.data);
-            else setLayers([]);
-            if (catsJson.success && Array.isArray(catsJson.data)) setCategories(catsJson.data);
-            else setCategories([]);
-        } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : 'Failed to fetch');
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+    // Helper to simulate fetchAll
+    const fetchAll = () => {
+        fetchLayers();
+        fetchCategories();
+    };
 
-    const createLayer = useCallback(async (data: CreateArchitectureLayerInput) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const res = await fetch('/api/v1/architecture-layers', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data),
-            });
-            const json = await res.json();
-            if (!json.success) throw new Error(json.error || 'Failed to create layer');
-            await fetchAll();
-            return json.data;
-        } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : 'Failed to create layer');
-            return null;
-        } finally {
-            setLoading(false);
-        }
-    }, [fetchAll]);
+    // Layer Mutations
+    const createLayerMutation = useMutation({
+        mutationFn: async (data: CreateArchitectureLayerInput) => {
+            return await apiClient.post<ArchitectureLayer>('/api/v1/architecture-layers', data);
+        },
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.architectureLayers.all }),
+    });
 
-    const updateLayer = useCallback(async (id: number, data: UpdateArchitectureLayerInput) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const res = await fetch(`/api/v1/architecture-layers/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data),
-            });
-            const json = await res.json();
-            if (!json.success) throw new Error(json.error || 'Failed to update layer');
-            await fetchAll();
-            return json.data;
-        } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : 'Failed to update layer');
-            return null;
-        } finally {
-            setLoading(false);
-        }
-    }, [fetchAll]);
+    const updateLayerMutation = useMutation({
+        mutationFn: async ({ id, data }: { id: number, data: UpdateArchitectureLayerInput }) => {
+            return await apiClient.put<ArchitectureLayer>(`/api/v1/architecture-layers/${id}`, data);
+        },
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.architectureLayers.all }),
+    });
 
-    const deleteLayer = useCallback(async (id: number) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const res = await fetch(`/api/v1/architecture-layers/${id}`, { method: 'DELETE' });
-            const json = await res.json();
-            if (!json.success) throw new Error(json.error || 'Failed to delete layer');
-            await fetchAll();
-            return true;
-        } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : 'Failed to delete layer');
-            return false;
-        } finally {
-            setLoading(false);
-        }
-    }, [fetchAll]);
+    const deleteLayerMutation = useMutation({
+        mutationFn: async (id: number) => {
+            return await apiClient.delete<boolean>(`/api/v1/architecture-layers/${id}`);
+        },
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.architectureLayers.all }),
+    });
 
-    const createCategory = useCallback(async (data: CreateArtefactCategoryInput) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const res = await fetch('/api/v1/categories', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data),
-            });
-            const json = await res.json();
-            if (!json.success) throw new Error(json.error || 'Failed to create category');
-            await fetchAll();
-            return json.data;
-        } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : 'Failed to create category');
-            return null;
-        } finally {
-            setLoading(false);
-        }
-    }, [fetchAll]);
+    // Category Mutations
+    const createCategoryMutation = useMutation({
+        mutationFn: async (data: CreateArtefactCategoryInput) => {
+            return await apiClient.post<ArtefactCategory>('/api/v1/categories', data);
+        },
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.categories.all }),
+    });
 
-    const updateCategory = useCallback(async (id: number, data: UpdateArtefactCategoryInput) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const res = await fetch(`/api/v1/categories/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data),
-            });
-            const json = await res.json();
-            if (!json.success) throw new Error(json.error || 'Failed to update category');
-            await fetchAll();
-            return json.data;
-        } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : 'Failed to update category');
-            return null;
-        } finally {
-            setLoading(false);
-        }
-    }, [fetchAll]);
+    const updateCategoryMutation = useMutation({
+        mutationFn: async ({ id, data }: { id: number, data: UpdateArtefactCategoryInput }) => {
+            return await apiClient.put<ArtefactCategory>(`/api/v1/categories/${id}`, data);
+        },
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.categories.all }),
+    });
 
-    const deleteCategory = useCallback(async (id: number) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const res = await fetch(`/api/v1/categories/${id}`, { method: 'DELETE' });
-            const json = await res.json();
-            if (!json.success) throw new Error(json.error || 'Failed to delete category');
-            await fetchAll();
-            return true;
-        } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : 'Failed to delete category');
-            return false;
-        } finally {
-            setLoading(false);
-        }
-    }, [fetchAll]);
+    const deleteCategoryMutation = useMutation({
+        mutationFn: async (id: number) => {
+            return await apiClient.delete<boolean>(`/api/v1/categories/${id}`);
+        },
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.categories.all }),
+    });
 
-    useEffect(() => {
-        fetchAll();
-    }, [fetchAll]);
+    const error = layersError?.message
+        || categoriesError?.message
+        || createLayerMutation.error?.message
+        || updateLayerMutation.error?.message
+        || deleteLayerMutation.error?.message
+        || createCategoryMutation.error?.message
+        || updateCategoryMutation.error?.message
+        || deleteCategoryMutation.error?.message
+        || null;
+
+    const loading = isLoadingLayers
+        || isLoadingCategories
+        || createLayerMutation.isPending
+        || updateLayerMutation.isPending
+        || deleteLayerMutation.isPending
+        || createCategoryMutation.isPending
+        || updateCategoryMutation.isPending
+        || deleteCategoryMutation.isPending;
 
     return {
         layers,
@@ -202,13 +109,17 @@ export function useArtefactTypes() {
         error,
         fetchAll,
         fetchLayers,
-        fetchCategories,
-        createLayer,
-        updateLayer,
-        deleteLayer,
-        createCategory,
-        updateCategory,
-        deleteCategory,
+        // Optional parameter handling backwards compat
+        fetchCategories: (layerId?: number) => {
+            console.warn('fetchCategories parameter layerId is deprecated in React Query migration. Categories are cached globally.');
+            return fetchCategories();
+        },
+        createLayer: createLayerMutation.mutateAsync,
+        updateLayer: (id: number, data: UpdateArchitectureLayerInput) => updateLayerMutation.mutateAsync({ id, data }),
+        deleteLayer: deleteLayerMutation.mutateAsync,
+        createCategory: createCategoryMutation.mutateAsync,
+        updateCategory: (id: number, data: UpdateArtefactCategoryInput) => updateCategoryMutation.mutateAsync({ id, data }),
+        deleteCategory: deleteCategoryMutation.mutateAsync,
         getLoc: getLocalizedName,
     };
 }

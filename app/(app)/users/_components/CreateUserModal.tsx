@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, User, Mail, Lock, Building, FileText, Check, EyeOff, Eye } from 'lucide-react';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { cn } from '@/lib/utils';
-import type { CreateUserInput } from '@/types/user';
 import type { RoleKey } from '@/types/role';
 import { userTemplates } from '@/data/user-templates';
 
@@ -17,65 +19,81 @@ const roleOptions: { value: RoleKey; label: string }[] = [
     { value: 'viewer', label: 'ผู้ดู' },
 ];
 
+const CreateUserModalSchema = z.object({
+    firstName: z.string().min(1, "กรุณากรอกชื่อ").max(255, "ชื่อยาวเกินไป"),
+    lastName: z.string().optional(),
+    email: z.string().min(1, "กรุณากรอกอีเมล").email("รูปแบบอีเมลไม่ถูกต้อง"),
+    password: z.string().min(8, "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร"),
+    role: z.enum(['admin', 'architect', 'manager', 'business_owner', 'auditor', 'viewer']),
+    department: z.string().optional(),
+});
+
+type CreateUserModalFormValues = z.infer<typeof CreateUserModalSchema>;
+
 interface CreateUserModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (data: Partial<CreateUserInput>) => void;
+    onSubmit: (data: any) => void;
 }
 
 export function CreateUserModal({ isOpen, onClose, onSubmit }: CreateUserModalProps) {
-    const [formData, setFormData] = useState({
-        firstName: '',
-        lastName: '',
-        email: '',
-        password: 'password123',
-        role: 'viewer' as RoleKey,
-        department: '',
-    });
     const [selectedTemplateIndex, setSelectedTemplateIndex] = useState<number | null>(null);
     const [showPassword, setShowPassword] = useState(false);
 
-    const selectTemplate = (index: number | null) => {
-        setSelectedTemplateIndex(index);
-        if (index !== null) {
-            const t = userTemplates[index];
-            setFormData(prev => ({
-                ...prev,
-                role: t.role,
-                department: t.department,
-            }));
-        }
-    };
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        onSubmit({
-            name: {
-                first: formData.firstName,
-                last: formData.lastName,
-            },
-            email: formData.email,
-            username: formData.email.split('@')[0],
-            password: formData.password,
-            role: formData.role,
-            department: formData.department,
-            status: 'pending',
-        } as any);
-        onClose();
-        setFormData({
+    const {
+        register,
+        handleSubmit,
+        control,
+        setValue,
+        reset,
+        formState: { errors, isValid }
+    } = useForm<CreateUserModalFormValues>({
+        resolver: zodResolver(CreateUserModalSchema),
+        defaultValues: {
             firstName: '',
             lastName: '',
             email: '',
             password: 'password123',
             role: 'viewer',
             department: '',
-        });
-        setSelectedTemplateIndex(null);
+        },
+        mode: 'onChange',
+    });
+
+    useEffect(() => {
+        if (!isOpen) {
+            reset();
+            setSelectedTemplateIndex(null);
+            setShowPassword(false);
+        }
+    }, [isOpen, reset]);
+
+    const selectTemplate = (index: number | null) => {
+        setSelectedTemplateIndex(index);
+        if (index !== null) {
+            const t = userTemplates[index];
+            setValue('role', t.role, { shouldValidate: true });
+            setValue('department', t.department, { shouldValidate: true });
+        } else {
+            setValue('role', 'viewer');
+            setValue('department', '');
+        }
     };
 
-    const handleClose = () => {
+    const onSubmitForm = (data: CreateUserModalFormValues) => {
+        onSubmit({
+            name: {
+                first: data.firstName,
+                last: data.lastName,
+            },
+            email: data.email,
+            username: data.email.split('@')[0], // Extract prefix
+            password: data.password,
+            role: data.role,
+            department: data.department,
+            status: 'pending',
+        });
         onClose();
-        setSelectedTemplateIndex(null);
     };
 
     if (!isOpen) return null;
@@ -87,7 +105,7 @@ export function CreateUserModal({ isOpen, onClose, onSubmit }: CreateUserModalPr
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
-                onClick={handleClose}
+                onClick={onClose}
             >
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -107,7 +125,7 @@ export function CreateUserModal({ isOpen, onClose, onSubmit }: CreateUserModalPr
                                 <p className="text-xs text-muted-foreground">เลือกเทมเพลตบทบาทหรือสร้างจากศูนย์</p>
                             </div>
                         </div>
-                        <button onClick={handleClose} className="p-2 hover:bg-muted rounded-lg transition-colors">
+                        <button onClick={onClose} className="p-2 hover:bg-muted rounded-lg transition-colors">
                             <X className="w-5 h-5 text-muted-foreground" />
                         </button>
                     </div>
@@ -163,7 +181,7 @@ export function CreateUserModal({ isOpen, onClose, onSubmit }: CreateUserModalPr
 
                         {/* Right: Form */}
                         <div className="flex-1 flex flex-col overflow-hidden">
-                            <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                            <form onSubmit={handleSubmit(onSubmitForm)} className="flex flex-col flex-1 min-h-0 overflow-hidden">
                                 <div className="flex-1 overflow-y-auto p-5 space-y-4">
                                     {selectedTemplateIndex !== null && (
                                         <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg border border-border">
@@ -176,28 +194,29 @@ export function CreateUserModal({ isOpen, onClose, onSubmit }: CreateUserModalPr
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="text-sm font-medium text-muted-foreground">ชื่อ *</label>
-                                            <div className="relative mt-1.5">
-                                                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                            <label className="text-sm font-medium text-foreground">ชื่อ <span className="text-destructive">*</span></label>
+                                            <div className="relative mt-1.5 focus-within:text-primary text-muted-foreground">
+                                                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" />
                                                 <input
                                                     type="text"
-                                                    required
-                                                    value={formData.firstName}
-                                                    onChange={e => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
-                                                    className="w-full h-10 pl-10 pr-4 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                                    {...register('firstName')}
+                                                    className={cn(
+                                                        "w-full h-10 pl-10 pr-4 text-sm bg-background border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors text-foreground",
+                                                        errors.firstName ? "border-destructive focus:border-destructive" : "border-border focus:border-primary"
+                                                    )}
                                                     placeholder="ชื่อ"
                                                 />
                                             </div>
+                                            {errors.firstName && <p className="text-xs text-destructive mt-1.5 font-medium">{errors.firstName.message}</p>}
                                         </div>
                                         <div>
-                                            <label className="text-sm font-medium text-muted-foreground">นามสกุล</label>
-                                            <div className="relative mt-1.5">
-                                                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                            <label className="text-sm font-medium text-foreground">นามสกุล</label>
+                                            <div className="relative mt-1.5 focus-within:text-primary text-muted-foreground">
+                                                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" />
                                                 <input
                                                     type="text"
-                                                    value={formData.lastName}
-                                                    onChange={e => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
-                                                    className="w-full h-10 pl-10 pr-4 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                                    {...register('lastName')}
+                                                    className="w-full h-10 pl-10 pr-4 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-foreground"
                                                     placeholder="นามสกุล"
                                                 />
                                             </div>
@@ -205,30 +224,33 @@ export function CreateUserModal({ isOpen, onClose, onSubmit }: CreateUserModalPr
                                     </div>
 
                                     <div>
-                                        <label className="text-sm font-medium text-muted-foreground">อีเมล *</label>
-                                        <div className="relative mt-1.5">
-                                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                        <label className="text-sm font-medium text-foreground">อีเมล <span className="text-destructive">*</span></label>
+                                        <div className="relative mt-1.5 focus-within:text-primary text-muted-foreground">
+                                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" />
                                             <input
                                                 type="email"
-                                                required
-                                                value={formData.email}
-                                                onChange={e => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                                                className="w-full h-10 pl-10 pr-4 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                                {...register('email')}
+                                                className={cn(
+                                                    "w-full h-10 pl-10 pr-4 text-sm bg-background border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors text-foreground",
+                                                    errors.email ? "border-destructive focus:border-destructive" : "border-border focus:border-primary"
+                                                )}
                                                 placeholder="email@example.com"
                                             />
                                         </div>
+                                        {errors.email && <p className="text-xs text-destructive mt-1.5 font-medium">{errors.email.message}</p>}
                                     </div>
 
                                     <div>
-                                        <label className="text-sm font-medium text-muted-foreground">รหัสผ่าน *</label>
-                                        <div className="relative mt-1.5">
-                                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none z-10" />
+                                        <label className="text-sm font-medium text-foreground">รหัสผ่าน <span className="text-destructive">*</span></label>
+                                        <div className="relative mt-1.5 focus-within:text-primary text-muted-foreground">
+                                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 z-10" />
                                             <input
                                                 type={showPassword ? "text" : "password"}
-                                                required
-                                                value={formData.password}
-                                                onChange={e => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                                                className="w-full h-10 pl-10 pr-11 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                                {...register('password')}
+                                                className={cn(
+                                                    "w-full h-10 pl-10 pr-11 text-sm bg-background border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors text-foreground",
+                                                    errors.password ? "border-destructive focus:border-destructive" : "border-border focus:border-primary"
+                                                )}
                                                 placeholder="••••••••"
                                                 autoComplete="new-password"
                                             />
@@ -246,30 +268,35 @@ export function CreateUserModal({ isOpen, onClose, onSubmit }: CreateUserModalPr
                                                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                             </button>
                                         </div>
+                                        {errors.password && <p className="text-xs text-destructive mt-1.5 font-medium">{errors.password.message}</p>}
                                     </div>
 
                                     <div>
-                                        <label className="text-sm font-medium text-muted-foreground">บทบาท</label>
-                                        <select
-                                            value={formData.role}
-                                            onChange={e => setFormData(prev => ({ ...prev, role: e.target.value as RoleKey }))}
-                                            className="w-full h-10 px-3 mt-1.5 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                                        >
-                                            {roleOptions.map(opt => (
-                                                <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                            ))}
-                                        </select>
+                                        <label className="text-sm font-medium text-foreground">บทบาท</label>
+                                        <Controller
+                                            name="role"
+                                            control={control}
+                                            render={({ field }) => (
+                                                <select
+                                                    {...field}
+                                                    className="w-full h-10 px-3 mt-1.5 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-foreground"
+                                                >
+                                                    {roleOptions.map(opt => (
+                                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                                    ))}
+                                                </select>
+                                            )}
+                                        />
                                     </div>
 
                                     <div>
-                                        <label className="text-sm font-medium text-muted-foreground">หน่วยงาน</label>
-                                        <div className="relative mt-1.5">
-                                            <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                        <label className="text-sm font-medium text-foreground">หน่วยงาน</label>
+                                        <div className="relative mt-1.5 focus-within:text-primary text-muted-foreground">
+                                            <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" />
                                             <input
                                                 type="text"
-                                                value={formData.department}
-                                                onChange={e => setFormData(prev => ({ ...prev, department: e.target.value }))}
-                                                className="w-full h-10 pl-10 pr-4 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                                {...register('department')}
+                                                className="w-full h-10 pl-10 pr-4 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-foreground"
                                                 placeholder="กรุณาระบุหน่วยงาน"
                                             />
                                         </div>
@@ -279,14 +306,18 @@ export function CreateUserModal({ isOpen, onClose, onSubmit }: CreateUserModalPr
                                 <div className="px-5 py-4 border-t border-border bg-muted/20 flex justify-end gap-3 flex-shrink-0">
                                     <button
                                         type="button"
-                                        onClick={handleClose}
-                                        className="px-4 py-2.5 text-sm font-medium border border-border rounded-lg hover:bg-muted"
+                                        onClick={onClose}
+                                        className="px-4 py-2.5 text-sm font-medium border border-border rounded-lg hover:bg-muted text-foreground"
                                     >
                                         ยกเลิก
                                     </button>
                                     <button
                                         type="submit"
-                                        className="px-4 py-2.5 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+                                        disabled={!isValid}
+                                        className={cn(
+                                            "px-4 py-2.5 text-sm font-medium rounded-lg transition-colors",
+                                            isValid ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-muted text-muted-foreground cursor-not-allowed"
+                                        )}
                                     >
                                         เพิ่มผู้ใช้งาน
                                     </button>

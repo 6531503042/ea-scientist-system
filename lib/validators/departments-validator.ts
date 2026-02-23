@@ -6,11 +6,11 @@ import { z } from "zod";
 
 export const CreateDepartmentSchema = z.object({
     shortName: z
-        .string({ required_error: "กรุณากรอกชื่อย่อหน่วยงาน" })
+        .string({ message: "กรุณากรอกชื่อย่อหน่วยงาน" })
         .min(1, "ชื่อต้องไม่เป็นค่าว่าง")
         .max(255, "ชื่อต้องไม่เกิน 255 ตัวอักษร"),
     fullName: z
-        .string({ required_error: "กรุณากรอกชื่อเต็มหน่วยงาน" })
+        .string({ message: "กรุณากรอกชื่อเต็มหน่วยงาน" })
         .min(1, "ชื่อต้องไม่เป็นค่าว่าง")
         .max(255, "ชื่อต้องไม่เกิน 255 ตัวอักษร"),
     parentId: z.number().int().positive().optional().nullable(),

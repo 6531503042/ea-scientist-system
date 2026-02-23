@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { User } from '@/types/user';
 import type { CreateUserInput, UpdateUserInput } from '@/lib/validators/users-validator';
+import { apiClient } from '@/lib/api-client';
+import { queryKeys } from '@/lib/query-keys';
 
 // Helper to transform API user to Frontend User type
 function transformApiUser(apiUser: any): User {
@@ -23,128 +25,80 @@ function transformApiUser(apiUser: any): User {
 }
 
 export function useUsers() {
-    const [users, setUsers] = useState<User[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const queryClient = useQueryClient();
 
-    const fetchUsers = useCallback(async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const response = await fetch('/api/v1/users');
-            if (!response.ok) throw new Error('Failed to fetch users');
-            const result = await response.json();
-
-            if (result.success && Array.isArray(result.data)) {
-                setUsers(result.data.map(transformApiUser));
-            } else {
-                setUsers([]);
-            }
-        } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : 'Failed to fetch users.');
-            console.error(err);
-        } finally {
-            setLoading(false);
+    const { data: users = [], isLoading, error: queryError, refetch } = useQuery<User[]>({
+        queryKey: queryKeys.users.all,
+        queryFn: async () => {
+            const data = await apiClient.get<any[]>('/api/v1/users');
+            return data.map(transformApiUser);
         }
-    }, []);
+    });
 
-    const createUser = useCallback(async (userData: CreateUserInput) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const response = await fetch('/api/v1/users', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(userData),
-            });
-
-            if (!response.ok) {
-                const res = await response.json();
-                throw new Error(res.error || 'Failed to create user');
-            }
-
-            const result = await response.json();
-            const newUser = transformApiUser(result.data);
-            setUsers(prev => [...prev, newUser]);
-            return newUser;
-        } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : 'Failed to create user.');
-            return null;
-        } finally {
-            setLoading(false);
+    const createMutation = useMutation({
+        mutationFn: async (userData: CreateUserInput) => {
+            const responseData = await apiClient.post<any>('/api/v1/users', userData);
+            return transformApiUser(responseData);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
         }
-    }, []);
+    });
 
-    const updateUser = useCallback(async (id: string, userData: UpdateUserInput) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const response = await fetch(`/api/v1/users/${id}`, {
-                method: 'PATCH', // or PUT
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(userData),
-            });
-
-            if (!response.ok) throw new Error('Failed to update user');
-
-            await fetchUsers();
+    const updateMutation = useMutation({
+        mutationFn: async ({ id, userData }: { id: string, userData: UpdateUserInput }) => {
+            await apiClient.put(`/api/v1/users/${id}`, userData);
             return true;
-        } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : 'Failed to update user.');
-            return false;
-        } finally {
-            setLoading(false);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
         }
-    }, [fetchUsers]);
+    });
 
-    const deleteUser = useCallback(async (id: string) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const response = await fetch(`/api/v1/users/${id}`, {
-                method: 'DELETE',
-            });
-
-            if (!response.ok) throw new Error('Failed to delete user');
-
-            setUsers(prev => prev.filter(u => u._id !== id));
+    const deleteMutation = useMutation({
+        mutationFn: async (id: string) => {
+            await apiClient.delete(`/api/v1/users/${id}`);
             return true;
-        } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : 'Failed to delete user.');
-            return false;
-        } finally {
-            setLoading(false);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
         }
-    }, []);
+    });
 
-    const deleteMultiple = useCallback(async (ids: string[]) => {
-        setLoading(true);
-        try {
-            await Promise.all(ids.map(id =>
-                fetch(`/api/v1/users/${id}`, { method: 'DELETE' })
-            ));
-            setUsers(prev => prev.filter(u => !ids.includes(u._id)));
+    const deleteMultipleMutation = useMutation({
+        mutationFn: async (ids: string[]) => {
+            await Promise.all(ids.map(id => apiClient.delete(`/api/v1/users/${id}`)));
             return true;
-        } catch (err) {
-            setError('Failed to delete some users');
-            return false;
-        } finally {
-            setLoading(false);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
         }
-    }, []);
+    });
 
-    useEffect(() => {
-        fetchUsers();
-    }, [fetchUsers]);
+    // Derived error state combining query and mutation errors
+    const error = queryError?.message
+        || createMutation.error?.message
+        || updateMutation.error?.message
+        || deleteMutation.error?.message
+        || deleteMultipleMutation.error?.message
+        || null;
+
+    // Derived loading state
+    const loading = isLoading
+        || createMutation.isPending
+        || updateMutation.isPending
+        || deleteMutation.isPending
+        || deleteMultipleMutation.isPending;
 
     return {
         users,
         loading,
         error,
-        fetchUsers,
-        createUser,
-        updateUser,
-        deleteUser,
-        deleteMultiple,
+        fetchUsers: refetch,
+        createUser: createMutation.mutateAsync,
+        updateUser: (id: string, userData: UpdateUserInput) => updateMutation.mutateAsync({ id, userData }),
+        deleteUser: deleteMutation.mutateAsync,
+        deleteMultiple: deleteMultipleMutation.mutateAsync,
     };
 }
+

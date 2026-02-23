@@ -1,5 +1,6 @@
 import { RolesRepository } from "@/lib/repositories/roles/roles-repository";
 import type { CreateRoleInput, UpdateRoleInput } from "@/lib/validators/roles-validator";
+import { NotFoundError, BadRequestError } from "@/lib/utils/api-error";
 
 /**
  * Service for Role business logic
@@ -28,13 +29,13 @@ export class RolesService {
 
     async getById(id: number) {
         const role = await this.repository.findById(id);
-        if (!role) throw new Error("ไม่พบบทบาท");
+        if (!role) throw new NotFoundError("ไม่พบบทบาท");
         return role;
     }
 
     async create(data: CreateRoleInput) {
         const existing = await this.repository.findByName(data.roleName);
-        if (existing) throw new Error("ชื่อบทบาทนี้มีอยู่แล้ว");
+        if (existing) throw new BadRequestError("ชื่อบทบาทนี้มีอยู่แล้ว", { field: "roleName" });
 
         const role = await this.repository.create({
             roleName: data.roleName,
@@ -52,7 +53,7 @@ export class RolesService {
 
     async update(id: number, data: UpdateRoleInput) {
         const role = await this.repository.findById(id);
-        if (!role) throw new Error("ไม่พบบทบาท");
+        if (!role) throw new NotFoundError("ไม่พบบทบาท");
 
         const updated = await this.repository.update(id, {
             ...(data.roleName && { roleName: data.roleName }),
@@ -70,7 +71,7 @@ export class RolesService {
 
     async delete(id: number) {
         const role = await this.repository.findById(id);
-        if (!role) throw new Error("ไม่พบบทบาท");
+        if (!role) throw new NotFoundError("ไม่พบบทบาท");
         return this.repository.delete(id);
     }
 }

@@ -6,7 +6,7 @@ import { z } from "zod";
 
 export const CreateRoleSchema = z.object({
     roleName: z
-        .string({ required_error: "กรุณากรอกชื่อบทบาท" })
+        .string({ message: "กรุณากรอกชื่อบทบาท" })
         .min(1, "ชื่อบทบาทต้องไม่เป็นค่าว่าง")
         .max(255, "ชื่อบทบาทต้องไม่เกิน 255 ตัวอักษร"),
     description: z.string().max(1000).optional().nullable(),

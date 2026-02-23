@@ -3,6 +3,7 @@ import type {
     CreateRelationshipInput,
     UpdateRelationshipInput,
 } from "@/lib/validators/relationships-validator";
+import { NotFoundError, BadRequestError } from "@/lib/utils/api-error";
 
 /**
  * Service for Relationship business logic
@@ -20,7 +21,7 @@ export class RelationshipsService {
 
     async getById(id: number) {
         const rel = await this.repository.findById(id);
-        if (!rel) throw new Error("ไม่พบ Relationship");
+        if (!rel) throw new NotFoundError("ไม่พบ Relationship");
         return rel;
     }
 
@@ -56,7 +57,7 @@ export class RelationshipsService {
     async create(data: CreateRelationshipInput) {
         // Prevent self-referencing
         if (data.sourceArtefactId === data.targetArtefactId) {
-            throw new Error("ไม่สามารถสร้างความสัมพันธ์กับตัวเองได้");
+            throw new BadRequestError("ไม่สามารถสร้างความสัมพันธ์กับตัวเองได้");
         }
 
         return this.repository.create({
@@ -71,7 +72,7 @@ export class RelationshipsService {
 
     async update(id: number, data: UpdateRelationshipInput) {
         const existing = await this.repository.findById(id);
-        if (!existing) throw new Error("ไม่พบ Relationship");
+        if (!existing) throw new NotFoundError("ไม่พบ Relationship");
 
         return this.repository.update(id, {
             ...(data.sourceArtefactId && {
@@ -89,7 +90,7 @@ export class RelationshipsService {
 
     async delete(id: number) {
         const existing = await this.repository.findById(id);
-        if (!existing) throw new Error("ไม่พบ Relationship");
+        if (!existing) throw new NotFoundError("ไม่พบ Relationship");
         return this.repository.delete(id);
     }
 }
