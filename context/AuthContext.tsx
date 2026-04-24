@@ -19,7 +19,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const checkSession = useCallback(async () => {
         try {
-            const response = await fetch('/api/v1/auth/me');
+            const response = await fetch('/api/v1/auth/me', { credentials: 'include' });
             if (response.ok) {
                 const data = await response.json();
                 if (data.success) {
@@ -65,7 +65,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const logout = async () => {
         try {
-            await fetch('/api/v1/auth/logout', { method: 'POST' });
+            await fetch('/api/v1/auth/logout', { method: 'POST', credentials: 'include' });
             setUser(null);
             // Optional: Redirect to login page
             if (typeof window !== 'undefined') {

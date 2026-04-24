@@ -32,3 +32,5 @@ frontend-next/
 
 .next
 generated/prisma
+
+/api

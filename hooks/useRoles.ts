@@ -4,20 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Role } from '@/types/role';
 import { apiClient } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-keys';
-
-function transformApiRole(apiRole: any): Role {
-    return {
-        _id: apiRole.id.toString(),
-        name: apiRole.roleName,
-        nameTh: apiRole.roleName, // Use same name for now
-        description: apiRole.description || '',
-        permissions: apiRole.permissions || [],
-        isDefault: false, // API doesn't have this yet
-        isSystemRole: false,
-        userCount: apiRole.userCount || 0,
-        color: apiRole.color || 'bg-gray-500/10 text-gray-700 border-gray-200', // Default color
-    };
-}
+import { mapApiRole } from '@/lib/api-adapters/iam';
 
 export function useRoles() {
     const queryClient = useQueryClient();
@@ -26,7 +13,7 @@ export function useRoles() {
         queryKey: queryKeys.roles.all,
         queryFn: async () => {
             const data = await apiClient.get<any[]>('/api/v1/roles');
-            return data.map(transformApiRole);
+            return data.map(mapApiRole);
         },
         staleTime: 5 * 60 * 1000, // 5 minutes cache
     });
@@ -40,7 +27,7 @@ export function useRoles() {
             };
 
             const responseData = await apiClient.post<any>('/api/v1/roles', apiData);
-            return transformApiRole(responseData);
+            return mapApiRole(responseData);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.roles.all });

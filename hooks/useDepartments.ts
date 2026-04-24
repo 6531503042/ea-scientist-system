@@ -4,19 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Department, CreateDepartmentInput, UpdateDepartmentInput } from '@/types/department';
 import { apiClient } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-keys';
-
-function transformApiDepartment(apiDept: any): Department {
-    return {
-        _id: apiDept.id.toString(),
-        code: apiDept.shortName, // Use shortName as code
-        name: apiDept.fullName,
-        nameTh: apiDept.fullName,
-        head: '-',
-        memberCount: apiDept.userCount || 0,
-        userCount: apiDept.userCount || 0,
-        status: apiDept.isActive ? 'active' : 'inactive',
-    };
-}
+import { mapApiDepartment } from '@/lib/api-adapters/iam';
 
 export function useDepartments() {
     const queryClient = useQueryClient();
@@ -26,7 +14,7 @@ export function useDepartments() {
         queryKey: queryKeys.departments.all,
         queryFn: async () => {
             const data = await apiClient.get<any[]>('/api/v1/departments');
-            return data.map(transformApiDepartment);
+            return data.map(mapApiDepartment);
         },
         staleTime: 5 * 60 * 1000, // 5 minutes cache
     });
@@ -42,7 +30,7 @@ export function useDepartments() {
             };
 
             const responseData = await apiClient.post<any>('/api/v1/departments', apiData);
-            return transformApiDepartment(responseData);
+            return mapApiDepartment(responseData);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.departments.all });

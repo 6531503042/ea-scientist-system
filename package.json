@@ -6,7 +6,8 @@
     "dev": "next dev --turbo",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "smoke:auth-iam": "node scripts/smoke/auth-iam-smoke.mjs"
   },
   "dependencies": {
     "@heroui/react": "^2.8.8",

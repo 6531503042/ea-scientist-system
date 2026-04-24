@@ -5,24 +5,7 @@ import type { User } from '@/types/user';
 import type { CreateUserInput, UpdateUserInput } from '@/lib/validators/users-validator';
 import { apiClient } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-keys';
-
-// Helper to transform API user to Frontend User type
-function transformApiUser(apiUser: any): User {
-    return {
-        _id: apiUser.id.toString(),
-        name: {
-            first: apiUser.firstName,
-            last: apiUser.lastName,
-        },
-        displayName: `${apiUser.firstName} ${apiUser.lastName}`,
-        username: apiUser.username || apiUser.email.split('@')[0],
-        email: apiUser.email,
-        role: apiUser.roleName || apiUser.role?.name || 'viewer',
-        department: apiUser.departmentName || apiUser.department?.shortName || undefined,
-        status: apiUser.isActive ? 'active' : 'inactive',
-        lastLogin: apiUser.lastLoginAt ? (typeof apiUser.lastLoginAt === 'string' ? apiUser.lastLoginAt : new Date(apiUser.lastLoginAt).toISOString()) : undefined,
-    };
-}
+import { mapApiUser } from '@/lib/api-adapters/iam';
 
 export function useUsers() {
     const queryClient = useQueryClient();
@@ -31,14 +14,14 @@ export function useUsers() {
         queryKey: queryKeys.users.all,
         queryFn: async () => {
             const data = await apiClient.get<any[]>('/api/v1/users');
-            return data.map(transformApiUser);
+            return data.map(mapApiUser);
         }
     });
 
     const createMutation = useMutation({
         mutationFn: async (userData: CreateUserInput) => {
             const responseData = await apiClient.post<any>('/api/v1/users', userData);
-            return transformApiUser(responseData);
+            return mapApiUser(responseData);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
