@@ -6,24 +6,16 @@ import {
 } from "@/lib/auth/cookies";
 
 // Routes that don't require authentication
-const PUBLIC_ROUTES = [
-  "/login",
-  "/api/v1/auth/login",
-  "/api/health",
-];
+const PUBLIC_ROUTES = ["/login"];
 
 // Routes that start with these prefixes don't require authentication
-const PUBLIC_PREFIXES = [
-  "/_next",
-  "/favicon.ico",
-  "/public",
-];
+const PUBLIC_PREFIXES = ["/_next", "/favicon.ico", "/public", "/api"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Skip public prefixes
-  if (PUBLIC_PREFIXES.some(prefix => pathname.startsWith(prefix))) {
+  if (PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
     return NextResponse.next();
   }
 
@@ -44,14 +36,6 @@ export async function middleware(request: NextRequest) {
 
   // If trying to access protected route without token, redirect to login
   if (!hasToken && !PUBLIC_ROUTES.includes(pathname)) {
-    // Return 401 for API routes
-    if (pathname.startsWith("/api/")) {
-      return NextResponse.json(
-        { success: false, error: "Authentication required" },
-        { status: 401 }
-      );
-    }
-    // Redirect for pages
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);

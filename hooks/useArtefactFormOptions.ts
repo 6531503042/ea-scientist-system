@@ -1,7 +1,8 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import type { ApiLayer, ApiUser, ApiDepartment } from '@/types/artefact-api';
+import { useState, useEffect, useCallback } from "react";
+import type { ApiLayer, ApiUser, ApiDepartment } from "@/types/artefact-api";
+import { resolveApiUrl } from "@/lib/api-client";
 
 type Cache = {
   users: ApiUser[];
@@ -17,11 +18,17 @@ function fetchOptions(): Promise<Cache> {
   if (fetchPromise) return fetchPromise;
   fetchPromise = (async () => {
     const [uRes, dRes, lRes] = await Promise.all([
-      fetch('/api/v1/users'),
-      fetch('/api/v1/departments'),
-      fetch('/api/v1/architecture-layers'),
+      fetch(resolveApiUrl("/api/v1/users"), { credentials: "include" }),
+      fetch(resolveApiUrl("/api/v1/departments"), { credentials: "include" }),
+      fetch(resolveApiUrl("/api/v1/architecture-layers"), {
+        credentials: "include",
+      }),
     ]);
-    const [uJson, dJson, lJson] = await Promise.all([uRes.json(), dRes.json(), lRes.json()]);
+    const [uJson, dJson, lJson] = await Promise.all([
+      uRes.json(),
+      dRes.json(),
+      lRes.json(),
+    ]);
     cache = {
       users: uJson.success ? uJson.data : [],
       departments: dJson.success ? dJson.data : [],
@@ -41,7 +48,7 @@ export function useArtefactFormOptions() {
   const [loading, setLoading] = useState(() => !cache);
 
   useEffect(() => {
-    fetchOptions().then(result => {
+    fetchOptions().then((result) => {
       setData(result);
       setLoading(false);
     });
@@ -52,7 +59,7 @@ export function useArtefactFormOptions() {
     fetchPromise = null;
     setData(null);
     setLoading(true);
-    fetchOptions().then(result => {
+    fetchOptions().then((result) => {
       setData(result);
       setLoading(false);
     });

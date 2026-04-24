@@ -1,27 +1,40 @@
-'use client';
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, Check, FileText, Eye, Star, Layers } from 'lucide-react';
-import { cn } from '@/lib/utils';
+"use client";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Check, FileText, Eye, Star, Layers } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { useToast } from "@/components/ui/use-toast";
-import type { ArtefactType } from '@/types/artefact';
-import type { ApiLayer, ApiCategory } from '@/types/artefact-api';
-import { useArtefactFormOptions } from '@/hooks/useArtefactFormOptions';
-import { getLocalizedName } from '@/lib/utils';
-import { bestPracticeExamples } from '@/data/bestPractices';
+import type { ArtefactType } from "@/types/artefact";
+import type { ApiLayer, ApiCategory } from "@/types/artefact-api";
+import { useArtefactFormOptions } from "@/hooks/useArtefactFormOptions";
+import { getLocalizedName } from "@/lib/utils";
+import { resolveApiUrl } from "@/lib/api-client";
+import { bestPracticeExamples } from "@/data/bestPractices";
 
 // Import extracted configs and templates
-import { typeIcons, typeColors, togafLabels, togafTypeFields, typeOrder } from '@/data/artefact-config';
-import { templates } from '@/data/artefact-templates';
+import {
+  typeIcons,
+  typeColors,
+  togafLabels,
+  togafTypeFields,
+  typeOrder,
+} from "@/data/artefact-config";
+import { templates } from "@/data/artefact-templates";
 
 /**
  * Map frontend status to Prisma LifecycleStatus.
@@ -29,11 +42,11 @@ import { templates } from '@/data/artefact-templates';
  * Only explicitly deprecated/archived → RETIRED.
  */
 const STATUS_MAP: Record<string, string> = {
-  draft: 'ACTIVE',
-  active: 'ACTIVE',
-  planned: 'ACTIVE',
-  deprecated: 'INACTIVE',
-  archived: 'RETIRED',
+  draft: "ACTIVE",
+  active: "ACTIVE",
+  planned: "ACTIVE",
+  deprecated: "INACTIVE",
+  archived: "RETIRED",
 };
 
 const CreateArtefactModalSchema = z.object({
@@ -43,13 +56,14 @@ const CreateArtefactModalSchema = z.object({
   ownerId: z.string().optional(),
   departmentId: z.string().optional(),
   version: z.string().min(1, "กรุณากรอกเวอร์ชัน"),
-  status: z.enum(['draft', 'active', 'planned', 'deprecated', 'archived']),
+  status: z.enum(["draft", "active", "planned", "deprecated", "archived"]),
 });
 
 type CreateArtefactModalFormValues = z.infer<typeof CreateArtefactModalSchema>;
 
 /** Localized name helper - use getLocalizedName */
-const getLoc = (val: unknown, lang: 'th' | 'en' = 'en') => getLocalizedName(val as { en?: string; th?: string } | string | null, lang);
+const getLoc = (val: unknown, lang: "th" | "en" = "en") =>
+  getLocalizedName(val as { en?: string; th?: string } | string | null, lang);
 
 interface CreateArtefactModalProps {
   isOpen: boolean;
@@ -57,12 +71,20 @@ interface CreateArtefactModalProps {
   onSubmit: (data: any) => void;
 }
 
-export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefactModalProps) {
+export function CreateArtefactModal({
+  isOpen,
+  onClose,
+  onSubmit,
+}: CreateArtefactModalProps) {
   const [loading, setLoading] = useState(false);
-  const [selectedType, setSelectedType] = useState<ArtefactType>('business');
-  const [selectedTemplateIndex, setSelectedTemplateIndex] = useState<number | null>(null);
+  const [selectedType, setSelectedType] = useState<ArtefactType>("business");
+  const [selectedTemplateIndex, setSelectedTemplateIndex] = useState<
+    number | null
+  >(null);
   const [showExamples, setShowExamples] = useState(false);
-  const [typeSpecificFields, setTypeSpecificFields] = useState<Record<string, string>>({});
+  const [typeSpecificFields, setTypeSpecificFields] = useState<
+    Record<string, string>
+  >({});
   const { users, departments, layers } = useArtefactFormOptions();
 
   const { toast } = useToast();
@@ -73,32 +95,40 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
     control,
     setValue,
     reset,
-    formState: { errors, isValid }
+    formState: { errors, isValid },
   } = useForm<CreateArtefactModalFormValues>({
     resolver: zodResolver(CreateArtefactModalSchema),
     defaultValues: {
-      name: '',
-      nameTh: '',
-      description: '',
-      ownerId: '',
-      departmentId: '',
-      version: '1.0',
-      status: 'draft',
+      name: "",
+      nameTh: "",
+      description: "",
+      ownerId: "",
+      departmentId: "",
+      version: "1.0",
+      status: "draft",
     },
-    mode: 'onChange',
+    mode: "onChange",
   });
 
   /**
    * Resolve layerId and categoryId from the selected TOGAF type.
    * Matches the English layer name to the ArtefactType key.
    */
-  const resolveLayerAndCategory = (type: ArtefactType): { layerId?: number; categoryId?: number } => {
+  const resolveLayerAndCategory = (
+    type: ArtefactType,
+  ): { layerId?: number; categoryId?: number } => {
     const typeToLayerKeyword: Record<ArtefactType, string> = {
-      business: 'business', application: 'application', data: 'data',
-      technology: 'technology', security: 'security', integration: 'integration',
+      business: "business",
+      application: "application",
+      data: "data",
+      technology: "technology",
+      security: "security",
+      integration: "integration",
     };
     const keyword = typeToLayerKeyword[type];
-    const layer = layers.find(l => getLoc(l.layerName, 'en').toLowerCase().includes(keyword));
+    const layer = layers.find((l) =>
+      getLoc(l.layerName, "en").toLowerCase().includes(keyword),
+    );
     if (!layer) return {};
     // Pick the first category under this layer
     const category = layer.artefactCategories?.[0];
@@ -111,7 +141,9 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
     try {
       const { layerId, categoryId } = resolveLayerAndCategory(selectedType);
       if (!categoryId) {
-        throw new Error(`ไม่พบ category สำหรับ ${selectedType} – กรุณาตรวจสอบ seed data`);
+        throw new Error(
+          `ไม่พบ category สำหรับ ${selectedType} – กรุณาตรวจสอบ seed data`,
+        );
       }
 
       const apiPayload = {
@@ -124,21 +156,24 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
           : undefined,
         categoryId,
         architectureLayerId: layerId,
-        lifecycleStatus: STATUS_MAP[data.status] || 'ACTIVE',
+        lifecycleStatus: STATUS_MAP[data.status] || "ACTIVE",
         responsibleById: data.ownerId ? Number(data.ownerId) : undefined,
-        ownerDepartmentId: data.departmentId ? Number(data.departmentId) : undefined,
+        ownerDepartmentId: data.departmentId
+          ? Number(data.departmentId)
+          : undefined,
       };
 
-      const response = await fetch('/api/v1/artefacts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch(resolveApiUrl("/api/v1/artefacts"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(apiPayload),
       });
 
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to create artefact');
+        throw new Error(result.error || "Failed to create artefact");
       }
 
       toast({
@@ -152,7 +187,10 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
       toast({
         variant: "destructive",
         title: "สร้าง Artefact ไม่สำเร็จ",
-        description: error instanceof Error ? error.message : "เกิดข้อผิดพลาด กรุณาลองใหม่",
+        description:
+          error instanceof Error
+            ? error.message
+            : "เกิดข้อผิดพลาด กรุณาลองใหม่",
       });
     } finally {
       setLoading(false);
@@ -161,7 +199,13 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
 
   const resetFormExceptType = () => {
     reset({
-      name: '', nameTh: '', description: '', ownerId: '', departmentId: '', version: '1.0', status: 'draft'
+      name: "",
+      nameTh: "",
+      description: "",
+      ownerId: "",
+      departmentId: "",
+      version: "1.0",
+      status: "draft",
     });
     setTypeSpecificFields({});
   };
@@ -173,7 +217,7 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
   };
 
   const handleTypeSpecificChange = (key: string, value: string) => {
-    setTypeSpecificFields(prev => ({
+    setTypeSpecificFields((prev) => ({
       ...prev,
       [key]: value,
     }));
@@ -182,14 +226,16 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
   const selectTemplate = (index: number) => {
     setSelectedTemplateIndex(index);
     const template = templates[selectedType][index];
-    setValue('name', template.fields.name, { shouldValidate: true });
-    setValue('nameTh', template.fields.nameTh, { shouldValidate: true });
-    setValue('description', template.fields.description, { shouldValidate: true });
+    setValue("name", template.fields.name, { shouldValidate: true });
+    setValue("nameTh", template.fields.nameTh, { shouldValidate: true });
+    setValue("description", template.fields.description, {
+      shouldValidate: true,
+    });
     setTypeSpecificFields(template.typeSpecificFields || {});
   };
 
   const handleClose = () => {
-    setSelectedType('business');
+    setSelectedType("business");
     setSelectedTemplateIndex(null);
     setShowExamples(false);
     resetFormExceptType();
@@ -221,9 +267,14 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
           <div className="flex items-center justify-between px-5 py-4 border-b">
             <div>
               <h2 className="text-lg font-bold">เพิ่ม Artefact ใหม่</h2>
-              <p className="text-xs text-muted-foreground">เลือกประเภทและเทมเพลตแล้วกรอกข้อมูล</p>
+              <p className="text-xs text-muted-foreground">
+                เลือกประเภทและเทมเพลตแล้วกรอกข้อมูล
+              </p>
             </div>
-            <button onClick={handleClose} className="p-2 hover:bg-muted rounded-lg transition-colors">
+            <button
+              onClick={handleClose}
+              className="p-2 hover:bg-muted rounded-lg transition-colors"
+            >
               <X className="w-4 h-4 text-muted-foreground" />
             </button>
           </div>
@@ -234,7 +285,9 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
             <div className="w-full md:w-56 border-b md:border-b-0 md:border-r bg-muted/30 flex flex-col md:overflow-hidden max-h-[200px] md:max-h-none overflow-y-auto">
               {/* Type Selection */}
               <div className="p-3 border-b">
-                <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2">ประเภท</h3>
+                <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2">
+                  ประเภท
+                </h3>
                 <div className="flex flex-row md:flex-col overflow-x-auto md:overflow-x-visible gap-1 md:gap-0 md:space-y-1 pb-2 md:pb-0">
                   {typeOrder.map((type) => {
                     const Icon = typeIcons[type];
@@ -247,17 +300,23 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
                           "flex-shrink-0 md:w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-medium transition-all whitespace-nowrap",
                           isSelected
                             ? "bg-primary text-primary-foreground"
-                            : "hover:bg-muted text-foreground"
+                            : "hover:bg-muted text-foreground",
                         )}
                       >
-                        <div className={cn(
-                          "flex items-center justify-center w-6 h-6 rounded-md",
-                          isSelected ? "bg-primary-foreground/20" : "bg-background"
-                        )}>
+                        <div
+                          className={cn(
+                            "flex items-center justify-center w-6 h-6 rounded-md",
+                            isSelected
+                              ? "bg-primary-foreground/20"
+                              : "bg-background",
+                          )}
+                        >
                           <Icon className="w-3.5 h-3.5" />
                         </div>
                         <span>{togafLabels[type].short}</span>
-                        {isSelected && <Check className="w-3 h-3 ml-auto hidden md:block" />}
+                        {isSelected && (
+                          <Check className="w-3 h-3 ml-auto hidden md:block" />
+                        )}
                       </button>
                     );
                   })}
@@ -266,7 +325,9 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
 
               {/* Template Selection */}
               <div className="flex-1 overflow-y-auto p-3">
-                <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2">เทมเพลต</h3>
+                <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2">
+                  เทมเพลต
+                </h3>
                 <div className="space-y-1">
                   {currentTemplates.map((template, index) => (
                     <button
@@ -276,25 +337,38 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
                         "w-full flex items-start gap-2 px-2.5 py-2 rounded-lg text-left transition-all group",
                         selectedTemplateIndex === index
                           ? "bg-accent text-accent-foreground"
-                          : "hover:bg-muted text-foreground"
+                          : "hover:bg-muted text-foreground",
                       )}
                     >
-                      <FileText className={cn(
-                        "w-3.5 h-3.5 flex-shrink-0 mt-0.5",
-                        selectedTemplateIndex === index ? "text-accent-foreground" : "text-muted-foreground"
-                      )} />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-medium truncate">{template.name}</p>
-                        {template.typeSpecificFields && Object.keys(template.typeSpecificFields).length > 0 && (
-                          <div className="flex items-center gap-1 mt-0.5">
-                            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4">
-                              <Layers className="w-2.5 h-2.5 mr-0.5" />
-                              Fields
-                            </Badge>
-                          </div>
+                      <FileText
+                        className={cn(
+                          "w-3.5 h-3.5 flex-shrink-0 mt-0.5",
+                          selectedTemplateIndex === index
+                            ? "text-accent-foreground"
+                            : "text-muted-foreground",
                         )}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-medium truncate">
+                          {template.name}
+                        </p>
+                        {template.typeSpecificFields &&
+                          Object.keys(template.typeSpecificFields).length >
+                            0 && (
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <Badge
+                                variant="outline"
+                                className="text-[9px] px-1 py-0 h-4"
+                              >
+                                <Layers className="w-2.5 h-2.5 mr-0.5" />
+                                Fields
+                              </Badge>
+                            </div>
+                          )}
                       </div>
-                      {selectedTemplateIndex === index && <Check className="w-3 h-3 mt-0.5 flex-shrink-0" />}
+                      {selectedTemplateIndex === index && (
+                        <Check className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                      )}
                     </button>
                   ))}
                   <button
@@ -307,7 +381,7 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
                       "w-full px-2.5 py-2 rounded-lg text-xs text-left border border-dashed transition-all",
                       selectedTemplateIndex === null
                         ? "border-primary bg-primary/5 text-primary"
-                        : "border-border hover:border-muted-foreground text-muted-foreground"
+                        : "border-border hover:border-muted-foreground text-muted-foreground",
                     )}
                   >
                     สร้างจากศูนย์
@@ -318,27 +392,46 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
 
             {/* Right Column: Form */}
             <div className="flex-1 flex flex-col overflow-hidden">
-              <form onSubmit={handleSubmit(onSubmitForm)} className="flex-1 flex flex-col overflow-hidden">
+              <form
+                onSubmit={handleSubmit(onSubmitForm)}
+                className="flex-1 flex flex-col overflow-hidden"
+              >
                 <div className="flex-1 overflow-y-auto p-5 space-y-4">
                   {/* Type indicator */}
                   <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg border">
-                    <div className={cn("w-2 h-2 rounded-full", typeColors[selectedType])} />
-                    <span className="text-xs font-medium">{togafLabels[selectedType].full}</span>
+                    <div
+                      className={cn(
+                        "w-2 h-2 rounded-full",
+                        typeColors[selectedType],
+                      )}
+                    />
+                    <span className="text-xs font-medium">
+                      {togafLabels[selectedType].full}
+                    </span>
                   </div>
 
                   {/* Form fields */}
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
                       <Label htmlFor="name" className="text-xs">
-                        ชื่อ (English) <span className="text-destructive">*</span>
+                        ชื่อ (English){" "}
+                        <span className="text-destructive">*</span>
                       </Label>
                       <Input
                         id="name"
                         placeholder="e.g. HR System"
-                        {...register('name')}
-                        className={cn("h-9 text-sm", errors.name && "border-destructive focus-visible:ring-destructive")}
+                        {...register("name")}
+                        className={cn(
+                          "h-9 text-sm",
+                          errors.name &&
+                            "border-destructive focus-visible:ring-destructive",
+                        )}
                       />
-                      {errors.name && <p className="text-[10px] text-destructive">{errors.name.message}</p>}
+                      {errors.name && (
+                        <p className="text-[10px] text-destructive">
+                          {errors.name.message}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-1.5">
                       <Label htmlFor="nameTh" className="text-xs">
@@ -347,26 +440,38 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
                       <Input
                         id="nameTh"
                         placeholder="e.g. ระบบทรัพยากรบุคคล"
-                        {...register('nameTh')}
-                        className={cn("h-9 text-sm", errors.nameTh && "border-destructive focus-visible:ring-destructive")}
+                        {...register("nameTh")}
+                        className={cn(
+                          "h-9 text-sm",
+                          errors.nameTh &&
+                            "border-destructive focus-visible:ring-destructive",
+                        )}
                       />
-                      {errors.nameTh && <p className="text-[10px] text-destructive">{errors.nameTh.message}</p>}
+                      {errors.nameTh && (
+                        <p className="text-[10px] text-destructive">
+                          {errors.nameTh.message}
+                        </p>
+                      )}
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="description" className="text-xs">รายละเอียด</Label>
+                    <Label htmlFor="description" className="text-xs">
+                      รายละเอียด
+                    </Label>
                     <Textarea
                       id="description"
                       placeholder="คำอธิบายเกี่ยวกับ Artefact นี้..."
                       className="h-20 resize-none text-sm"
-                      {...register('description')}
+                      {...register("description")}
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                      <Label htmlFor="owner" className="text-xs">ผู้รับผิดชอบ</Label>
+                      <Label htmlFor="owner" className="text-xs">
+                        ผู้รับผิดชอบ
+                      </Label>
                       <Controller
                         name="ownerId"
                         control={control}
@@ -379,8 +484,11 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
                               <SelectValue placeholder="เลือกผู้รับผิดชอบ" />
                             </SelectTrigger>
                             <SelectContent className="max-h-[200px]">
-                              {users.map(user => (
-                                <SelectItem key={user.id} value={String(user.id)}>
+                              {users.map((user) => (
+                                <SelectItem
+                                  key={user.id}
+                                  value={String(user.id)}
+                                >
                                   {user.firstName} {user.lastName}
                                 </SelectItem>
                               ))}
@@ -390,7 +498,9 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label htmlFor="department" className="text-xs">หน่วยงาน</Label>
+                      <Label htmlFor="department" className="text-xs">
+                        หน่วยงาน
+                      </Label>
                       <Controller
                         name="departmentId"
                         control={control}
@@ -399,12 +509,18 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
                             value={field.value}
                             onValueChange={field.onChange}
                           >
-                            <SelectTrigger className="h-9 text-sm" id="department">
+                            <SelectTrigger
+                              className="h-9 text-sm"
+                              id="department"
+                            >
                               <SelectValue placeholder="เลือกหน่วยงาน" />
                             </SelectTrigger>
                             <SelectContent className="max-h-[200px]">
-                              {departments.map(dept => (
-                                <SelectItem key={dept.id} value={String(dept.id)}>
+                              {departments.map((dept) => (
+                                <SelectItem
+                                  key={dept.id}
+                                  value={String(dept.id)}
+                                >
                                   {dept.fullName || dept.shortName}
                                 </SelectItem>
                               ))}
@@ -419,15 +535,29 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
                   {togafTypeFields[selectedType]?.length > 0 && (
                     <div className="pt-3 mt-2 border-t">
                       <div className="flex items-center gap-2 mb-3">
-                        <div className={cn("w-2 h-2 rounded-full", typeColors[selectedType])} />
+                        <div
+                          className={cn(
+                            "w-2 h-2 rounded-full",
+                            typeColors[selectedType],
+                          )}
+                        />
                         <span className="text-xs font-semibold text-muted-foreground uppercase">
                           {togafLabels[selectedType].short} Fields
                         </span>
-                        <Badge variant="outline" className="text-[9px] px-1.5">TOGAF</Badge>
+                        <Badge variant="outline" className="text-[9px] px-1.5">
+                          TOGAF
+                        </Badge>
                         {selectedTemplateIndex !== null &&
-                          templates[selectedType][selectedTemplateIndex]?.typeSpecificFields &&
-                          Object.keys(templates[selectedType][selectedTemplateIndex].typeSpecificFields || {}).length > 0 && (
-                            <Badge variant="secondary" className="text-[9px] px-1.5 bg-green-500/10 text-green-600 border-green-500/20">
+                          templates[selectedType][selectedTemplateIndex]
+                            ?.typeSpecificFields &&
+                          Object.keys(
+                            templates[selectedType][selectedTemplateIndex]
+                              .typeSpecificFields || {},
+                          ).length > 0 && (
+                            <Badge
+                              variant="secondary"
+                              className="text-[9px] px-1.5 bg-green-500/10 text-green-600 border-green-500/20"
+                            >
                               <Check className="w-2.5 h-2.5 mr-0.5" />
                               จาก Template
                             </Badge>
@@ -435,40 +565,69 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         {togafTypeFields[selectedType].map((field) => (
-                          <div key={field.key} className={cn("space-y-1.5", field.type === 'textarea' && "col-span-2")}>
+                          <div
+                            key={field.key}
+                            className={cn(
+                              "space-y-1.5",
+                              field.type === "textarea" && "col-span-2",
+                            )}
+                          >
                             <Label htmlFor={field.key} className="text-xs">
-                              {field.labelTh} <span className="text-muted-foreground text-[10px]">({field.label})</span>
+                              {field.labelTh}{" "}
+                              <span className="text-muted-foreground text-[10px]">
+                                ({field.label})
+                              </span>
                             </Label>
-                            {field.type === 'select' ? (
+                            {field.type === "select" ? (
                               <Select
-                                value={typeSpecificFields[field.key] || ''}
-                                onValueChange={(val) => handleTypeSpecificChange(field.key, val)}
+                                value={typeSpecificFields[field.key] || ""}
+                                onValueChange={(val) =>
+                                  handleTypeSpecificChange(field.key, val)
+                                }
                               >
-                                <SelectTrigger className="h-9 text-sm" id={field.key}>
-                                  <SelectValue placeholder={`เลือก${field.labelTh}`} />
+                                <SelectTrigger
+                                  className="h-9 text-sm"
+                                  id={field.key}
+                                >
+                                  <SelectValue
+                                    placeholder={`เลือก${field.labelTh}`}
+                                  />
                                 </SelectTrigger>
                                 <SelectContent>
                                   {field.options?.map((opt) => (
-                                    <SelectItem key={opt.value} value={opt.value}>
+                                    <SelectItem
+                                      key={opt.value}
+                                      value={opt.value}
+                                    >
                                       {opt.label}
                                     </SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
-                            ) : field.type === 'textarea' ? (
+                            ) : field.type === "textarea" ? (
                               <Textarea
                                 id={field.key}
                                 placeholder={field.placeholder}
                                 className="h-16 resize-none text-sm"
-                                value={typeSpecificFields[field.key] || ''}
-                                onChange={(e) => handleTypeSpecificChange(field.key, e.target.value)}
+                                value={typeSpecificFields[field.key] || ""}
+                                onChange={(e) =>
+                                  handleTypeSpecificChange(
+                                    field.key,
+                                    e.target.value,
+                                  )
+                                }
                               />
                             ) : (
                               <Input
                                 id={field.key}
                                 placeholder={field.placeholder}
-                                value={typeSpecificFields[field.key] || ''}
-                                onChange={(e) => handleTypeSpecificChange(field.key, e.target.value)}
+                                value={typeSpecificFields[field.key] || ""}
+                                onChange={(e) =>
+                                  handleTypeSpecificChange(
+                                    field.key,
+                                    e.target.value,
+                                  )
+                                }
                                 className="h-9 text-sm"
                               />
                             )}
@@ -480,14 +639,24 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                      <Label htmlFor="version" className="text-xs">Version</Label>
+                      <Label htmlFor="version" className="text-xs">
+                        Version
+                      </Label>
                       <Input
                         id="version"
                         placeholder="1.0"
-                        {...register('version')}
-                        className={cn("h-9 text-sm", errors.version && "border-destructive focus-visible:ring-destructive")}
+                        {...register("version")}
+                        className={cn(
+                          "h-9 text-sm",
+                          errors.version &&
+                            "border-destructive focus-visible:ring-destructive",
+                        )}
                       />
-                      {errors.version && <p className="text-[10px] text-destructive">{errors.version.message}</p>}
+                      {errors.version && (
+                        <p className="text-[10px] text-destructive">
+                          {errors.version.message}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-xs">สถานะ</Label>
@@ -503,9 +672,15 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="draft">Draft - ร่าง</SelectItem>
-                              <SelectItem value="active">Active - ใช้งาน</SelectItem>
-                              <SelectItem value="planned">Planned - วางแผน</SelectItem>
+                              <SelectItem value="draft">
+                                Draft - ร่าง
+                              </SelectItem>
+                              <SelectItem value="active">
+                                Active - ใช้งาน
+                              </SelectItem>
+                              <SelectItem value="planned">
+                                Planned - วางแผน
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                         )}
@@ -522,13 +697,27 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
                     >
                       <div className="flex items-center gap-2">
                         <Star className="w-4 h-4 text-amber-500" />
-                        <span>ดูตัวอย่าง {togafLabels[selectedType].short} ที่ดี</span>
+                        <span>
+                          ดูตัวอย่าง {togafLabels[selectedType].short} ที่ดี
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className={cn("text-[9px]", typeColors[selectedType], "text-white")}>
+                        <Badge
+                          variant="secondary"
+                          className={cn(
+                            "text-[9px]",
+                            typeColors[selectedType],
+                            "text-white",
+                          )}
+                        >
                           {togafLabels[selectedType].short}
                         </Badge>
-                        <Eye className={cn("w-4 h-4 transition-transform", showExamples && "rotate-180")} />
+                        <Eye
+                          className={cn(
+                            "w-4 h-4 transition-transform",
+                            showExamples && "rotate-180",
+                          )}
+                        />
                       </div>
                     </button>
 
@@ -536,45 +725,70 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
                       {showExamples && (
                         <motion.div
                           initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
+                          animate={{ opacity: 1, height: "auto" }}
                           exit={{ opacity: 0, height: 0 }}
                           className="mt-3 space-y-2 overflow-hidden"
                         >
                           <div className="flex items-center gap-2 mb-2">
-                            <div className={cn("w-2 h-2 rounded-full", typeColors[selectedType])} />
-                            <span className="text-xs font-medium">{togafLabels[selectedType].full}</span>
-                          </div>
-                          {bestPracticeExamples[selectedType]?.slice(0, 2).map((example) => (
                             <div
-                              key={example.id}
-                              className="p-3 rounded-lg border bg-card hover:shadow-sm transition-shadow"
-                            >
-                              <div className="flex items-start justify-between mb-2">
-                                <div>
-                                  <h4 className="text-xs font-semibold">{example.nameTh}</h4>
-                                  <p className="text-[10px] text-muted-foreground">{example.name}</p>
-                                </div>
-                                <Badge variant="secondary" className="text-[9px]">
-                                  v{example.version}
-                                </Badge>
-                              </div>
-                              <p className="text-[10px] text-muted-foreground line-clamp-2 mb-2">
-                                {example.description}
-                              </p>
-                              <div className="flex items-center gap-2 text-[9px] text-muted-foreground">
-                                <span className="font-medium">Owner:</span> {example.owner}
-                              </div>
-                              <div className="flex flex-wrap gap-1 mt-2">
-                                {example.highlights.slice(0, 2).map((h, i) => (
-                                  <Badge key={i} variant="outline" className="text-[9px] px-1.5 py-0">
-                                    ✓ {h}
+                              className={cn(
+                                "w-2 h-2 rounded-full",
+                                typeColors[selectedType],
+                              )}
+                            />
+                            <span className="text-xs font-medium">
+                              {togafLabels[selectedType].full}
+                            </span>
+                          </div>
+                          {bestPracticeExamples[selectedType]
+                            ?.slice(0, 2)
+                            .map((example) => (
+                              <div
+                                key={example.id}
+                                className="p-3 rounded-lg border bg-card hover:shadow-sm transition-shadow"
+                              >
+                                <div className="flex items-start justify-between mb-2">
+                                  <div>
+                                    <h4 className="text-xs font-semibold">
+                                      {example.nameTh}
+                                    </h4>
+                                    <p className="text-[10px] text-muted-foreground">
+                                      {example.name}
+                                    </p>
+                                  </div>
+                                  <Badge
+                                    variant="secondary"
+                                    className="text-[9px]"
+                                  >
+                                    v{example.version}
                                   </Badge>
-                                ))}
+                                </div>
+                                <p className="text-[10px] text-muted-foreground line-clamp-2 mb-2">
+                                  {example.description}
+                                </p>
+                                <div className="flex items-center gap-2 text-[9px] text-muted-foreground">
+                                  <span className="font-medium">Owner:</span>{" "}
+                                  {example.owner}
+                                </div>
+                                <div className="flex flex-wrap gap-1 mt-2">
+                                  {example.highlights
+                                    .slice(0, 2)
+                                    .map((h, i) => (
+                                      <Badge
+                                        key={i}
+                                        variant="outline"
+                                        className="text-[9px] px-1.5 py-0"
+                                      >
+                                        ✓ {h}
+                                      </Badge>
+                                    ))}
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            ))}
                           <p className="text-[10px] text-muted-foreground text-center py-1">
-                            💡 ศึกษาตัวอย่างเหล่านี้เพื่อสร้าง {togafLabels[selectedType].short} Artefact ที่มีคุณภาพ
+                            💡 ศึกษาตัวอย่างเหล่านี้เพื่อสร้าง{" "}
+                            {togafLabels[selectedType].short} Artefact
+                            ที่มีคุณภาพ
                           </p>
                         </motion.div>
                       )}
@@ -584,11 +798,20 @@ export function CreateArtefactModal({ isOpen, onClose, onSubmit }: CreateArtefac
 
                 {/* Footer */}
                 <div className="flex gap-3 p-4 border-t bg-muted/30">
-                  <Button type="button" variant="outline" className="flex-1 h-9" onClick={handleClose}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex-1 h-9"
+                    onClick={handleClose}
+                  >
                     ยกเลิก
                   </Button>
-                  <Button type="submit" className="flex-1 h-9" disabled={loading || !isValid}>
-                    {loading ? 'กำลังสร้าง...' : 'สร้าง Artefact'}
+                  <Button
+                    type="submit"
+                    className="flex-1 h-9"
+                    disabled={loading || !isValid}
+                  >
+                    {loading ? "กำลังสร้าง..." : "สร้าง Artefact"}
                   </Button>
                 </div>
               </form>
