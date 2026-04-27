@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
   User,
@@ -18,20 +18,21 @@ import {
   History,
   Layers,
   Briefcase,
-  Activity
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import type { Artefact, ArtefactType } from '@/types/artefact';
-import { relationships, artefacts } from '@/data/mockData';
-import { useLanguage } from '@/context/LanguageContext';
-import { useLocale } from '@/hooks/useLocale';
+  Activity,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { Artefact, ArtefactType } from "@/types/artefact";
+import { useLanguage } from "@/context/LanguageContext";
+import { useLocale } from "@/hooks/useLocale";
+import { useArtefacts } from "@/hooks/useArtefacts";
+import { useRelationships } from "@/hooks/useRelationships";
 import {
   ARTEFACT_TYPE_ICONS,
   RISK_COLORS,
   RISK_LABELS,
-  STATUS_COLORS
-} from '@/config/ui-constants';
-import { VersionHistoryDrawer } from './VersionHistoryDrawer';
+  STATUS_COLORS,
+} from "@/config/ui-constants";
+import { VersionHistoryDrawer } from "./VersionHistoryDrawer";
 
 interface ArtefactDetailModalProps {
   artefact: Artefact | null;
@@ -39,19 +40,29 @@ interface ArtefactDetailModalProps {
   onEdit: (artefact: Artefact) => void;
 }
 
-export function ArtefactDetailModal({ artefact, onClose, onEdit }: ArtefactDetailModalProps) {
+export function ArtefactDetailModal({
+  artefact,
+  onClose,
+  onEdit,
+}: ArtefactDetailModalProps) {
   const { language } = useLanguage();
-  const detail = useLocale('detail');
-  const versionHistory = useLocale('versionHistory');
+  const detail = useLocale("detail");
+  const versionHistory = useLocale("versionHistory");
   const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const { allArtefacts } = useArtefacts();
+  const { relationships } = useRelationships();
 
   if (!artefact) return null;
 
   const upstreamRels = relationships.filter((r) => r.target === artefact.id);
   const downstreamRels = relationships.filter((r) => r.source === artefact.id);
 
-  const upstream = upstreamRels.map(r => artefacts.find(a => a.id === r.source)!).filter(Boolean);
-  const downstream = downstreamRels.map(r => artefacts.find(a => a.id === r.target)!).filter(Boolean);
+  const upstream = upstreamRels
+    .map((r) => allArtefacts.find((a) => a.id === r.source)!)
+    .filter(Boolean);
+  const downstream = downstreamRels
+    .map((r) => allArtefacts.find((a) => a.id === r.target)!)
+    .filter(Boolean);
 
   const TypeIcon = ARTEFACT_TYPE_ICONS[artefact.type] || Layers;
 
@@ -70,10 +81,10 @@ export function ArtefactDetailModal({ artefact, onClose, onEdit }: ArtefactDetai
 
           {/* Modal */}
           <motion.div
-            initial={{ opacity: 0, x: '100%' }}
+            initial={{ opacity: 0, x: "100%" }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            exit={{ opacity: 0, x: "100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
             className="fixed right-0 top-0 bottom-0 w-full max-w-2xl bg-card border-l border-border shadow-2xl z-50 overflow-y-auto flex flex-col"
           >
             {/* Header */}
@@ -84,22 +95,33 @@ export function ArtefactDetailModal({ artefact, onClose, onEdit }: ArtefactDetai
                     <TypeIcon className="w-7 h-7 text-primary" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-foreground mb-1 break-words">{artefact.name}</h2>
-                    <p className="text-base text-muted-foreground break-words">{artefact.nameTh}</p>
+                    <h2 className="text-xl font-bold text-foreground mb-1 break-words">
+                      {artefact.name}
+                    </h2>
+                    <p className="text-base text-muted-foreground break-words">
+                      {artefact.nameTh}
+                    </p>
                     <div className="flex flex-wrap items-center gap-3 mt-3">
-                      <span className={cn(
-                        "px-3 py-1 text-sm font-medium rounded-full capitalize",
-                        STATUS_COLORS[artefact.status]
-                      )}>
+                      <span
+                        className={cn(
+                          "px-3 py-1 text-sm font-medium rounded-full capitalize",
+                          STATUS_COLORS[artefact.status],
+                        )}
+                      >
                         {artefact.status}
                       </span>
-                      <span className={cn(
-                        "px-3 py-1 text-sm font-medium rounded-full flex items-center gap-1.5",
-                        RISK_COLORS[artefact.riskLevel]?.bg,
-                        RISK_COLORS[artefact.riskLevel]?.text
-                      )}>
+                      <span
+                        className={cn(
+                          "px-3 py-1 text-sm font-medium rounded-full flex items-center gap-1.5",
+                          RISK_COLORS[artefact.riskLevel]?.bg,
+                          RISK_COLORS[artefact.riskLevel]?.text,
+                        )}
+                      >
                         <AlertTriangle className="w-3.5 h-3.5" />
-                        Risk: {language === 'th' ? RISK_LABELS[artefact.riskLevel]?.th : RISK_LABELS[artefact.riskLevel]?.en}
+                        Risk:{" "}
+                        {language === "th"
+                          ? RISK_LABELS[artefact.riskLevel]?.th
+                          : RISK_LABELS[artefact.riskLevel]?.en}
                       </span>
                     </div>
                   </div>
@@ -137,7 +159,6 @@ export function ArtefactDetailModal({ artefact, onClose, onEdit }: ArtefactDetai
 
             {/* Content */}
             <div className="p-6 space-y-8 flex-1">
-
               {/* Description */}
               <div>
                 <h4 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
@@ -145,7 +166,9 @@ export function ArtefactDetailModal({ artefact, onClose, onEdit }: ArtefactDetai
                   {detail.details}
                 </h4>
                 <div className="p-5 bg-muted/30 rounded-2xl border border-border/50">
-                  <p className="text-base text-foreground leading-relaxed">{artefact.description}</p>
+                  <p className="text-base text-foreground leading-relaxed">
+                    {artefact.description}
+                  </p>
                 </div>
               </div>
 
@@ -154,30 +177,46 @@ export function ArtefactDetailModal({ artefact, onClose, onEdit }: ArtefactDetai
                 <div className="p-4 bg-muted/30 rounded-2xl border border-border/50">
                   <div className="flex items-center gap-2 text-muted-foreground mb-2">
                     <User className="w-4 h-4" />
-                    <span className="text-xs font-semibold uppercase">{detail.owner}</span>
+                    <span className="text-xs font-semibold uppercase">
+                      {detail.owner}
+                    </span>
                   </div>
-                  <p className="text-sm font-medium text-foreground">{artefact.owner}</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {artefact.owner}
+                  </p>
                 </div>
                 <div className="p-4 bg-muted/30 rounded-2xl border border-border/50">
                   <div className="flex items-center gap-2 text-muted-foreground mb-2">
                     <Building className="w-4 h-4" />
-                    <span className="text-xs font-semibold uppercase">{detail.department}</span>
+                    <span className="text-xs font-semibold uppercase">
+                      {detail.department}
+                    </span>
                   </div>
-                  <p className="text-sm font-medium text-foreground">{artefact.department}</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {artefact.department}
+                  </p>
                 </div>
                 <div className="p-4 bg-muted/30 rounded-2xl border border-border/50">
                   <div className="flex items-center gap-2 text-muted-foreground mb-2">
                     <GitBranch className="w-4 h-4" />
-                    <span className="text-xs font-semibold uppercase">{detail.version}</span>
+                    <span className="text-xs font-semibold uppercase">
+                      {detail.version}
+                    </span>
                   </div>
-                  <p className="text-sm font-medium text-foreground">{artefact.version}</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {artefact.version}
+                  </p>
                 </div>
                 <div className="p-4 bg-muted/30 rounded-2xl border border-border/50">
                   <div className="flex items-center gap-2 text-muted-foreground mb-2">
                     <Calendar className="w-4 h-4" />
-                    <span className="text-xs font-semibold uppercase">{detail.updated}</span>
+                    <span className="text-xs font-semibold uppercase">
+                      {detail.updated}
+                    </span>
                   </div>
-                  <p className="text-sm font-medium text-foreground">{artefact.lastUpdated}</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {artefact.lastUpdated}
+                  </p>
                 </div>
               </div>
 
@@ -189,16 +228,28 @@ export function ArtefactDetailModal({ artefact, onClose, onEdit }: ArtefactDetai
                 </h4>
                 <div className="grid grid-cols-3 gap-4">
                   <div className="p-4 bg-muted/30 rounded-2xl border border-border/50 text-center">
-                    <p className="text-3xl font-bold text-foreground mb-1">{artefact.dependencies}</p>
-                    <p className="text-xs font-medium text-muted-foreground uppercase">Dependencies</p>
+                    <p className="text-3xl font-bold text-foreground mb-1">
+                      {artefact.dependencies}
+                    </p>
+                    <p className="text-xs font-medium text-muted-foreground uppercase">
+                      Dependencies
+                    </p>
                   </div>
                   <div className="p-4 bg-muted/30 rounded-2xl border border-border/50 text-center">
-                    <p className="text-3xl font-bold text-foreground mb-1">{artefact.dependents}</p>
-                    <p className="text-xs font-medium text-muted-foreground uppercase">Dependents</p>
+                    <p className="text-3xl font-bold text-foreground mb-1">
+                      {artefact.dependents}
+                    </p>
+                    <p className="text-xs font-medium text-muted-foreground uppercase">
+                      Dependents
+                    </p>
                   </div>
                   <div className="p-4 bg-muted/30 rounded-2xl border border-border/50 text-center">
-                    <p className="text-xl font-bold text-foreground mb-1 capitalize">{artefact.usageFrequency}</p>
-                    <p className="text-xs font-medium text-muted-foreground uppercase">Usage</p>
+                    <p className="text-xl font-bold text-foreground mb-1 capitalize">
+                      {artefact.usageFrequency}
+                    </p>
+                    <p className="text-xs font-medium text-muted-foreground uppercase">
+                      Usage
+                    </p>
                   </div>
                 </div>
               </div>
@@ -214,22 +265,29 @@ export function ArtefactDetailModal({ artefact, onClose, onEdit }: ArtefactDetai
                     </h4>
                   </div>
                   <div className="space-y-2">
-                    {upstream.length > 0 ? upstream.map((item) => {
-                      const ItemIcon = ARTEFACT_TYPE_ICONS[item.type] || Layers;
-                      return (
-                        <div
-                          key={item.id}
-                          className="flex items-center gap-3 p-3 bg-muted/30 border border-border/50 rounded-xl hover:bg-muted/50 transition-colors"
-                        >
-                          <ItemIcon className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-sm font-medium text-foreground line-clamp-1">
-                            {language === 'th' ? (item.nameTh || item.name) : item.name}
-                          </span>
-                        </div>
-                      );
-                    }) : (
+                    {upstream.length > 0 ? (
+                      upstream.map((item) => {
+                        const ItemIcon =
+                          ARTEFACT_TYPE_ICONS[item.type] || Layers;
+                        return (
+                          <div
+                            key={item.id}
+                            className="flex items-center gap-3 p-3 bg-muted/30 border border-border/50 rounded-xl hover:bg-muted/50 transition-colors"
+                          >
+                            <ItemIcon className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-sm font-medium text-foreground line-clamp-1">
+                              {language === "th"
+                                ? item.nameTh || item.name
+                                : item.name}
+                            </span>
+                          </div>
+                        );
+                      })
+                    ) : (
                       <div className="p-4 text-center border border-dashed border-border rounded-xl">
-                        <p className="text-sm text-muted-foreground">{detail.noUpstream}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {detail.noUpstream}
+                        </p>
                       </div>
                     )}
                   </div>
@@ -244,22 +302,29 @@ export function ArtefactDetailModal({ artefact, onClose, onEdit }: ArtefactDetai
                     </h4>
                   </div>
                   <div className="space-y-2">
-                    {downstream.length > 0 ? downstream.map((item) => {
-                      const ItemIcon = ARTEFACT_TYPE_ICONS[item.type] || Layers;
-                      return (
-                        <div
-                          key={item.id}
-                          className="flex items-center gap-3 p-3 bg-muted/30 border border-border/50 rounded-xl hover:bg-muted/50 transition-colors"
-                        >
-                          <ItemIcon className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-sm font-medium text-foreground line-clamp-1">
-                            {language === 'th' ? (item.nameTh || item.name) : item.name}
-                          </span>
-                        </div>
-                      );
-                    }) : (
+                    {downstream.length > 0 ? (
+                      downstream.map((item) => {
+                        const ItemIcon =
+                          ARTEFACT_TYPE_ICONS[item.type] || Layers;
+                        return (
+                          <div
+                            key={item.id}
+                            className="flex items-center gap-3 p-3 bg-muted/30 border border-border/50 rounded-xl hover:bg-muted/50 transition-colors"
+                          >
+                            <ItemIcon className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-sm font-medium text-foreground line-clamp-1">
+                              {language === "th"
+                                ? item.nameTh || item.name
+                                : item.name}
+                            </span>
+                          </div>
+                        );
+                      })
+                    ) : (
                       <div className="p-4 text-center border border-dashed border-border rounded-xl">
-                        <p className="text-sm text-muted-foreground">{detail.noDownstream}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {detail.noDownstream}
+                        </p>
                       </div>
                     )}
                   </div>
@@ -304,7 +369,7 @@ export function ArtefactDetailModal({ artefact, onClose, onEdit }: ArtefactDetai
                 isOpen={showVersionHistory}
                 onClose={() => setShowVersionHistory(false)}
                 artefactId={artefact.id}
-                artefactName={artefact.name || artefact.nameTh || ''}
+                artefactName={artefact.name || artefact.nameTh || ""}
               />
 
               {/* Impact Analysis Button */}

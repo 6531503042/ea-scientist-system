@@ -1,18 +1,12 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-  ReactNode,
-} from "react";
-import { resolveApiUrl } from "@/lib/api-client";
+import { createContext, useContext, type ReactNode } from "react";
+import { authService } from "@/features/auth/services/auth.service";
+import { useAuthStore } from "@/store/use-auth-store";
 
 interface AuthContextType {
   user: any;
-  role: "admin" | "architect" | "executive" | "user" | "viewer";
+  role: string;
   login: (token: string, user: any) => void;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
@@ -21,87 +15,38 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+/**
+ * Backward-compatibility wrapper.
+ * Auth state now lives in Zustand (useAuthStore). This provider reads from
+ * the store so that existing consumers of useAuth() continue to work unchanged.
+ */
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const user = useAuthStore((s) => s.user);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const storeLogout = useAuthStore((s) => s.logout);
 
-  const checkSession = useCallback(async () => {
-    try {
-      const response = await fetch(resolveApiUrl("/api/v1/auth/me"), {
-        credentials: "include",
-      });
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setUser(data.data);
-        } else {
-          setUser(null);
-        }
-      } else {
-        setUser(null);
-        // Don't redirect if we're already on login page (prevents infinite reload loop)
-        if (
-          typeof window !== "undefined" &&
-          response.status === 401 &&
-          !window.location.pathname.startsWith("/login")
-        ) {
-          window.location.href = "/login";
-        }
-      }
-    } catch (error) {
-      console.error("Session check failed:", error);
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    checkSession();
-  }, [checkSession]);
-
-  // Refetch session when tab becomes visible (fixes sidebar not loading after switching browsers/tabs)
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        checkSession();
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () =>
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, [checkSession]);
-
-  const login = (token: string, newUser: any) => {
-    // Token is now handled by httpOnly cookies, so we just set the user state
-    setUser(newUser);
-  };
+  // login is a no-op: the login page handles auth directly via authService + store
+  const login = (_token: string, _newUser: any) => {};
 
   const logout = async () => {
     try {
-      await fetch(resolveApiUrl("/api/v1/auth/logout"), {
-        method: "POST",
-        credentials: "include",
-      });
-      setUser(null);
-      // Optional: Redirect to login page
-      if (typeof window !== "undefined") {
-        window.location.href = "/login";
-      }
-    } catch (error) {
-      console.error("Logout failed:", error);
+      await authService.logout();
+    } catch {
+      /* still clear local session on failure */
+    } finally {
+      storeLogout();
+      document.cookie = "session=; Path=/; Max-Age=0; SameSite=Lax";
+      if (typeof window !== "undefined") window.location.href = "/login";
     }
   };
 
-  // Extract role string from user data (API returns role as object { roleName: "admin" })
-  const role =
-    (typeof user?.role === "object" ? user?.role?.roleName : user?.role) ||
-    "user";
+  // Derive role_key from user object returned by the new API
+  const role: string =
+    (user as any)?.role?.role_key ?? (user as any)?.role_key ?? "viewer";
 
   return (
     <AuthContext.Provider
-      value={{ user, role, login, logout, isAuthenticated: !!user, loading }}
+      value={{ user, role, login, logout, isAuthenticated, loading: false }}
     >
       {children}
     </AuthContext.Provider>

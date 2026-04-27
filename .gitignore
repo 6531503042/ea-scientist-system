@@ -34,3 +34,4 @@ frontend-next/
 generated/prisma
 
 /api
+/example-project

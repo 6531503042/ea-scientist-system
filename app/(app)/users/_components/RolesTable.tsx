@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
     Shield,
+    ShieldCheck,
     Eye,
     Edit2,
     Trash2,
@@ -36,9 +37,10 @@ interface RolesTableProps {
     roles: Role[];
     onEditRole?: (role: Role) => void;
     onDeleteRole?: (roleId: string) => void;
+    onAssignPermissions?: (role: Role) => void;
 }
 
-export function RolesTable({ roles, onEditRole, onDeleteRole }: RolesTableProps) {
+export function RolesTable({ roles, onEditRole, onDeleteRole, onAssignPermissions }: RolesTableProps) {
     const [selectedRole, setSelectedRole] = useState<Role | null>(null);
 
     // Stats - calculated automatically
@@ -162,6 +164,16 @@ export function RolesTable({ roles, onEditRole, onDeleteRole }: RolesTableProps)
                                                     }}
                                                 >
                                                     <Eye className="w-4 h-4 text-muted-foreground" />
+                                                </button>
+                                                <button
+                                                    className="p-2 hover:bg-emerald-500/10 rounded-lg transition-colors"
+                                                    title="กำหนดสิทธิ์"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onAssignPermissions?.(role);
+                                                    }}
+                                                >
+                                                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
                                                 </button>
                                                 <button
                                                     className="p-2 hover:bg-muted rounded-lg transition-colors"

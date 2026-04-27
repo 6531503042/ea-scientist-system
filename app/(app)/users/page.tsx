@@ -13,7 +13,9 @@ import { RolesTable } from './_components/RolesTable';
 import { DepartmentsTable } from './_components/DepartmentsTable';
 import { CreateUserModal } from './_components/CreateUserModal';
 import { EditUserModal } from './_components/EditUserModal';
-import { CreateRoleModal } from './_components/CreateRoleModal';
+import { CreateRoleModal, type CreateRoleFormData } from './_components/CreateRoleModal';
+import { EditRoleModal, type EditRoleFormData } from './_components/EditRoleModal';
+import { RolePermissionModal } from './_components/RolePermissionModal';
 import { CreateDepartmentModal } from './_components/CreateDepartmentModal';
 import { EditDepartmentModal } from './_components/EditDepartmentModal';
 import {
@@ -23,7 +25,10 @@ import {
   FilterSidebarSkeleton,
 } from './_components/UserManagementSkeleton';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 import type { User as UserType } from '@/types/user';
+import type { Role as RoleType } from '@/types/role';
+import type { CreateRolePayload, UpdateRolePayload } from '@/hooks/useRoles';
 
 const TABS = [
   { id: 'users', icon: UsersIcon, label: 'ผู้ใช้งาน' },
@@ -47,6 +52,10 @@ export default function UsersPage() {
   const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserType | null>(null);
   const [isCreateRoleModalOpen, setIsCreateRoleModalOpen] = useState(false);
+  const [isEditRoleModalOpen, setIsEditRoleModalOpen] = useState(false);
+  const [editingRole, setEditingRole] = useState<RoleType | null>(null);
+  const [isPermissionModalOpen, setIsPermissionModalOpen] = useState(false);
+  const [permissionRole, setPermissionRole] = useState<RoleType | null>(null);
   const [isCreateDepartmentModalOpen, setIsCreateDepartmentModalOpen] = useState(false);
   const [isEditDepartmentModalOpen, setIsEditDepartmentModalOpen] = useState(false);
   const [editingDepartment, setEditingDepartment] = useState<import('@/types/department').Department | null>(null);
@@ -118,48 +127,74 @@ export default function UsersPage() {
         d.name === data.department ||
         (typeof data.department === 'string' && d.name?.includes(data.department))
     );
-    const updated = await updateUser(editingUser._id, {
-      firstName: data.name?.first,
-      lastName: data.name?.last,
-      email: data.email,
-      ...(data.password && { password: data.password }),
-      roleId: roleMatch ? Number(roleMatch._id) : undefined,
-      departmentId: deptMatch ? Number(deptMatch._id) : undefined,
-      isActive: data.status === 'active',
-    });
-    if (updated) {
+    try {
+      await updateUser(editingUser._id, {
+        firstName: data.name?.first,
+        lastName: data.name?.last,
+        email: data.email,
+        ...(data.password && { password: data.password }),
+        roleId: roleMatch ? Number(roleMatch._id) : undefined,
+        departmentId: deptMatch ? Number(deptMatch._id) : undefined,
+        isActive: data.status === 'active',
+      });
       setIsEditUserModalOpen(false);
       setEditingUser(null);
+      toast.success('แก้ไขข้อมูลผู้ใช้งานสำเร็จ');
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? 'แก้ไขข้อมูลไม่สำเร็จ');
     }
   };
 
-  const handleCreateRole = async (data: {
-    code: string;
-    name: string;
-    nameTh: string;
-    description: string;
-    permissions: string[];
-    isSystemRole: boolean;
-  }) => {
-    const created = await createRole({
-      name: data.name,
-      description: data.description,
-      permissions: data.permissions,
-    });
-    if (created) setIsCreateRoleModalOpen(false);
+  const handleCreateRole = async (data: CreateRoleFormData) => {
+    try {
+      await createRole(data as CreateRolePayload);
+      setIsCreateRoleModalOpen(false);
+      toast.success(`สร้างบทบาท "${data.name}" สำเร็จ`);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? 'สร้างบทบาทไม่สำเร็จ');
+      throw err;
+    }
   };
 
-  const handleEditRole = (role: typeof roles[0]) => {
-    // TODO: Add EditRoleModal - for now keep console
-    console.log('Edit role:', role);
+  const handleEditRole = (role: RoleType) => {
+    setEditingRole(role);
+    setIsEditRoleModalOpen(true);
+  };
+
+  const handleEditRoleSubmit = async (data: EditRoleFormData) => {
+    if (!editingRole?._id) return;
+    try {
+      await updateRole(editingRole._id, data as UpdateRolePayload);
+      setIsEditRoleModalOpen(false);
+      setEditingRole(null);
+      toast.success(`แก้ไขบทบาท "${data.name}" สำเร็จ`);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? 'แก้ไขบทบาทไม่สำเร็จ');
+      throw err;
+    }
+  };
+
+  const handleAssignPermissions = (role: RoleType) => {
+    setPermissionRole(role);
+    setIsPermissionModalOpen(true);
   };
 
   const handleDeleteRole = async (roleId: string) => {
-    await deleteRole(roleId);
+    try {
+      await deleteRole(roleId);
+      toast.success('ลบบทบาทสำเร็จ');
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? 'ลบบทบาทไม่สำเร็จ');
+    }
   };
 
   const handleDeleteUser = async (userId: string) => {
-    await deleteUser(userId);
+    try {
+      await deleteUser(userId);
+      toast.success('ลบผู้ใช้งานสำเร็จ');
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? 'ลบผู้ใช้งานไม่สำเร็จ');
+    }
   };
 
   const handleCreateUser = async (data: Partial<import('@/types/user').CreateUserInput>) => {
@@ -176,17 +211,25 @@ export default function UsersPage() {
             (typeof data.department === 'string' && d.name?.includes(data.department))
         )
       : null;
-    if (!roleMatch) return;
-    const created = await createUser({
-      firstName: data.name?.first ?? '',
-      lastName: data.name?.last ?? '',
-      email: data.email ?? '',
-      username: data.username ?? data.email?.split('@')[0] ?? 'user',
-      password: (data as { password?: string }).password ?? 'password123',
-      roleId: Number(roleMatch._id),
-      departmentId: deptMatch ? Number(deptMatch._id) : undefined,
-    });
-    if (created) setIsCreateUserModalOpen(false);
+    if (!roleMatch) {
+      toast.error('กรุณาเลือกบทบาทก่อนสร้างผู้ใช้งาน');
+      return;
+    }
+    try {
+      await createUser({
+        firstName: data.name?.first ?? '',
+        lastName: data.name?.last ?? '',
+        email: data.email ?? '',
+        username: data.username ?? data.email?.split('@')[0] ?? 'user',
+        password: (data as { password?: string }).password ?? 'password123',
+        roleId: Number(roleMatch._id),
+        departmentId: deptMatch ? Number(deptMatch._id) : undefined,
+      });
+      setIsCreateUserModalOpen(false);
+      toast.success('สร้างผู้ใช้งานสำเร็จ');
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? 'สร้างผู้ใช้งานไม่สำเร็จ');
+    }
   };
 
   const handleDepartmentCreate = async (data: Partial<import('@/types/department').Department> & { code?: string; name?: string }) => {
@@ -354,6 +397,7 @@ export default function UsersPage() {
                 roles={roles}
                 onEditRole={handleEditRole}
                 onDeleteRole={handleDeleteRole}
+                onAssignPermissions={handleAssignPermissions}
               />
             )}
           </motion.div>
@@ -405,6 +449,25 @@ export default function UsersPage() {
         isOpen={isCreateRoleModalOpen}
         onClose={() => setIsCreateRoleModalOpen(false)}
         onSubmit={handleCreateRole}
+      />
+
+      <EditRoleModal
+        isOpen={isEditRoleModalOpen}
+        onClose={() => {
+          setIsEditRoleModalOpen(false);
+          setEditingRole(null);
+        }}
+        role={editingRole}
+        onSubmit={handleEditRoleSubmit}
+      />
+
+      <RolePermissionModal
+        isOpen={isPermissionModalOpen}
+        onClose={() => {
+          setIsPermissionModalOpen(false);
+          setPermissionRole(null);
+        }}
+        role={permissionRole}
       />
 
       <CreateDepartmentModal

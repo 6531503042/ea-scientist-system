@@ -1,19 +1,15 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type {
-  Department,
-  CreateDepartmentInput,
-  UpdateDepartmentInput,
-} from "@/types/department";
-import { apiClient } from "@/lib/api-client";
+import axiosInstance from "@/lib/axios";
+import type { Department } from "@/types/department";
 import { queryKeys } from "@/lib/query-keys";
 import { mapApiDepartment } from "@/lib/api-adapters/iam";
+import { API_ENDPOINTS } from "@/lib/api/endpoints";
 
 export function useDepartments() {
   const queryClient = useQueryClient();
 
-  // Fetch Departments
   const {
     data: departments = [],
     isLoading,
@@ -22,48 +18,35 @@ export function useDepartments() {
   } = useQuery<Department[]>({
     queryKey: queryKeys.departments.all,
     queryFn: async () => {
-      const data = await apiClient.get<any[]>("/api/v1/departments");
-      return data.map(mapApiDepartment);
+      const resp = await axiosInstance.get(API_ENDPOINTS.departments.list);
+      // Departments endpoint returns: { success, data: [...] } (flat array, not paginated)
+      const items: any[] = resp.data?.data ?? [];
+      return items.map(mapApiDepartment);
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes cache
+    staleTime: 5 * 60 * 1000,
   });
 
-  // Create Department
   const createMutation = useMutation({
-    mutationFn: async (data: CreateDepartmentInput) => {
-      const parentValue =
-        typeof data.parent === "string" ? data.parent : undefined;
-      const apiData = {
+    mutationFn: async (data: { code: string; name: string }) => {
+      const dto = {
         shortName: data.code,
         fullName: data.name,
-        parentId: parentValue ? parseInt(parentValue) : undefined,
+        isActive: true,
       };
-
-      const responseData = await apiClient.post<any>(
-        "/api/v1/departments",
-        apiData,
-      );
-      return mapApiDepartment(responseData);
+      const resp = await axiosInstance.post(API_ENDPOINTS.departments.create, dto);
+      return mapApiDepartment(resp.data?.data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.departments.all });
     },
   });
 
-  // Update Department
   const updateMutation = useMutation({
-    mutationFn: async ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: UpdateDepartmentInput;
-    }) => {
-      const apiData: any = {};
-      if (data.code) apiData.shortName = data.code;
-      if (data.name) apiData.fullName = data.name;
-
-      await apiClient.put(`/api/v1/departments/${id}`, apiData);
+    mutationFn: async ({ id, data }: { id: string; data: { code?: string; name?: string } }) => {
+      const dto: Record<string, unknown> = {};
+      if (data.code) dto.shortName = data.code;
+      if (data.name) dto.fullName = data.name;
+      await axiosInstance.put(API_ENDPOINTS.departments.update(Number(id)), dto);
       return true;
     },
     onSuccess: () => {
@@ -71,10 +54,9 @@ export function useDepartments() {
     },
   });
 
-  // Delete Department
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await apiClient.delete(`/api/v1/departments/${id}`);
+      await axiosInstance.delete(API_ENDPOINTS.departments.delete(Number(id)));
       return true;
     },
     onSuccess: () => {
@@ -82,7 +64,6 @@ export function useDepartments() {
     },
   });
 
-  // Derived error state combining query and mutation errors
   const error =
     queryError?.message ||
     createMutation.error?.message ||
@@ -90,7 +71,6 @@ export function useDepartments() {
     deleteMutation.error?.message ||
     null;
 
-  // Derived loading state
   const loading =
     isLoading ||
     createMutation.isPending ||
@@ -101,9 +81,9 @@ export function useDepartments() {
     departments,
     loading,
     error,
-    fetchDepartments: refetch, // Backwards compatibility for existing components
+    fetchDepartments: refetch,
     createDepartment: createMutation.mutateAsync,
-    updateDepartment: (id: string, data: UpdateDepartmentInput) =>
+    updateDepartment: (id: string, data: { code?: string; name?: string }) =>
       updateMutation.mutateAsync({ id, data }),
     deleteDepartment: deleteMutation.mutateAsync,
   };

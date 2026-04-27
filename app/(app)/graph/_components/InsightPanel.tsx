@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
 import {
   X,
   User,
@@ -15,11 +15,18 @@ import {
   Cpu,
   Link,
   Shield,
-  ChevronRight
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import type { Artefact, ArtefactType, RiskLevel } from '@/types/artefact';
-import { relationships, artefacts, typeLabels } from '@/data/mockData';
+  ChevronRight,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import type {
+  Artefact,
+  ArtefactType,
+  Relationship,
+  RiskLevel,
+} from "@/types/artefact";
+import { ARTEFACT_TYPE_LABELS } from "@/config/ui-constants";
+import { useArtefacts } from "@/hooks/useArtefacts";
+import { useRelationships } from "@/hooks/useRelationships";
 
 interface InsightPanelProps {
   artefact: Artefact;
@@ -27,18 +34,25 @@ interface InsightPanelProps {
   onImpactAnalysis: () => void;
 }
 
-const riskStyles: Record<RiskLevel, { bg: string; text: string; label: string }> = {
-  high: { bg: 'bg-risk-high/10', text: 'text-risk-high', label: 'สูง' },
-  medium: { bg: 'bg-risk-medium/10', text: 'text-risk-medium', label: 'ปานกลาง' },
-  low: { bg: 'bg-risk-low/10', text: 'text-risk-low', label: 'ต่ำ' },
-  none: { bg: 'bg-muted', text: 'text-muted-foreground', label: 'ไม่มี' },
+const riskStyles: Record<
+  RiskLevel,
+  { bg: string; text: string; label: string }
+> = {
+  high: { bg: "bg-risk-high/10", text: "text-risk-high", label: "สูง" },
+  medium: {
+    bg: "bg-risk-medium/10",
+    text: "text-risk-medium",
+    label: "ปานกลาง",
+  },
+  low: { bg: "bg-risk-low/10", text: "text-risk-low", label: "ต่ำ" },
+  none: { bg: "bg-muted", text: "text-muted-foreground", label: "ไม่มี" },
 };
 
 const statusStyles: Record<string, { bg: string; text: string }> = {
-  active: { bg: 'bg-success/10', text: 'text-success' },
-  draft: { bg: 'bg-warning/10', text: 'text-warning' },
-  deprecated: { bg: 'bg-muted', text: 'text-muted-foreground' },
-  planned: { bg: 'bg-info/10', text: 'text-info' },
+  active: { bg: "bg-success/10", text: "text-success" },
+  draft: { bg: "bg-warning/10", text: "text-warning" },
+  deprecated: { bg: "bg-muted", text: "text-muted-foreground" },
+  planned: { bg: "bg-info/10", text: "text-info" },
 };
 
 // Icon mapping for artefact types
@@ -53,38 +67,55 @@ const typeIcons: Record<ArtefactType, React.ElementType> = {
 
 // Thai labels for relationship types
 const relationshipLabels: Record<string, { th: string; desc: string }> = {
-  uses: { th: 'ใช้งาน', desc: 'ใช้งานระบบนี้' },
-  depends_on: { th: 'พึ่งพา', desc: 'ต้องพึ่งพาระบบนี้' },
-  manages: { th: 'จัดการ', desc: 'จัดการข้อมูลนี้' },
-  integrates_with: { th: 'เชื่อมต่อ', desc: 'เชื่อมต่อกับระบบนี้' },
-  supports: { th: 'สนับสนุน', desc: 'ให้การสนับสนุน' },
+  uses: { th: "ใช้งาน", desc: "ใช้งานระบบนี้" },
+  depends_on: { th: "พึ่งพา", desc: "ต้องพึ่งพาระบบนี้" },
+  manages: { th: "จัดการ", desc: "จัดการข้อมูลนี้" },
+  integrates_with: { th: "เชื่อมต่อ", desc: "เชื่อมต่อกับระบบนี้" },
+  supports: { th: "สนับสนุน", desc: "ให้การสนับสนุน" },
 };
 
-export function InsightPanel({ artefact, onClose, onImpactAnalysis }: InsightPanelProps) {
+export function InsightPanel({
+  artefact,
+  onClose,
+  onImpactAnalysis,
+}: InsightPanelProps) {
+  const { allArtefacts } = useArtefacts();
+  const { relationships } = useRelationships();
+
   // Find related artefacts with relationship info
   const upstreamRels = relationships.filter((r) => r.target === artefact.id);
   const downstreamRels = relationships.filter((r) => r.source === artefact.id);
 
-  const upstream = upstreamRels.map(r => ({
-    artefact: artefacts.find(a => a.id === r.source)!,
-    relationship: r
-  })).filter(item => item.artefact);
+  const upstream = upstreamRels
+    .map((r) => ({
+      artefact: allArtefacts.find((a) => a.id === r.source)!,
+      relationship: r,
+    }))
+    .filter((item) => item.artefact);
 
-  const downstream = downstreamRels.map(r => ({
-    artefact: artefacts.find(a => a.id === r.target)!,
-    relationship: r
-  })).filter(item => item.artefact);
+  const downstream = downstreamRels
+    .map((r) => ({
+      artefact: allArtefacts.find((a) => a.id === r.target)!,
+      relationship: r,
+    }))
+    .filter((item) => item.artefact);
 
   const riskStyle = riskStyles[artefact.riskLevel];
   const statusStyle = statusStyles[artefact.status];
 
   // Component to render a related artefact item
-  const RelatedItem = ({ item, direction }: {
-    item: { artefact: Artefact; relationship: typeof relationships[0] };
-    direction: 'upstream' | 'downstream';
+  const RelatedItem = ({
+    item,
+    direction,
+  }: {
+    item: { artefact: Artefact; relationship: Relationship };
+    direction: "upstream" | "downstream";
   }) => {
     const TypeIcon = typeIcons[item.artefact.type];
-    const relLabel = relationshipLabels[item.relationship.type] || { th: item.relationship.label, desc: '' };
+    const relLabel = relationshipLabels[item.relationship.type] || {
+      th: item.relationship.label,
+      desc: "",
+    };
     const typeColor = `bg-ea-${item.artefact.type}`;
 
     return (
@@ -95,7 +126,12 @@ export function InsightPanel({ artefact, onClose, onImpactAnalysis }: InsightPan
       >
         {/* Header with type icon and name */}
         <div className="flex items-center gap-2 mb-1.5">
-          <div className={cn("flex items-center justify-center w-6 h-6 rounded-md", typeColor)}>
+          <div
+            className={cn(
+              "flex items-center justify-center w-6 h-6 rounded-md",
+              typeColor,
+            )}
+          >
             <TypeIcon className="w-3.5 h-3.5 text-white" />
           </div>
           <span className="text-sm font-medium text-foreground flex-1 truncate">
@@ -111,13 +147,15 @@ export function InsightPanel({ artefact, onClose, onImpactAnalysis }: InsightPan
 
         {/* Relationship badge */}
         <div className="flex items-center gap-1.5 ml-8">
-          <span className={cn(
-            "inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-full",
-            direction === 'upstream'
-              ? "bg-blue-500/10 text-blue-600"
-              : "bg-amber-500/10 text-amber-600"
-          )}>
-            {direction === 'upstream' ? (
+          <span
+            className={cn(
+              "inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-full",
+              direction === "upstream"
+                ? "bg-blue-500/10 text-blue-600"
+                : "bg-amber-500/10 text-amber-600",
+            )}
+          >
+            {direction === "upstream" ? (
               <ArrowDownToLine className="w-2.5 h-2.5" />
             ) : (
               <ArrowUpFromLine className="w-2.5 h-2.5" />
@@ -125,7 +163,8 @@ export function InsightPanel({ artefact, onClose, onImpactAnalysis }: InsightPan
             {relLabel.th}
           </span>
           <span className="text-[10px] text-muted-foreground">
-            • {typeLabels[item.artefact.type]?.th || item.artefact.type}
+            •{" "}
+            {ARTEFACT_TYPE_LABELS[item.artefact.type]?.th || item.artefact.type}
           </span>
         </div>
       </motion.div>
@@ -142,8 +181,12 @@ export function InsightPanel({ artefact, onClose, onImpactAnalysis }: InsightPan
       {/* Header */}
       <div className="flex items-start justify-between mb-4 gap-2">
         <div className="min-w-0 flex-1">
-          <h3 className="font-semibold text-base sm:text-lg text-foreground truncate">{artefact.name}</h3>
-          <p className="text-xs sm:text-sm text-muted-foreground truncate">{artefact.nameTh}</p>
+          <h3 className="font-semibold text-base sm:text-lg text-foreground truncate">
+            {artefact.name}
+          </h3>
+          <p className="text-xs sm:text-sm text-muted-foreground truncate">
+            {artefact.nameTh}
+          </p>
         </div>
         <button
           onClick={onClose}
@@ -155,18 +198,22 @@ export function InsightPanel({ artefact, onClose, onImpactAnalysis }: InsightPan
 
       {/* Status & Risk */}
       <div className="flex flex-wrap items-center gap-2 mb-4 sm:mb-6">
-        <span className={cn(
-          "px-2.5 py-1 text-xs font-medium rounded-full capitalize",
-          statusStyle.bg,
-          statusStyle.text
-        )}>
+        <span
+          className={cn(
+            "px-2.5 py-1 text-xs font-medium rounded-full capitalize",
+            statusStyle.bg,
+            statusStyle.text,
+          )}
+        >
           {artefact.status}
         </span>
-        <span className={cn(
-          "px-2.5 py-1 text-xs font-medium rounded-full flex items-center gap-1",
-          riskStyle.bg,
-          riskStyle.text
-        )}>
+        <span
+          className={cn(
+            "px-2.5 py-1 text-xs font-medium rounded-full flex items-center gap-1",
+            riskStyle.bg,
+            riskStyle.text,
+          )}
+        >
           <AlertTriangle className="w-3 h-3" />
           ความเสี่ยง: {riskStyle.label}
         </span>
@@ -177,7 +224,9 @@ export function InsightPanel({ artefact, onClose, onImpactAnalysis }: InsightPan
         <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">
           รายละเอียด
         </h4>
-        <p className="text-sm text-foreground leading-relaxed">{artefact.description}</p>
+        <p className="text-sm text-foreground leading-relaxed">
+          {artefact.description}
+        </p>
       </div>
 
       {/* Metadata */}
@@ -187,28 +236,36 @@ export function InsightPanel({ artefact, onClose, onImpactAnalysis }: InsightPan
             <User className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             <span className="text-[10px] sm:text-xs">ผู้รับผิดชอบ</span>
           </div>
-          <p className="text-xs sm:text-sm font-medium text-foreground truncate">{artefact.owner}</p>
+          <p className="text-xs sm:text-sm font-medium text-foreground truncate">
+            {artefact.owner}
+          </p>
         </div>
         <div className="p-2 sm:p-3 bg-muted/50 rounded-lg">
           <div className="flex items-center gap-1.5 sm:gap-2 text-muted-foreground mb-1">
             <Building className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             <span className="text-[10px] sm:text-xs">หน่วยงาน</span>
           </div>
-          <p className="text-xs sm:text-sm font-medium text-foreground truncate">{artefact.department}</p>
+          <p className="text-xs sm:text-sm font-medium text-foreground truncate">
+            {artefact.department}
+          </p>
         </div>
         <div className="p-2 sm:p-3 bg-muted/50 rounded-lg">
           <div className="flex items-center gap-1.5 sm:gap-2 text-muted-foreground mb-1">
             <GitBranch className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             <span className="text-[10px] sm:text-xs">เวอร์ชัน</span>
           </div>
-          <p className="text-xs sm:text-sm font-medium text-foreground">{artefact.version}</p>
+          <p className="text-xs sm:text-sm font-medium text-foreground">
+            {artefact.version}
+          </p>
         </div>
         <div className="p-2 sm:p-3 bg-muted/50 rounded-lg">
           <div className="flex items-center gap-1.5 sm:gap-2 text-muted-foreground mb-1">
             <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             <span className="text-[10px] sm:text-xs">อัพเดตล่าสุด</span>
           </div>
-          <p className="text-xs sm:text-sm font-medium text-foreground">{artefact.lastUpdated}</p>
+          <p className="text-xs sm:text-sm font-medium text-foreground">
+            {artefact.lastUpdated}
+          </p>
         </div>
       </div>
 
@@ -230,11 +287,19 @@ export function InsightPanel({ artefact, onClose, onImpactAnalysis }: InsightPan
             </div>
           </div>
           <div className="space-y-2">
-            {upstream.length > 0 ? upstream.map((item) => (
-              <RelatedItem key={item.artefact.id} item={item} direction="upstream" />
-            )) : (
+            {upstream.length > 0 ? (
+              upstream.map((item) => (
+                <RelatedItem
+                  key={item.artefact.id}
+                  item={item}
+                  direction="upstream"
+                />
+              ))
+            ) : (
               <div className="p-3 rounded-lg border border-dashed border-border text-center">
-                <p className="text-xs text-muted-foreground">ไม่มีระบบที่ส่งข้อมูลเข้ามา</p>
+                <p className="text-xs text-muted-foreground">
+                  ไม่มีระบบที่ส่งข้อมูลเข้ามา
+                </p>
               </div>
             )}
           </div>
@@ -256,11 +321,19 @@ export function InsightPanel({ artefact, onClose, onImpactAnalysis }: InsightPan
             </div>
           </div>
           <div className="space-y-2">
-            {downstream.length > 0 ? downstream.map((item) => (
-              <RelatedItem key={item.artefact.id} item={item} direction="downstream" />
-            )) : (
+            {downstream.length > 0 ? (
+              downstream.map((item) => (
+                <RelatedItem
+                  key={item.artefact.id}
+                  item={item}
+                  direction="downstream"
+                />
+              ))
+            ) : (
               <div className="p-3 rounded-lg border border-dashed border-border text-center">
-                <p className="text-xs text-muted-foreground">ไม่มีระบบที่รับข้อมูลไป</p>
+                <p className="text-xs text-muted-foreground">
+                  ไม่มีระบบที่รับข้อมูลไป
+                </p>
               </div>
             )}
           </div>
@@ -273,7 +346,7 @@ export function InsightPanel({ artefact, onClose, onImpactAnalysis }: InsightPan
         whileTap={{ scale: 0.98 }}
         onClick={onImpactAnalysis}
         className="w-full mt-4 sm:mt-6 px-4 py-2.5 sm:py-3 bg-primary text-primary-foreground text-sm sm:text-base font-medium rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 fixed sm:relative bottom-4 sm:bottom-auto left-4 right-4 sm:left-auto sm:right-auto z-10"
-        style={{ width: 'calc(100% - 2rem)' }}
+        style={{ width: "calc(100% - 2rem)" }}
       >
         <AlertTriangle className="w-4 h-4" />
         <span>วิเคราะห์ผลกระทบ</span>
@@ -282,4 +355,3 @@ export function InsightPanel({ artefact, onClose, onImpactAnalysis }: InsightPan
     </motion.div>
   );
 }
-

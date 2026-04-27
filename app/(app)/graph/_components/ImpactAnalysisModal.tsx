@@ -1,6 +1,6 @@
-'use client';
-import { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+"use client";
+import { useState, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
   AlertTriangle,
@@ -18,24 +18,30 @@ import {
   Database,
   Server,
   Shield,
-  Briefcase
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import type { Artefact, ArtefactType, RiskLevel } from '@/types/artefact';
-import { relationships, artefacts } from '@/data/mockData';
-import { useLanguage } from '@/context/LanguageContext';
+  Briefcase,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import type {
+  Artefact,
+  ArtefactType,
+  Relationship,
+  RiskLevel,
+} from "@/types/artefact";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface ImpactAnalysisModalProps {
   artefact: Artefact;
+  artefacts: Artefact[];
+  relationships: Relationship[];
   onClose: () => void;
-  onSave: (action: 'break' | 'modify', affectedIds: string[]) => void;
+  onSave: (action: "break" | "modify", affectedIds: string[]) => void;
 }
 
 interface ImpactNode {
   artefact: Artefact;
   depth: number;
-  impactType: 'direct' | 'indirect';
-  direction: 'upstream' | 'downstream';
+  impactType: "direct" | "indirect";
+  direction: "upstream" | "downstream";
 }
 
 const typeIcons: Record<ArtefactType, React.ElementType> = {
@@ -47,16 +53,43 @@ const typeIcons: Record<ArtefactType, React.ElementType> = {
   security: Shield,
 };
 
-const riskColors: Record<RiskLevel, { bg: string; text: string; border: string }> = {
-  high: { bg: 'bg-destructive/10', text: 'text-destructive', border: 'border-destructive/30' },
-  medium: { bg: 'bg-warning/10', text: 'text-warning', border: 'border-warning/30' },
-  low: { bg: 'bg-success/10', text: 'text-success', border: 'border-success/30' },
-  none: { bg: 'bg-muted', text: 'text-muted-foreground', border: 'border-border' },
+const riskColors: Record<
+  RiskLevel,
+  { bg: string; text: string; border: string }
+> = {
+  high: {
+    bg: "bg-destructive/10",
+    text: "text-destructive",
+    border: "border-destructive/30",
+  },
+  medium: {
+    bg: "bg-warning/10",
+    text: "text-warning",
+    border: "border-warning/30",
+  },
+  low: {
+    bg: "bg-success/10",
+    text: "text-success",
+    border: "border-success/30",
+  },
+  none: {
+    bg: "bg-muted",
+    text: "text-muted-foreground",
+    border: "border-border",
+  },
 };
 
-export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysisModalProps) {
+export function ImpactAnalysisModal({
+  artefact,
+  artefacts,
+  relationships,
+  onClose,
+  onSave,
+}: ImpactAnalysisModalProps) {
   const { t, language } = useLanguage();
-  const [selectedAction, setSelectedAction] = useState<'break' | 'modify' | null>(null);
+  const [selectedAction, setSelectedAction] = useState<
+    "break" | "modify" | null
+  >(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [selectedNodes, setSelectedNodes] = useState<Set<string>>(new Set());
 
@@ -67,17 +100,17 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
 
     // Find downstream (things that depend on this artefact)
     const findDownstream = (id: string, depth: number) => {
-      const rels = relationships.filter(r => r.source === id);
-      rels.forEach(rel => {
+      const rels = relationships.filter((r) => r.source === id);
+      rels.forEach((rel) => {
         if (!visited.has(rel.target)) {
           visited.add(rel.target);
-          const target = artefacts.find(a => a.id === rel.target);
+          const target = artefacts.find((a) => a.id === rel.target);
           if (target) {
             impactNodes.push({
               artefact: target,
               depth,
-              impactType: depth === 1 ? 'direct' : 'indirect',
-              direction: 'downstream'
+              impactType: depth === 1 ? "direct" : "indirect",
+              direction: "downstream",
             });
             findDownstream(rel.target, depth + 1);
           }
@@ -87,17 +120,17 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
 
     // Find upstream (things this artefact depends on)
     const findUpstream = (id: string, depth: number) => {
-      const rels = relationships.filter(r => r.target === id);
-      rels.forEach(rel => {
+      const rels = relationships.filter((r) => r.target === id);
+      rels.forEach((rel) => {
         if (!visited.has(rel.source)) {
           visited.add(rel.source);
-          const source = artefacts.find(a => a.id === rel.source);
+          const source = artefacts.find((a) => a.id === rel.source);
           if (source) {
             impactNodes.push({
               artefact: source,
               depth,
-              impactType: depth === 1 ? 'direct' : 'indirect',
-              direction: 'upstream'
+              impactType: depth === 1 ? "direct" : "indirect",
+              direction: "upstream",
             });
             findUpstream(rel.source, depth + 1);
           }
@@ -112,12 +145,20 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
     return impactNodes;
   }, [artefact]);
 
-  const downstreamNodes = impactAnalysis.filter(n => n.direction === 'downstream');
-  const upstreamNodes = impactAnalysis.filter(n => n.direction === 'upstream');
-  const directImpact = impactAnalysis.filter(n => n.impactType === 'direct');
-  const indirectImpact = impactAnalysis.filter(n => n.impactType === 'indirect');
+  const downstreamNodes = impactAnalysis.filter(
+    (n) => n.direction === "downstream",
+  );
+  const upstreamNodes = impactAnalysis.filter(
+    (n) => n.direction === "upstream",
+  );
+  const directImpact = impactAnalysis.filter((n) => n.impactType === "direct");
+  const indirectImpact = impactAnalysis.filter(
+    (n) => n.impactType === "indirect",
+  );
 
-  const highRiskCount = impactAnalysis.filter(n => n.artefact.riskLevel === 'high').length;
+  const highRiskCount = impactAnalysis.filter(
+    (n) => n.artefact.riskLevel === "high",
+  ).length;
   const totalAffected = impactAnalysis.length;
 
   const toggleNode = (id: string) => {
@@ -159,7 +200,7 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
         initial={{ opacity: 0, x: 100 }}
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: 100 }}
-        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+        transition={{ type: "spring", damping: 25, stiffness: 300 }}
         className="fixed right-0 top-0 bottom-0 z-50 w-full sm:w-[90%] sm:max-w-md md:max-w-lg lg:max-w-xl bg-card border-l border-border shadow-2xl overflow-hidden flex flex-col"
       >
         {/* Header */}
@@ -171,8 +212,12 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
                   <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-warning" />
                 </div>
                 <div>
-                  <h2 className="text-lg sm:text-xl font-bold text-foreground">{t('detail.analyzeImpact')}</h2>
-                  <p className="text-sm text-muted-foreground">{t('detail.impactAnalysisFor')} "{artefact.name}"</p>
+                  <h2 className="text-lg sm:text-xl font-bold text-foreground">
+                    {t("detail.analyzeImpact")}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    {t("detail.impactAnalysisFor")} "{artefact.name}"
+                  </p>
                 </div>
               </div>
             </div>
@@ -187,20 +232,36 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
           {/* Summary Stats */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mt-4">
             <div className="p-2 sm:p-3 bg-card rounded-xl border border-border">
-              <p className="text-xl sm:text-2xl font-bold text-foreground">{totalAffected}</p>
-              <p className="text-[10px] sm:text-xs text-muted-foreground">{t('detail.totalAffected')}</p>
+              <p className="text-xl sm:text-2xl font-bold text-foreground">
+                {totalAffected}
+              </p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">
+                {t("detail.totalAffected")}
+              </p>
             </div>
             <div className="p-2 sm:p-3 bg-card rounded-xl border border-border">
-              <p className="text-xl sm:text-2xl font-bold text-info">{directImpact.length}</p>
-              <p className="text-[10px] sm:text-xs text-muted-foreground">{t('detail.directImpact')}</p>
+              <p className="text-xl sm:text-2xl font-bold text-info">
+                {directImpact.length}
+              </p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">
+                {t("detail.directImpact")}
+              </p>
             </div>
             <div className="p-2 sm:p-3 bg-card rounded-xl border border-border">
-              <p className="text-xl sm:text-2xl font-bold text-warning">{indirectImpact.length}</p>
-              <p className="text-[10px] sm:text-xs text-muted-foreground">{t('detail.indirectImpact')}</p>
+              <p className="text-xl sm:text-2xl font-bold text-warning">
+                {indirectImpact.length}
+              </p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">
+                {t("detail.indirectImpact")}
+              </p>
             </div>
             <div className="p-2 sm:p-3 bg-card rounded-xl border border-destructive/30">
-              <p className="text-xl sm:text-2xl font-bold text-destructive">{highRiskCount}</p>
-              <p className="text-[10px] sm:text-xs text-muted-foreground">{t('detail.highRisk')}</p>
+              <p className="text-xl sm:text-2xl font-bold text-destructive">
+                {highRiskCount}
+              </p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">
+                {t("detail.highRisk")}
+              </p>
             </div>
           </div>
         </div>
@@ -210,13 +271,31 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
           {/* Context Summary */}
           <div className="mb-6 bg-muted/40 p-4 rounded-xl border border-border">
             <p className="text-sm text-foreground">
-              {language === 'th' ? (
+              {language === "th" ? (
                 <>
-                  การเปลี่ยนแปลง <span className="font-semibold">{artefact.name}</span> จะส่งผลโดยตรงต่อ <span className="font-semibold text-foreground">{directImpact.length} รายการ</span> และส่งผลต่อเนื่องไปยังอีก <span className="font-semibold text-muted-foreground">{indirectImpact.length} รายการ</span>
+                  การเปลี่ยนแปลง{" "}
+                  <span className="font-semibold">{artefact.name}</span>{" "}
+                  จะส่งผลโดยตรงต่อ{" "}
+                  <span className="font-semibold text-foreground">
+                    {directImpact.length} รายการ
+                  </span>{" "}
+                  และส่งผลต่อเนื่องไปยังอีก{" "}
+                  <span className="font-semibold text-muted-foreground">
+                    {indirectImpact.length} รายการ
+                  </span>
                 </>
               ) : (
                 <>
-                  Changing <span className="font-semibold">{artefact.name}</span> will directly affect <span className="font-semibold text-foreground">{directImpact.length} items</span> and indirectly affect <span className="font-semibold text-muted-foreground">{indirectImpact.length} items</span>
+                  Changing{" "}
+                  <span className="font-semibold">{artefact.name}</span> will
+                  directly affect{" "}
+                  <span className="font-semibold text-foreground">
+                    {directImpact.length} items
+                  </span>{" "}
+                  and indirectly affect{" "}
+                  <span className="font-semibold text-muted-foreground">
+                    {indirectImpact.length} items
+                  </span>
                 </>
               )}
             </p>
@@ -224,26 +303,28 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
 
           {/* Action Selection */}
           <div className="mb-8">
-            <h3 className="font-semibold text-foreground mb-3 text-sm uppercase tracking-wider text-muted-foreground">{t('detail.selectAnalysisTarget')}</h3>
+            <h3 className="font-semibold text-foreground mb-3 text-sm uppercase tracking-wider text-muted-foreground">
+              {t("detail.selectAnalysisTarget")}
+            </h3>
             <div className="flex p-1 bg-muted rounded-xl mb-4">
               <button
-                onClick={() => setSelectedAction('modify')}
+                onClick={() => setSelectedAction("modify")}
                 className={cn(
                   "flex-1 py-2 text-sm font-medium rounded-lg transition-all",
-                  selectedAction === 'modify'
+                  selectedAction === "modify"
                     ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 Simulation Modification
               </button>
               <button
-                onClick={() => setSelectedAction('break')}
+                onClick={() => setSelectedAction("break")}
                 className={cn(
                   "flex-1 py-2 text-sm font-medium rounded-lg transition-all",
-                  selectedAction === 'break'
+                  selectedAction === "break"
                     ? "bg-background text-destructive shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 Simulation Deletion
@@ -259,56 +340,71 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
                 <div className="flex items-center gap-2 mb-4 pb-2 border-b border-border">
                   <ArrowDown className="w-4 h-4 text-primary" />
                   <div>
-                    <h3 className="font-semibold text-foreground">{t('detail.upstream')}</h3>
-                    <p className="text-xs text-muted-foreground">{t('detail.systemsSendingData')}</p>
+                    <h3 className="font-semibold text-foreground">
+                      {t("detail.upstream")}
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      {t("detail.systemsSendingData")}
+                    </p>
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  {upstreamNodes.length > 0 ? upstreamNodes.map((node) => {
-                    const Icon = typeIcons[node.artefact.type];
-                    const risk = riskColors[node.artefact.riskLevel];
-                    const isDirect = node.impactType === 'direct';
+                  {upstreamNodes.length > 0 ? (
+                    upstreamNodes.map((node) => {
+                      const Icon = typeIcons[node.artefact.type];
+                      const risk = riskColors[node.artefact.riskLevel];
+                      const isDirect = node.impactType === "direct";
 
-                    return (
-                      <motion.div
-                        key={node.artefact.id}
-                        layout
-                        className={cn(
-                          "relative p-3 rounded-xl border transition-all hover:shadow-md",
-                          selectedNodes.has(node.artefact.id)
-                            ? "border-primary bg-primary/5 shadow-sm"
-                            : "border-border bg-card"
-                        )}
-                        onClick={() => toggleNode(node.artefact.id)}
-                      >
-                        {!isDirect && (
-                          <div className="absolute left-0 top-1/2 -ml-3 w-3 h-px bg-border border-t border-dashed" />
-                        )}
-                        <div className="flex items-start gap-3">
-                          <div className={cn("w-9 h-9 rounded-lg flex-shrink-0 flex items-center justify-center", risk.bg)}>
-                            <Icon className={cn("w-4 h-4", risk.text)} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm text-foreground truncate">{node.artefact.name}</p>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className="text-[10px] uppercase tracking-wider text-muted-foreground bg-muted px-1.5 rounded">
-                                {node.artefact.type}
-                              </span>
-                              {node.artefact.riskLevel === 'high' && (
-                                <span className="flex items-center gap-1 text-[10px] text-destructive font-medium">
-                                  <AlertTriangle className="w-3 h-3" />
-                                  High Risk
-                                </span>
+                      return (
+                        <motion.div
+                          key={node.artefact.id}
+                          layout
+                          className={cn(
+                            "relative p-3 rounded-xl border transition-all hover:shadow-md",
+                            selectedNodes.has(node.artefact.id)
+                              ? "border-primary bg-primary/5 shadow-sm"
+                              : "border-border bg-card",
+                          )}
+                          onClick={() => toggleNode(node.artefact.id)}
+                        >
+                          {!isDirect && (
+                            <div className="absolute left-0 top-1/2 -ml-3 w-3 h-px bg-border border-t border-dashed" />
+                          )}
+                          <div className="flex items-start gap-3">
+                            <div
+                              className={cn(
+                                "w-9 h-9 rounded-lg flex-shrink-0 flex items-center justify-center",
+                                risk.bg,
                               )}
+                            >
+                              <Icon className={cn("w-4 h-4", risk.text)} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm text-foreground truncate">
+                                {node.artefact.name}
+                              </p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-[10px] uppercase tracking-wider text-muted-foreground bg-muted px-1.5 rounded">
+                                  {node.artefact.type}
+                                </span>
+                                {node.artefact.riskLevel === "high" && (
+                                  <span className="flex items-center gap-1 text-[10px] text-destructive font-medium">
+                                    <AlertTriangle className="w-3 h-3" />
+                                    High Risk
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </motion.div>
-                    );
-                  }) : (
+                        </motion.div>
+                      );
+                    })
+                  ) : (
                     <div className="text-center py-8 bg-muted/20 rounded-xl border border-dashed">
-                      <p className="text-sm text-muted-foreground">{t('detail.noUpstream')}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {t("detail.noUpstream")}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -319,58 +415,75 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
                 <div className="flex items-center gap-2 mb-4 pb-2 border-b border-border">
                   <ArrowUp className="w-4 h-4 text-destructive" />
                   <div>
-                    <h3 className="font-semibold text-foreground">{t('detail.impacts')}</h3>
-                    <p className="text-xs text-muted-foreground">{t('detail.systemDamage')}</p>
+                    <h3 className="font-semibold text-foreground">
+                      {t("detail.impacts")}
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      {t("detail.systemDamage")}
+                    </p>
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  {downstreamNodes.length > 0 ? downstreamNodes.map((node) => {
-                    const Icon = typeIcons[node.artefact.type];
-                    const risk = riskColors[node.artefact.riskLevel];
-                    const isDirect = node.impactType === 'direct';
+                  {downstreamNodes.length > 0 ? (
+                    downstreamNodes.map((node) => {
+                      const Icon = typeIcons[node.artefact.type];
+                      const risk = riskColors[node.artefact.riskLevel];
+                      const isDirect = node.impactType === "direct";
 
-                    return (
-                      <motion.div
-                        key={node.artefact.id}
-                        layout
-                        className={cn(
-                          "relative p-3 rounded-xl border transition-all hover:shadow-md",
-                          selectedNodes.has(node.artefact.id)
-                            ? "border-destructive bg-destructive/5 shadow-sm"
-                            : "border-border bg-card"
-                        )}
-                        onClick={() => toggleNode(node.artefact.id)}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className={cn("w-9 h-9 rounded-lg flex-shrink-0 flex items-center justify-center", risk.bg)}>
-                            <Icon className={cn("w-4 h-4", risk.text)} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm text-foreground truncate">{node.artefact.name}</p>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className={cn(
-                                "text-[10px] px-1.5 rounded border",
-                                isDirect
-                                  ? "bg-destructive/10 text-destructive border-destructive/20"
-                                  : "bg-muted text-muted-foreground border-transparent"
-                              )}>
-                                {isDirect ? 'Direct' : 'Indirect'}
-                              </span>
-                              {node.artefact.riskLevel === 'high' && (
-                                <span className="flex items-center gap-1 text-[10px] text-destructive font-medium ml-auto">
-                                  <AlertTriangle className="w-3 h-3" />
-                                  Critical
-                                </span>
+                      return (
+                        <motion.div
+                          key={node.artefact.id}
+                          layout
+                          className={cn(
+                            "relative p-3 rounded-xl border transition-all hover:shadow-md",
+                            selectedNodes.has(node.artefact.id)
+                              ? "border-destructive bg-destructive/5 shadow-sm"
+                              : "border-border bg-card",
+                          )}
+                          onClick={() => toggleNode(node.artefact.id)}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div
+                              className={cn(
+                                "w-9 h-9 rounded-lg flex-shrink-0 flex items-center justify-center",
+                                risk.bg,
                               )}
+                            >
+                              <Icon className={cn("w-4 h-4", risk.text)} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm text-foreground truncate">
+                                {node.artefact.name}
+                              </p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span
+                                  className={cn(
+                                    "text-[10px] px-1.5 rounded border",
+                                    isDirect
+                                      ? "bg-destructive/10 text-destructive border-destructive/20"
+                                      : "bg-muted text-muted-foreground border-transparent",
+                                  )}
+                                >
+                                  {isDirect ? "Direct" : "Indirect"}
+                                </span>
+                                {node.artefact.riskLevel === "high" && (
+                                  <span className="flex items-center gap-1 text-[10px] text-destructive font-medium ml-auto">
+                                    <AlertTriangle className="w-3 h-3" />
+                                    Critical
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </motion.div>
-                    );
-                  }) : (
+                        </motion.div>
+                      );
+                    })
+                  ) : (
                     <div className="text-center py-8 bg-muted/20 rounded-xl border border-dashed">
-                      <p className="text-sm text-muted-foreground">{t('detail.noDownstream')}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {t("detail.noDownstream")}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -383,7 +496,7 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
             {selectedAction && highRiskCount > 0 && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
+                animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 className="mt-8 overflow-hidden"
               >
@@ -392,17 +505,27 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
                     <AlertTriangle className="w-5 h-5 text-destructive" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-destructive mb-1">Critical Warning</h4>
+                    <h4 className="font-semibold text-destructive mb-1">
+                      Critical Warning
+                    </h4>
                     <p className="text-sm text-muted-foreground">
-                      {language === 'th' ? (
+                      {language === "th" ? (
                         <>
-                          การดำเนินการนี้มีความเสี่ยงสูงเนื่องจากส่งผลกระทบต่อ <span className="text-destructive font-medium">{highRiskCount} critical systems</span>.
-                          กรุณาติดต่อผู้อนุมัติหรือตรวจสอบ Impact Assessment Document ก่อนดำเนินการ
+                          การดำเนินการนี้มีความเสี่ยงสูงเนื่องจากส่งผลกระทบต่อ{" "}
+                          <span className="text-destructive font-medium">
+                            {highRiskCount} critical systems
+                          </span>
+                          . กรุณาติดต่อผู้อนุมัติหรือตรวจสอบ Impact Assessment
+                          Document ก่อนดำเนินการ
                         </>
                       ) : (
                         <>
-                          This action is high risk as it affects <span className="text-destructive font-medium">{highRiskCount} critical systems</span>.
-                          Please contact approvers or check Impact Assessment Document before proceeding.
+                          This action is high risk as it affects{" "}
+                          <span className="text-destructive font-medium">
+                            {highRiskCount} critical systems
+                          </span>
+                          . Please contact approvers or check Impact Assessment
+                          Document before proceeding.
                         </>
                       )}
                     </p>
@@ -421,11 +544,14 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
                 onClick={onClose}
                 className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                {t('detail.cancel')}
+                {t("detail.cancel")}
               </button>
               <div className="flex items-center justify-between sm:justify-end gap-3">
                 <span className="text-sm text-muted-foreground">
-                  {selectedNodes.size > 0 && (language === 'th' ? `เลือก ${selectedNodes.size} รายการ` : `Selected ${selectedNodes.size} items`)}
+                  {selectedNodes.size > 0 &&
+                    (language === "th"
+                      ? `เลือก ${selectedNodes.size} รายการ`
+                      : `Selected ${selectedNodes.size} items`)}
                 </span>
                 <motion.button
                   whileHover={{ scale: 1.02 }}
@@ -436,11 +562,11 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
                     "flex items-center gap-2 px-6 py-2.5 font-medium rounded-lg transition-colors",
                     selectedAction
                       ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                      : "bg-muted text-muted-foreground cursor-not-allowed"
+                      : "bg-muted text-muted-foreground cursor-not-allowed",
                   )}
                 >
                   <ArrowRight className="w-4 h-4" />
-                  {t('detail.proceed')}
+                  {t("detail.proceed")}
                 </motion.button>
               </div>
             </div>
@@ -454,12 +580,24 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
                 <div className="flex items-center gap-3">
                   <Info className="w-5 h-5 text-warning" />
                   <div>
-                    <p className="font-medium text-warning">{t('detail.confirmAction')}</p>
+                    <p className="font-medium text-warning">
+                      {t("detail.confirmAction")}
+                    </p>
                     <p className="text-sm text-warning/80">
-                      {language === 'th' ? (
-                        <>คุณกำลังจะ{selectedAction === 'break' ? 'ลบ' : 'แก้ไข'} "{artefact.name}" ซึ่งจะส่งผลกระทบต่อ {totalAffected} Artefacts</>
+                      {language === "th" ? (
+                        <>
+                          คุณกำลังจะ
+                          {selectedAction === "break" ? "ลบ" : "แก้ไข"} "
+                          {artefact.name}" ซึ่งจะส่งผลกระทบต่อ {totalAffected}{" "}
+                          Artefacts
+                        </>
                       ) : (
-                        <>You are about to {selectedAction === 'break' ? 'delete' : 'modify'} "{artefact.name}" which will affect {totalAffected} Artefacts</>
+                        <>
+                          You are about to{" "}
+                          {selectedAction === "break" ? "delete" : "modify"} "
+                          {artefact.name}" which will affect {totalAffected}{" "}
+                          Artefacts
+                        </>
                       )}
                     </p>
                   </div>
@@ -470,7 +608,7 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
                   onClick={() => setShowConfirm(false)}
                   className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  ← {t('detail.back')}
+                  ← {t("detail.back")}
                 </button>
                 <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3">
                   <button
@@ -478,7 +616,7 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
                     className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg border border-border hover:bg-muted transition-colors"
                   >
                     <XCircle className="w-4 h-4" />
-                    {t('detail.cancel')}
+                    {t("detail.cancel")}
                   </button>
                   <motion.button
                     whileHover={{ scale: 1.02 }}
@@ -486,15 +624,19 @@ export function ImpactAnalysisModal({ artefact, onClose, onSave }: ImpactAnalysi
                     onClick={handleConfirm}
                     className={cn(
                       "flex items-center gap-2 px-6 py-2.5 font-medium rounded-lg",
-                      selectedAction === 'break'
+                      selectedAction === "break"
                         ? "bg-destructive text-white hover:bg-destructive/90"
-                        : "bg-primary text-primary-foreground hover:bg-primary/90"
+                        : "bg-primary text-primary-foreground hover:bg-primary/90",
                     )}
                   >
                     <Save className="w-4 h-4" />
-                    {selectedAction === 'break'
-                      ? (language === 'th' ? 'ยืนยันการลบ' : 'Confirm Deletion')
-                      : (language === 'th' ? 'ยืนยันการแก้ไข' : 'Confirm Modification')}
+                    {selectedAction === "break"
+                      ? language === "th"
+                        ? "ยืนยันการลบ"
+                        : "Confirm Deletion"
+                      : language === "th"
+                        ? "ยืนยันการแก้ไข"
+                        : "Confirm Modification"}
                   </motion.button>
                 </div>
               </div>

@@ -1,7 +1,7 @@
-import { motion } from 'framer-motion';
-import { AlertTriangle, ChevronRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import type { RiskLevel } from '@/data/mockData';
+import { motion } from "framer-motion";
+import { AlertTriangle, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { RiskLevel } from "@/types/artefact";
 
 interface RiskItem {
   name: string;
@@ -15,30 +15,33 @@ interface RiskCardProps {
   onViewAll?: () => void;
 }
 
-const severityStyles: Record<RiskLevel, { bg: string; text: string; border: string; dot: string }> = {
-  high: { 
-    bg: 'bg-destructive/10', 
-    text: 'text-destructive', 
-    border: 'border-destructive/20',
-    dot: 'bg-destructive'
+const severityStyles: Record<
+  RiskLevel,
+  { bg: string; text: string; border: string; dot: string }
+> = {
+  high: {
+    bg: "bg-destructive/10",
+    text: "text-destructive",
+    border: "border-destructive/20",
+    dot: "bg-destructive",
   },
-  medium: { 
-    bg: 'bg-warning/10', 
-    text: 'text-warning', 
-    border: 'border-warning/20',
-    dot: 'bg-warning'
+  medium: {
+    bg: "bg-warning/10",
+    text: "text-warning",
+    border: "border-warning/20",
+    dot: "bg-warning",
   },
-  low: { 
-    bg: 'bg-success/10', 
-    text: 'text-success', 
-    border: 'border-success/20',
-    dot: 'bg-success'
+  low: {
+    bg: "bg-success/10",
+    text: "text-success",
+    border: "border-success/20",
+    dot: "bg-success",
   },
-  none: { 
-    bg: 'bg-muted', 
-    text: 'text-muted-foreground', 
-    border: 'border-border',
-    dot: 'bg-muted-foreground'
+  none: {
+    bg: "bg-muted",
+    text: "text-muted-foreground",
+    border: "border-border",
+    dot: "bg-muted-foreground",
   },
 };
 
@@ -57,7 +60,7 @@ export function RiskCard({ items, onViewAll }: RiskCardProps) {
           </div>
           <h3 className="font-semibold text-foreground">Risk Hotspots</h3>
         </div>
-        <button 
+        <button
           onClick={onViewAll}
           className="flex items-center gap-1 text-sm text-muted-foreground hover:text-accent transition-colors"
         >
@@ -76,21 +79,29 @@ export function RiskCard({ items, onViewAll }: RiskCardProps) {
             className={cn(
               "p-4 rounded-xl border transition-all duration-200 hover:shadow-sm cursor-pointer",
               severityStyles[item.severity].bg,
-              severityStyles[item.severity].border
+              severityStyles[item.severity].border,
             )}
           >
             <div className="flex items-start gap-3">
-              <div className={cn(
-                "w-2 h-2 rounded-full mt-2 animate-pulse",
-                severityStyles[item.severity].dot
-              )} />
+              <div
+                className={cn(
+                  "w-2 h-2 rounded-full mt-2 animate-pulse",
+                  severityStyles[item.severity].dot,
+                )}
+              />
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-foreground truncate">{item.name}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{item.department}</p>
-                <p className={cn(
-                  "text-sm font-medium mt-1",
-                  severityStyles[item.severity].text
-                )}>
+                <p className="font-medium text-foreground truncate">
+                  {item.name}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {item.department}
+                </p>
+                <p
+                  className={cn(
+                    "text-sm font-medium mt-1",
+                    severityStyles[item.severity].text,
+                  )}
+                >
                   {item.risk}
                 </p>
               </div>

@@ -1,33 +1,36 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Network,
   LogOut,
   Menu,
   X,
   PanelLeftClose,
-  PanelLeft
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useAuth } from '@/context/AuthContext';
-import { useLanguage } from '@/context/LanguageContext';
-import { useLocale } from '@/hooks/useLocale';
-import { getMenuByRole, type NavItem } from '@/config/getMenuByRole';
-import { siteConfig } from '@/config/site';
+  PanelLeft,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
+import { useAuthStore } from "@/store/use-auth-store";
+import { useLanguage } from "@/context/LanguageContext";
+import { useLocale } from "@/hooks/useLocale";
+import { getMenuByPermissions, type NavItem } from "@/config/getMenuByRole";
+import { siteConfig } from "@/config/site";
 
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const pathname = usePathname();
-  const { user, logout, role } = useAuth();
+  const { user, logout } = useAuth();
+  const permissions = useAuthStore((s) => s.permissions);
   const { language } = useLanguage();
-  const nav = useLocale('nav');
-  const { main: navItems, admin: adminItems } = getMenuByRole(role);
+  const nav = useLocale("nav");
+  const { main: navItems, admin: adminItems } =
+    getMenuByPermissions(permissions);
 
   // Auto-collapse on smaller screens and detect mobile
   useEffect(() => {
@@ -44,8 +47,8 @@ export function AppSidebar() {
     };
 
     checkScreenSize();
-    window.addEventListener('resize', checkScreenSize);
-    return () => window.removeEventListener('resize', checkScreenSize);
+    window.addEventListener("resize", checkScreenSize);
+    return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
   // Close mobile menu on route change
@@ -80,7 +83,7 @@ export function AppSidebar() {
                 initial={{ x: -280 }}
                 animate={{ x: 0 }}
                 exit={{ x: -280 }}
-                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
                 className="fixed left-0 top-0 h-screen w-[280px] bg-sidebar text-sidebar-foreground border-r border-sidebar-border z-50 flex flex-col"
               >
                 {/* Close button */}
@@ -98,9 +101,13 @@ export function AppSidebar() {
                       <Network className="w-5 h-5 text-accent-foreground" />
                     </div>
                     <div>
-                      <h1 className="text-sm font-semibold">{siteConfig.shortName}</h1>
+                      <h1 className="text-sm font-semibold">
+                        {siteConfig.shortName}
+                      </h1>
                       <p className="text-xs text-sidebar-foreground/60">
-                        {language === 'th' ? siteConfig.organization : 'Department of Science Service'}
+                        {language === "th"
+                          ? siteConfig.organization
+                          : "Department of Science Service"}
                       </p>
                     </div>
                   </div>
@@ -143,13 +150,21 @@ export function AppSidebar() {
                 <div className="p-3 border-t border-sidebar-border">
                   <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-sidebar-accent transition-colors cursor-pointer">
                     <div className="flex items-center justify-center w-9 h-9 rounded-full bg-accent text-accent-foreground text-sm font-medium">
-                      {user?.name?.substring(0, 2).toUpperCase() || 'EA'}
+                      {user?.name?.substring(0, 2).toUpperCase() || "EA"}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{user?.name || 'User'}</p>
-                      <p className="text-xs text-sidebar-foreground/60 truncate">{user?.email || 'email@example.com'}</p>
+                      <p className="text-sm font-medium truncate">
+                        {user?.name || "User"}
+                      </p>
+                      <p className="text-xs text-sidebar-foreground/60 truncate">
+                        {user?.email || "email@example.com"}
+                      </p>
                     </div>
-                    <button onClick={logout} className="ml-auto p-1 hover:text-destructive transition-colors" title={nav.signOut}>
+                    <button
+                      onClick={logout}
+                      className="ml-auto p-1 hover:text-destructive transition-colors"
+                      title={nav.signOut}
+                    >
                       <LogOut className="w-4 h-4" />
                     </button>
                   </div>
@@ -171,10 +186,12 @@ export function AppSidebar() {
       className="relative flex flex-col h-screen bg-sidebar text-sidebar-foreground border-r border-sidebar-border shrink-0"
     >
       {/* Header */}
-      <div className={cn(
-        "flex items-center h-16 border-b border-sidebar-border transition-all duration-250",
-        collapsed ? "px-2 justify-center" : "px-4 justify-between"
-      )}>
+      <div
+        className={cn(
+          "flex items-center h-16 border-b border-sidebar-border transition-all duration-250",
+          collapsed ? "px-2 justify-center" : "px-4 justify-between",
+        )}
+      >
         <AnimatePresence mode="wait">
           {!collapsed && (
             <motion.div
@@ -188,9 +205,16 @@ export function AppSidebar() {
                 <Network className="w-5 h-5 text-accent-foreground" />
               </div>
               <div className="overflow-hidden min-w-0">
-                <h1 className="text-sm font-bold truncate">{siteConfig.shortName}</h1>
-                <p className="text-[10px] text-muted-foreground truncate" suppressHydrationWarning>
-                  {language === 'th' ? siteConfig.organization : 'Department of Science Service'}
+                <h1 className="text-sm font-bold truncate">
+                  {siteConfig.shortName}
+                </h1>
+                <p
+                  className="text-[10px] text-muted-foreground truncate"
+                  suppressHydrationWarning
+                >
+                  {language === "th"
+                    ? siteConfig.organization
+                    : "Department of Science Service"}
                 </p>
               </div>
             </motion.div>
@@ -201,9 +225,17 @@ export function AppSidebar() {
           onClick={() => setCollapsed(!collapsed)}
           className={cn(
             "p-1.5 rounded-md hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-sidebar-foreground transition-all duration-200 shrink-0",
-            collapsed && "mx-auto"
+            collapsed && "mx-auto",
           )}
-          title={collapsed ? (language === 'th' ? "ขยาย Sidebar" : "Expand Sidebar") : (language === 'th' ? "ย่อ Sidebar" : "Collapse Sidebar")}
+          title={
+            collapsed
+              ? language === "th"
+                ? "ขยาย Sidebar"
+                : "Expand Sidebar"
+              : language === "th"
+                ? "ย่อ Sidebar"
+                : "Collapse Sidebar"
+          }
         >
           {collapsed ? (
             <PanelLeft className="w-4 h-4" />
@@ -219,7 +251,7 @@ export function AppSidebar() {
           {!collapsed && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
+              animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.2 }}
               className="mb-2"
@@ -244,7 +276,7 @@ export function AppSidebar() {
           {!collapsed && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
+              animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.2 }}
               className="pt-4 mt-4 border-t border-sidebar-border"
@@ -267,16 +299,20 @@ export function AppSidebar() {
       </nav>
 
       {/* User Section */}
-      <div className={cn(
-        "border-t border-sidebar-border transition-all duration-250",
-        collapsed ? "p-2" : "p-3"
-      )}>
-        <div className={cn(
-          "flex items-center gap-3 p-2 rounded-lg hover:bg-sidebar-accent transition-colors cursor-pointer",
-          collapsed && "justify-center"
-        )}>
+      <div
+        className={cn(
+          "border-t border-sidebar-border transition-all duration-250",
+          collapsed ? "p-2" : "p-3",
+        )}
+      >
+        <div
+          className={cn(
+            "flex items-center gap-3 p-2 rounded-lg hover:bg-sidebar-accent transition-colors cursor-pointer",
+            collapsed && "justify-center",
+          )}
+        >
           <div className="flex items-center justify-center w-9 h-9 rounded-full bg-accent text-accent-foreground text-sm font-medium shrink-0">
-            {user?.name?.substring(0, 2).toUpperCase() || 'EA'}
+            {user?.name?.substring(0, 2).toUpperCase() || "EA"}
           </div>
           <AnimatePresence mode="wait">
             {!collapsed && (
@@ -287,8 +323,12 @@ export function AppSidebar() {
                 transition={{ duration: 0.2 }}
                 className="flex-1 min-w-0"
               >
-                <p className="text-sm font-medium truncate">{user?.name || 'User'}</p>
-                <p className="text-xs text-sidebar-foreground/60 truncate">{user?.email || 'email@example.com'}</p>
+                <p className="text-sm font-medium truncate">
+                  {user?.name || "User"}
+                </p>
+                <p className="text-xs text-sidebar-foreground/60 truncate">
+                  {user?.email || "email@example.com"}
+                </p>
               </motion.div>
             )}
           </AnimatePresence>
@@ -309,8 +349,6 @@ export function AppSidebar() {
           </AnimatePresence>
         </div>
       </div>
-
-
     </motion.aside>
   );
 }
@@ -319,12 +357,17 @@ interface NavButtonProps {
   item: NavItem;
   isActive: boolean;
   collapsed: boolean;
-  language?: 'th' | 'en';
+  language?: "th" | "en";
 }
 
-function NavButton({ item, isActive, collapsed, language = 'th' }: NavButtonProps) {
+function NavButton({
+  item,
+  isActive,
+  collapsed,
+  language = "th",
+}: NavButtonProps) {
   const Icon = item.icon;
-  const displayLabel = language === 'th' ? item.labelTh : item.label;
+  const displayLabel = language === "th" ? item.labelTh : item.label;
 
   return (
     <Link
@@ -334,7 +377,7 @@ function NavButton({ item, isActive, collapsed, language = 'th' }: NavButtonProp
         isActive
           ? "bg-sidebar-accent text-sidebar-accent-foreground"
           : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50",
-        collapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"
+        collapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5",
       )}
       title={collapsed ? displayLabel : undefined}
     >
@@ -342,19 +385,21 @@ function NavButton({ item, isActive, collapsed, language = 'th' }: NavButtonProp
         <motion.div
           layoutId="activeNav"
           className="absolute left-0 w-1 h-6 rounded-r-full bg-accent"
-          transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+          transition={{ type: "spring", stiffness: 500, damping: 30 }}
         />
       )}
-      <Icon className={cn(
-        "flex-shrink-0 transition-colors",
-        collapsed ? "w-5 h-5" : "w-5 h-5",
-        isActive && "text-accent"
-      )} />
+      <Icon
+        className={cn(
+          "flex-shrink-0 transition-colors",
+          collapsed ? "w-5 h-5" : "w-5 h-5",
+          isActive && "text-accent",
+        )}
+      />
       <AnimatePresence mode="wait">
         {!collapsed && (
           <motion.span
             initial={{ opacity: 0, width: 0, marginLeft: 0 }}
-            animate={{ opacity: 1, width: 'auto', marginLeft: 'auto' }}
+            animate={{ opacity: 1, width: "auto", marginLeft: "auto" }}
             exit={{ opacity: 0, width: 0, marginLeft: 0 }}
             transition={{ duration: 0.2 }}
             className="truncate flex-1"

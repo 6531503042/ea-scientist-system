@@ -1,6 +1,7 @@
-'use client';
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+"use client";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   History,
   X,
@@ -13,14 +14,15 @@ import {
   ChevronRight,
   User,
   Clock,
-  Filter
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useLanguage } from '@/context/LanguageContext';
+  Filter,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useLanguage } from "@/context/LanguageContext";
+import { apiClient } from "@/lib/api-client";
 
 interface Transaction {
   id: string;
-  action: 'create' | 'update' | 'delete' | 'link' | 'unlink';
+  action: "create" | "update" | "delete" | "link" | "unlink";
   targetName: string;
   targetType: string;
   user: string;
@@ -29,79 +31,129 @@ interface Transaction {
   canRevert: boolean;
 }
 
-const mockTransactions: Transaction[] = [
-  {
-    id: 't1',
-    action: 'update',
-    targetName: 'LIMS',
-    targetType: 'Application',
-    user: 'คุณวิภา สถาปัตย์',
-    timestamp: '14:32:15',
-    details: 'อัปเดต version: 5.2.0 → 5.2.1',
-    canRevert: true,
-  },
-  {
-    id: 't2',
-    action: 'link',
-    targetName: 'LIMS → Test Results',
-    targetType: 'Relationship',
-    user: 'คุณวิภา สถาปัตย์',
-    timestamp: '14:30:00',
-    details: 'เพิ่มความสัมพันธ์ใหม่: depends_on',
-    canRevert: true,
-  },
-  {
-    id: 't3',
-    action: 'create',
-    targetName: 'GovConnect API',
-    targetType: 'Integration',
-    user: 'ดร.สมชาย วิทยาการ',
-    timestamp: '10:15:30',
-    details: 'สร้าง Artefact ใหม่',
-    canRevert: true,
-  },
-  {
-    id: 't4',
-    action: 'delete',
-    targetName: 'Legacy Portal',
-    targetType: 'Application',
-    user: 'ดร.สมชาย วิทยาการ',
-    timestamp: '09:45:00',
-    details: 'ลบ Artefact ที่ deprecated',
-    canRevert: false,
-  },
-  {
-    id: 't5',
-    action: 'unlink',
-    targetName: 'E-Lab → Old DB',
-    targetType: 'Relationship',
-    user: 'คุณประสิทธิ์ เทคโน',
-    timestamp: 'เมื่อวาน 16:20',
-    details: 'ลบความสัมพันธ์เดิม',
-    canRevert: true,
-  },
-];
+function formatTimeLabel(value: string, language: "th" | "en") {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+
+  return date.toLocaleString(language === "th" ? "th-TH" : "en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    day: "2-digit",
+    month: "short",
+  });
+}
+
+function mapAuditAction(
+  action: string,
+  entityType: string,
+): Transaction["action"] {
+  const normalizedAction = action.toLowerCase();
+  const normalizedEntity = entityType.toLowerCase();
+
+  if (normalizedEntity.includes("relationship")) {
+    if (
+      normalizedAction.includes("delete") ||
+      normalizedAction.includes("remove")
+    )
+      return "unlink";
+    return "link";
+  }
+
+  if (normalizedAction.includes("create")) return "create";
+  if (
+    normalizedAction.includes("delete") ||
+    normalizedAction.includes("remove")
+  )
+    return "delete";
+  return "update";
+}
+
+function mapAuditLogToTransaction(
+  apiLog: any,
+  language: "th" | "en",
+): Transaction {
+  const action = mapAuditAction(
+    String(apiLog?.action || ""),
+    String(apiLog?.entityType || "system"),
+  );
+  const userName = apiLog?.user
+    ? `${apiLog.user.firstName} ${apiLog.user.lastName}`
+    : language === "th"
+      ? "ระบบอัตโนมัติ"
+      : "System";
+
+  return {
+    id: String(apiLog?.id ?? ""),
+    action,
+    targetName:
+      apiLog?.entityLabel ||
+      apiLog?.summary ||
+      (language === "th" ? "รายการระบบ" : "System entry"),
+    targetType: apiLog?.entityType || "system",
+    user: userName,
+    timestamp: formatTimeLabel(apiLog?.createdAt, language),
+    details: apiLog?.summary || undefined,
+    canRevert: action !== "delete",
+  };
+}
 
 interface TransactionHistoryProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export function TransactionHistory({ isOpen, onClose }: TransactionHistoryProps) {
+export function TransactionHistory({
+  isOpen,
+  onClose,
+}: TransactionHistoryProps) {
   const { t, language } = useLanguage();
-  const [filter, setFilter] = useState<Transaction['action'] | 'all'>('all');
+  const [filter, setFilter] = useState<Transaction["action"] | "all">("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const actionConfig: Record<Transaction['action'], { icon: React.ElementType; color: string; label: string }> = {
-    create: { icon: Plus, color: 'bg-success/10 text-success', label: t('history.create') },
-    update: { icon: Edit, color: 'bg-info/10 text-info', label: t('history.update') },
-    delete: { icon: Trash2, color: 'bg-destructive/10 text-destructive', label: t('detail.delete') },
-    link: { icon: Link2, color: 'bg-primary/10 text-primary', label: t('history.link') },
-    unlink: { icon: Link2, color: 'bg-warning/10 text-warning', label: t('history.unlink') },
+  const { data: transactions = [] } = useQuery<Transaction[]>({
+    queryKey: ["graph-transaction-history", language],
+    queryFn: async () => {
+      const data = await apiClient.get<any[]>("/api/v1/audit-logs?limit=50");
+      const items = Array.isArray(data) ? data : [];
+      return items.map((item) => mapAuditLogToTransaction(item, language));
+    },
+    staleTime: 60 * 1000,
+    refetchInterval: 60 * 1000,
+  });
+
+  const actionConfig: Record<
+    Transaction["action"],
+    { icon: React.ElementType; color: string; label: string }
+  > = {
+    create: {
+      icon: Plus,
+      color: "bg-success/10 text-success",
+      label: t("history.create"),
+    },
+    update: {
+      icon: Edit,
+      color: "bg-info/10 text-info",
+      label: t("history.update"),
+    },
+    delete: {
+      icon: Trash2,
+      color: "bg-destructive/10 text-destructive",
+      label: t("detail.delete"),
+    },
+    link: {
+      icon: Link2,
+      color: "bg-primary/10 text-primary",
+      label: t("history.link"),
+    },
+    unlink: {
+      icon: Link2,
+      color: "bg-warning/10 text-warning",
+      label: t("history.unlink"),
+    },
   };
 
-  const filteredTransactions = mockTransactions.filter(
-    t => filter === 'all' || t.action === filter
+  const filteredTransactions = transactions.filter(
+    (t) => filter === "all" || t.action === filter,
   );
 
   if (!isOpen) return null;
@@ -122,8 +174,12 @@ export function TransactionHistory({ isOpen, onClose }: TransactionHistoryProps)
                 <History className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h2 className="font-semibold text-foreground">{t('history.changeHistory')}</h2>
-                <p className="text-xs text-muted-foreground">{t('history.transactionHistory')}</p>
+                <h2 className="font-semibold text-foreground">
+                  {t("history.changeHistory")}
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  {t("history.transactionHistory")}
+                </p>
               </div>
             </div>
             <button
@@ -137,25 +193,25 @@ export function TransactionHistory({ isOpen, onClose }: TransactionHistoryProps)
           {/* Filter */}
           <div className="flex items-center gap-2 mt-4 overflow-x-auto pb-2">
             <button
-              onClick={() => setFilter('all')}
+              onClick={() => setFilter("all")}
               className={cn(
                 "px-3 py-1.5 text-xs font-medium rounded-full whitespace-nowrap transition-colors",
-                filter === 'all'
+                filter === "all"
                   ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80",
               )}
             >
-              {t('graph.total')}
+              {t("graph.total")}
             </button>
             {Object.entries(actionConfig).map(([key, config]) => (
               <button
                 key={key}
-                onClick={() => setFilter(key as Transaction['action'])}
+                onClick={() => setFilter(key as Transaction["action"])}
                 className={cn(
                   "px-3 py-1.5 text-xs font-medium rounded-full whitespace-nowrap transition-colors",
                   filter === key
                     ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80",
                 )}
               >
                 {config.label}
@@ -181,14 +237,18 @@ export function TransactionHistory({ isOpen, onClose }: TransactionHistoryProps)
                   className="bg-muted/30 rounded-xl border border-border overflow-hidden"
                 >
                   <button
-                    onClick={() => setExpandedId(isExpanded ? null : transaction.id)}
+                    onClick={() =>
+                      setExpandedId(isExpanded ? null : transaction.id)
+                    }
                     className="w-full p-3 text-left hover:bg-muted/50 transition-colors"
                   >
                     <div className="flex items-start gap-3">
-                      <div className={cn(
-                        "flex items-center justify-center w-8 h-8 rounded-lg flex-shrink-0",
-                        config.color
-                      )}>
+                      <div
+                        className={cn(
+                          "flex items-center justify-center w-8 h-8 rounded-lg flex-shrink-0",
+                          config.color,
+                        )}
+                      >
                         <Icon className="w-4 h-4" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -217,15 +277,19 @@ export function TransactionHistory({ isOpen, onClose }: TransactionHistoryProps)
                     {isExpanded && (
                       <motion.div
                         initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
+                        animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         className="border-t border-border overflow-hidden"
                       >
                         <div className="p-3 space-y-3">
                           <div className="flex items-center gap-2 text-sm">
                             <User className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-muted-foreground">{t('history.by')}:</span>
-                            <span className="text-foreground">{transaction.user}</span>
+                            <span className="text-muted-foreground">
+                              {t("history.by")}:
+                            </span>
+                            <span className="text-foreground">
+                              {transaction.user}
+                            </span>
                           </div>
                           {transaction.details && (
                             <div className="text-sm text-muted-foreground">
@@ -239,7 +303,7 @@ export function TransactionHistory({ isOpen, onClose }: TransactionHistoryProps)
                               className="flex items-center gap-2 px-3 py-2 w-full text-sm font-medium text-warning bg-warning/10 rounded-lg hover:bg-warning/20 transition-colors"
                             >
                               <RotateCcw className="w-4 h-4" />
-                              {t('history.revert')}
+                              {t("history.revert")}
                             </motion.button>
                           )}
                         </div>
@@ -255,7 +319,9 @@ export function TransactionHistory({ isOpen, onClose }: TransactionHistoryProps)
         {/* Footer */}
         <div className="p-4 border-t border-border">
           <p className="text-xs text-muted-foreground text-center">
-            {language === 'th' ? `แสดง ${filteredTransactions.length} จาก ${mockTransactions.length} รายการ` : `Showing ${filteredTransactions.length} of ${mockTransactions.length} items`}
+            {language === "th"
+              ? `แสดง ${filteredTransactions.length} จาก ${transactions.length} รายการ`
+              : `Showing ${filteredTransactions.length} of ${transactions.length} items`}
           </p>
         </div>
       </motion.div>

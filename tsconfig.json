@@ -27,5 +27,12 @@
     "strictNullChecks": false
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "src", "src_legacy_vite", "prisma/seed.ts"]
+  "exclude": [
+    "node_modules",
+    "src",
+    "src_legacy_vite",
+    "prisma/seed.ts",
+    "api",
+    "example-project"
+  ]
 }

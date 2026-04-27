@@ -1,10 +1,26 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import axiosInstance from "@/lib/axios";
 import type { Role } from "@/types/role";
-import { apiClient } from "@/lib/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import { mapApiRole } from "@/lib/api-adapters/iam";
+import { API_ENDPOINTS } from "@/lib/api/endpoints";
+
+export interface CreateRolePayload {
+  name: string;
+  role_key: string;
+  description?: string;
+  level: number;
+}
+
+export interface UpdateRolePayload {
+  name?: string;
+  role_key?: string;
+  description?: string;
+  level?: number;
+  is_active?: boolean;
+}
 
 export function useRoles() {
   const queryClient = useQueryClient();
@@ -17,22 +33,26 @@ export function useRoles() {
   } = useQuery<Role[]>({
     queryKey: queryKeys.roles.all,
     queryFn: async () => {
-      const data = await apiClient.get<any[]>("/api/v1/roles");
-      return data.map(mapApiRole);
+      const resp = await axiosInstance.get(API_ENDPOINTS.accessControl.roles, {
+        params: { limit: 100 },
+      });
+      // API: resp.data = { success, data: { data: [...], pagination: {} } }
+      const items: any[] = resp.data?.data?.data ?? [];
+      return items.map(mapApiRole);
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes cache
+    staleTime: 5 * 60 * 1000,
   });
 
   const createMutation = useMutation({
-    mutationFn: async (roleData: Partial<Role>) => {
-      const apiData = {
-        roleName: roleData.name,
-        description: roleData.description,
-        permissions: roleData.permissions,
-      };
-
-      const responseData = await apiClient.post<any>("/api/v1/roles", apiData);
-      return mapApiRole(responseData);
+    mutationFn: async (payload: CreateRolePayload) => {
+      const resp = await axiosInstance.post(API_ENDPOINTS.accessControl.roles, {
+        name: payload.name,
+        role_key: payload.role_key,
+        description: payload.description || null,
+        level: payload.level,
+        is_active: true,
+      });
+      return mapApiRole(resp.data?.data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.roles.all });
@@ -40,19 +60,15 @@ export function useRoles() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({
-      id,
-      roleData,
-    }: {
-      id: string;
-      roleData: Partial<Role>;
-    }) => {
-      const apiData: any = {};
-      if (roleData.name) apiData.roleName = roleData.name;
-      if (roleData.description) apiData.description = roleData.description;
-      if (roleData.permissions) apiData.permissions = roleData.permissions;
+    mutationFn: async ({ id, roleData }: { id: string; roleData: UpdateRolePayload }) => {
+      const dto: Record<string, unknown> = {};
+      if (roleData.name !== undefined) dto.name = roleData.name;
+      if (roleData.role_key !== undefined) dto.role_key = roleData.role_key;
+      if (roleData.description !== undefined) dto.description = roleData.description;
+      if (roleData.level !== undefined) dto.level = roleData.level;
+      if (roleData.is_active !== undefined) dto.is_active = roleData.is_active;
 
-      await apiClient.put(`/api/v1/roles/${id}`, apiData);
+      await axiosInstance.patch(API_ENDPOINTS.accessControl.roleById(Number(id)), dto);
       return true;
     },
     onSuccess: () => {
@@ -62,7 +78,7 @@ export function useRoles() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await apiClient.delete(`/api/v1/roles/${id}`);
+      await axiosInstance.delete(API_ENDPOINTS.accessControl.roleById(Number(id)));
       return true;
     },
     onSuccess: () => {
@@ -70,7 +86,6 @@ export function useRoles() {
     },
   });
 
-  // Derived error state combining query and mutation errors
   const error =
     queryError?.message ||
     createMutation.error?.message ||
@@ -78,7 +93,6 @@ export function useRoles() {
     deleteMutation.error?.message ||
     null;
 
-  // Derived loading state
   const loading =
     isLoading ||
     createMutation.isPending ||
@@ -91,7 +105,7 @@ export function useRoles() {
     error,
     fetchRoles: refetch,
     createRole: createMutation.mutateAsync,
-    updateRole: (id: string, roleData: Partial<Role>) =>
+    updateRole: (id: string, roleData: UpdateRolePayload) =>
       updateMutation.mutateAsync({ id, roleData }),
     deleteRole: deleteMutation.mutateAsync,
   };

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -26,31 +25,32 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { motion } from "framer-motion";
-import { resolveApiUrl } from "@/lib/api-client";
+import { authService } from "@/features/auth/services/auth.service";
+import { useAuthStore } from "@/store/use-auth-store";
 
 const testAccounts = {
   admin: [
     {
-      name: "ผู้ดูแลระบบ",
-      email: "admin@example.com",
-      password: "Password123!",
+      name: "Somchai (Admin)",
+      email: "somchai.admin",
+      password: "password123",
       role: "admin",
     },
   ],
   architect: [
     {
-      name: "Somchai A.",
-      email: "somchai@dss.go.th",
+      name: "Wipa (Architect)",
+      email: "wipa.architect",
       password: "password123",
       role: "architect",
     },
   ],
   executive: [
     {
-      name: "Director N.",
-      email: "director@dss.go.th",
+      name: "Prasit (Manager)",
+      email: "prasit.manager",
       password: "password123",
-      role: "executive",
+      role: "manager",
     },
   ],
 };
@@ -125,8 +125,9 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [testAccountsOpen, setTestAccountsOpen] = useState(false);
-  const { login } = useAuth();
-  const router = useRouter(); // Changed from useNavigate
+  const setAuth = useAuthStore((s) => s.setAuth);
+  const setAccessControl = useAuthStore((s) => s.setAccessControl);
+  const router = useRouter();
   const { toast } = useToast();
 
   // Real login handler
@@ -137,26 +138,19 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const response = await fetch(resolveApiUrl("/api/v1/auth/login"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email, password }),
-      });
+      const res = await authService.login({ username: email, password });
+      const { access_token, user } = res.data;
 
-      const data = await response.json();
+      setAuth(user, access_token);
 
-      if (!response.ok) {
-        throw new Error(data.message || data.error || "เข้าสู่ระบบไม่สำเร็จ");
-      }
+      const acRes = await authService.getAccessControl();
+      setAccessControl(acRes.data);
 
-      // Login successful
-      // Token is in httpOnly cookie, just update context state
-      login("cookie-auth", data.data);
+      document.cookie = "session=1; Path=/; SameSite=Lax";
 
       toast({
         title: "เข้าสู่ระบบสำเร็จ",
-        description: `ยินดีต้อนรับกลับเข้าสู่ระบบ`,
+        description: `ยินดีต้อนรับ ${user.first_name}`,
       });
 
       router.push("/");
@@ -226,7 +220,7 @@ export default function Login() {
           <CardHeader className="space-y-1 text-center">
             <CardTitle className="text-2xl">เข้าสู่ระบบ</CardTitle>
             <CardDescription>
-              กรอกอีเมลและรหัสผ่านเพื่อเข้าสู่ระบบ
+              กรอกชื่อผู้ใช้และรหัสผ่านเพื่อเข้าสู่ระบบ
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -234,11 +228,11 @@ export default function Login() {
               {/* Role Selection */}
 
               <div className="space-y-2">
-                <Label htmlFor="email">อีเมล</Label>
+                <Label htmlFor="email">ชื่อผู้ใช้</Label>
                 <Input
                   id="email"
-                  type="email"
-                  placeholder="example@dss.go.th"
+                  type="text"
+                  placeholder="somchai.admin"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required

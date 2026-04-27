@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { useRouter } from 'next/navigation';
+import { useMemo } from "react";
+import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import {
   Layers,
   Clock,
@@ -16,13 +16,21 @@ import {
   ArrowRight,
   CheckCircle2,
   Calendar,
-  GitBranch
-} from 'lucide-react';
-import { artefacts, relationships, typeLabels } from '@/data/mockData';
-import { useLanguage } from '@/context/LanguageContext';
+  GitBranch,
+} from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
+import { useArtefacts } from "@/hooks/useArtefacts";
+import { useRelationships } from "@/hooks/useRelationships";
 
 // TOGAF ordered types
-const togafOrder = ['business', 'application', 'data', 'technology', 'security', 'integration'] as const;
+const togafOrder = [
+  "business",
+  "application",
+  "data",
+  "technology",
+  "security",
+  "integration",
+] as const;
 
 const typeIcons = {
   business: Briefcase,
@@ -34,51 +42,85 @@ const typeIcons = {
 };
 
 const typeColors = {
-  business: { bg: 'bg-violet-500/10', text: 'text-violet-500', border: 'border-violet-500/30' },
-  application: { bg: 'bg-sky-500/10', text: 'text-sky-500', border: 'border-sky-500/30' },
-  data: { bg: 'bg-teal-500/10', text: 'text-teal-500', border: 'border-teal-500/30' },
-  technology: { bg: 'bg-indigo-500/10', text: 'text-indigo-500', border: 'border-indigo-500/30' },
-  security: { bg: 'bg-amber-500/10', text: 'text-amber-500', border: 'border-amber-500/30' },
-  integration: { bg: 'bg-pink-500/10', text: 'text-pink-500', border: 'border-pink-500/30' },
+  business: {
+    bg: "bg-violet-500/10",
+    text: "text-violet-500",
+    border: "border-violet-500/30",
+  },
+  application: {
+    bg: "bg-sky-500/10",
+    text: "text-sky-500",
+    border: "border-sky-500/30",
+  },
+  data: {
+    bg: "bg-teal-500/10",
+    text: "text-teal-500",
+    border: "border-teal-500/30",
+  },
+  technology: {
+    bg: "bg-indigo-500/10",
+    text: "text-indigo-500",
+    border: "border-indigo-500/30",
+  },
+  security: {
+    bg: "bg-amber-500/10",
+    text: "text-amber-500",
+    border: "border-amber-500/30",
+  },
+  integration: {
+    bg: "bg-pink-500/10",
+    text: "text-pink-500",
+    border: "border-pink-500/30",
+  },
 };
 
 const togafLabels = {
-  business: { en: 'Business Architecture', th: 'สถาปัตยกรรมธุรกิจ' },
-  application: { en: 'Application Architecture', th: 'สถาปัตยกรรมแอปพลิเคชัน' },
-  data: { en: 'Data Architecture', th: 'สถาปัตยกรรมข้อมูล' },
-  technology: { en: 'Technology Architecture', th: 'สถาปัตยกรรมเทคโนโลยี' },
-  security: { en: 'Security Architecture', th: 'สถาปัตยกรรมความปลอดภัย' },
-  integration: { en: 'Integration Architecture', th: 'สถาปัตยกรรมการเชื่อมต่อ' },
+  business: { en: "Business Architecture", th: "สถาปัตยกรรมธุรกิจ" },
+  application: { en: "Application Architecture", th: "สถาปัตยกรรมแอปพลิเคชัน" },
+  data: { en: "Data Architecture", th: "สถาปัตยกรรมข้อมูล" },
+  technology: { en: "Technology Architecture", th: "สถาปัตยกรรมเทคโนโลยี" },
+  security: { en: "Security Architecture", th: "สถาปัตยกรรมความปลอดภัย" },
+  integration: {
+    en: "Integration Architecture",
+    th: "สถาปัตยกรรมการเชื่อมต่อ",
+  },
 };
 
 export default function DashboardPage() {
   const router = useRouter();
   const { language, t } = useLanguage();
+  const { allArtefacts } = useArtefacts();
+  const { relationships } = useRelationships();
 
-  // Calculate real stats from mockData
   const stats = useMemo(() => {
-    const total = artefacts.length;
-    const byType = togafOrder.map(type => ({
+    const total = allArtefacts.length;
+    const byType = togafOrder.map((type) => ({
       type,
-      count: artefacts.filter(a => a.type === type).length,
+      count: allArtefacts.filter((a) => a.type === type).length,
       icon: typeIcons[type],
       colors: typeColors[type],
       label: togafLabels[type],
     }));
     const totalRelationships = relationships.length;
 
-    // Get unique departments
-    const departments = new Set(artefacts.map(a => a.department));
+    const departments = new Set(allArtefacts.map((a) => a.department));
 
-    return { total, byType, totalRelationships, departmentCount: departments.size };
-  }, []);
+    return {
+      total,
+      byType,
+      totalRelationships,
+      departmentCount: departments.size,
+    };
+  }, [allArtefacts, relationships]);
 
-  // Recent activities (with both names for language switching)
   const recentActivities = useMemo(() => {
-    return artefacts
-      .sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime())
+    return [...allArtefacts]
+      .sort(
+        (a, b) =>
+          new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime(),
+      )
       .slice(0, 5)
-      .map(a => ({
+      .map((a) => ({
         name: a.name,
         nameTh: a.nameTh || a.name,
         type: a.type,
@@ -86,11 +128,10 @@ export default function DashboardPage() {
         owner: a.owner,
         date: a.lastUpdated,
       }));
-  }, []);
+  }, [allArtefacts]);
 
   return (
     <div className="flex-1 overflow-y-auto">
-
       {/* Quick Stats - 3 cards only */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         <motion.div
@@ -103,8 +144,12 @@ export default function DashboardPage() {
               <Layers className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">{stats.total}</p>
-              <p className="text-xs text-muted-foreground">{t('dashboard.totalArtefacts')}</p>
+              <p className="text-2xl font-bold text-foreground">
+                {stats.total}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {t("dashboard.totalArtefacts")}
+              </p>
             </div>
           </div>
           {/* Tooltip */}
@@ -125,8 +170,12 @@ export default function DashboardPage() {
               <GitBranch className="w-5 h-5 text-success" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">{stats.totalRelationships}</p>
-              <p className="text-xs text-muted-foreground">{t('dashboard.relationships')}</p>
+              <p className="text-2xl font-bold text-foreground">
+                {stats.totalRelationships}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {t("dashboard.relationships")}
+              </p>
             </div>
           </div>
           {/* Tooltip */}
@@ -147,8 +196,12 @@ export default function DashboardPage() {
               <Users className="w-5 h-5 text-info" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">{stats.departmentCount}</p>
-              <p className="text-xs text-muted-foreground">{t('dashboard.departments')}</p>
+              <p className="text-2xl font-bold text-foreground">
+                {stats.departmentCount}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {t("dashboard.departments")}
+              </p>
             </div>
           </div>
           {/* Tooltip */}
@@ -171,14 +224,18 @@ export default function DashboardPage() {
           >
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-lg font-semibold text-foreground">{t('dashboard.togafArchitecture')}</h2>
-                <p className="text-xs text-muted-foreground">{t('dashboard.byArchType')}</p>
+                <h2 className="text-lg font-semibold text-foreground">
+                  {t("dashboard.togafArchitecture")}
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  {t("dashboard.byArchType")}
+                </p>
               </div>
               <button
-                onClick={() => router.push('/artefacts')}
+                onClick={() => router.push("/artefacts")}
                 className="flex items-center gap-1 text-sm text-primary hover:underline"
               >
-                {t('common.viewAll')}
+                {t("common.viewAll")}
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
@@ -192,20 +249,24 @@ export default function DashboardPage() {
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.25 + index * 0.05 }}
-                    onClick={() => router.push('/artefacts')}
+                    onClick={() => router.push("/artefacts")}
                     className={`p-4 rounded-xl border ${item.colors.border} ${item.colors.bg} hover:shadow-md transition-all text-left group`}
                   >
                     <div className="flex items-center gap-3 mb-3">
-                      <div className={`w-10 h-10 rounded-lg ${item.colors.bg} flex items-center justify-center`}>
+                      <div
+                        className={`w-10 h-10 rounded-lg ${item.colors.bg} flex items-center justify-center`}
+                      >
                         <Icon className={`w-5 h-5 ${item.colors.text}`} />
                       </div>
-                      <span className="text-2xl font-bold text-foreground">{item.count}</span>
+                      <span className="text-2xl font-bold text-foreground">
+                        {item.count}
+                      </span>
                     </div>
                     <p className="text-sm font-medium text-foreground mb-0.5">
-                      {language === 'th' ? item.label.th : item.label.en}
+                      {language === "th" ? item.label.th : item.label.en}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {language === 'th' ? item.label.en : item.label.th}
+                      {language === "th" ? item.label.en : item.label.th}
                     </p>
                   </motion.button>
                 );
@@ -223,57 +284,75 @@ export default function DashboardPage() {
             transition={{ delay: 0.25 }}
             className="bg-card border border-border rounded-xl p-4"
           >
-            <h3 className="font-semibold text-foreground mb-3">{t('dashboard.quickActions')}</h3>
+            <h3 className="font-semibold text-foreground mb-3">
+              {t("dashboard.quickActions")}
+            </h3>
             <div className="space-y-2">
               <button
-                onClick={() => router.push('/artefacts')}
+                onClick={() => router.push("/artefacts")}
                 className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors text-left"
               >
                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                   <Layers className="w-4 h-4 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-foreground">{t('dashboard.manageArtefacts')}</p>
-                  <p className="text-xs text-muted-foreground">{t('dashboard.manageArtefactsDesc')}</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {t("dashboard.manageArtefacts")}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {t("dashboard.manageArtefactsDesc")}
+                  </p>
                 </div>
               </button>
 
               <button
-                onClick={() => router.push('/graph')}
+                onClick={() => router.push("/graph")}
                 className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors text-left"
               >
                 <div className="w-8 h-8 rounded-lg bg-info/10 flex items-center justify-center">
                   <GitBranch className="w-4 h-4 text-info" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-foreground">{t('dashboard.architectureMap')}</p>
-                  <p className="text-xs text-muted-foreground">{t('dashboard.architectureMapDesc')}</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {t("dashboard.architectureMap")}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {t("dashboard.architectureMapDesc")}
+                  </p>
                 </div>
               </button>
 
               <button
-                onClick={() => router.push('/reports')}
+                onClick={() => router.push("/reports")}
                 className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors text-left"
               >
                 <div className="w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center">
                   <FileText className="w-4 h-4 text-success" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-foreground">{t('dashboard.reports')}</p>
-                  <p className="text-xs text-muted-foreground">{t('dashboard.reportsDesc')}</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {t("dashboard.reports")}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {t("dashboard.reportsDesc")}
+                  </p>
                 </div>
               </button>
 
               <button
-                onClick={() => router.push('/users')}
+                onClick={() => router.push("/users")}
                 className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors text-left"
               >
                 <div className="w-8 h-8 rounded-lg bg-warning/10 flex items-center justify-center">
                   <Users className="w-4 h-4 text-warning" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-foreground">{t('dashboard.users')}</p>
-                  <p className="text-xs text-muted-foreground">{t('dashboard.usersDesc')}</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {t("dashboard.users")}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {t("dashboard.usersDesc")}
+                  </p>
                 </div>
               </button>
             </div>
@@ -287,13 +366,18 @@ export default function DashboardPage() {
             className="bg-card border border-border rounded-xl p-4"
           >
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-foreground">{t('dashboard.recentUpdates')}</h3>
-              <button className="text-xs text-primary hover:underline">{t('common.viewAll')}</button>
+              <h3 className="font-semibold text-foreground">
+                {t("dashboard.recentUpdates")}
+              </h3>
+              <button className="text-xs text-primary hover:underline">
+                {t("common.viewAll")}
+              </button>
             </div>
             <div className="space-y-3">
               {recentActivities.map((activity, index) => {
                 const Icon = typeIcons[activity.type as keyof typeof typeIcons];
-                const colors = typeColors[activity.type as keyof typeof typeColors];
+                const colors =
+                  typeColors[activity.type as keyof typeof typeColors];
                 return (
                   <motion.div
                     key={index}
@@ -302,21 +386,28 @@ export default function DashboardPage() {
                     transition={{ delay: 0.35 + index * 0.05 }}
                     className="flex items-start gap-3"
                   >
-                    <div className={`w-8 h-8 rounded-lg ${colors.bg} flex items-center justify-center flex-shrink-0`}>
+                    <div
+                      className={`w-8 h-8 rounded-lg ${colors.bg} flex items-center justify-center flex-shrink-0`}
+                    >
                       <Icon className={`w-4 h-4 ${colors.text}`} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">
-                        {language === 'th' ? activity.nameTh : activity.name}
+                        {language === "th" ? activity.nameTh : activity.name}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {activity.owner} • {activity.date}
                       </p>
                     </div>
-                    <span className={`text-xs px-2 py-0.5 rounded-full capitalize ${activity.status === 'active' ? 'bg-success/10 text-success' :
-                      activity.status === 'draft' ? 'bg-warning/10 text-warning' :
-                        'bg-muted text-muted-foreground'
-                      }`}>
+                    <span
+                      className={`text-xs px-2 py-0.5 rounded-full capitalize ${
+                        activity.status === "active"
+                          ? "bg-success/10 text-success"
+                          : activity.status === "draft"
+                            ? "bg-warning/10 text-warning"
+                            : "bg-muted text-muted-foreground"
+                      }`}
+                    >
                       {activity.status}
                     </span>
                   </motion.div>
@@ -332,12 +423,16 @@ export default function DashboardPage() {
             transition={{ delay: 0.35 }}
             className="bg-gradient-to-br from-primary/10 to-info/10 border border-primary/20 rounded-xl p-4"
           >
-            <h3 className="font-semibold text-foreground mb-2">{t('dashboard.aboutSystem')}</h3>
+            <h3 className="font-semibold text-foreground mb-2">
+              {t("dashboard.aboutSystem")}
+            </h3>
             <p className="text-xs text-muted-foreground mb-3">
-              {t('dashboard.aboutDesc')}
+              {t("dashboard.aboutDesc")}
             </p>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="px-2 py-0.5 bg-background/50 rounded">TOGAF 10</span>
+              <span className="px-2 py-0.5 bg-background/50 rounded">
+                TOGAF 10
+              </span>
               <span className="px-2 py-0.5 bg-background/50 rounded">DSS</span>
               <span className="px-2 py-0.5 bg-background/50 rounded">v1.0</span>
             </div>
