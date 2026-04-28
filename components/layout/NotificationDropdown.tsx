@@ -17,6 +17,7 @@ import {
   Shield,
 } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
+import { useAuthStore } from "@/store/use-auth-store";
 
 type NotificationType = "info" | "warning" | "success" | "error";
 type NotificationCategory = "artefact" | "system" | "user" | "security";
@@ -116,6 +117,7 @@ export function NotificationDropdown() {
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   const { data: notificationList = [] } = useQuery<Notification[]>({
     queryKey: ["header-notifications"],
@@ -124,8 +126,14 @@ export function NotificationDropdown() {
       const items = Array.isArray(data) ? data : [];
       return items.map(mapAuditToNotification);
     },
+    enabled: isAuthenticated,
     staleTime: 60 * 1000,
-    refetchInterval: 60 * 1000,
+    refetchInterval: () => {
+      if (!isAuthenticated) return false;
+      if (typeof document !== "undefined" && document.hidden) return false;
+      return 60 * 1000;
+    },
+    refetchOnWindowFocus: true,
   });
 
   const visibleNotifications = notificationList

@@ -1,37 +1,41 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, ShieldCheck, Save, Loader2, Check, RefreshCw } from 'lucide-react';
-import { toast } from 'sonner';
-import axiosInstance from '@/lib/axios';
-import { API_ENDPOINTS } from '@/lib/api/endpoints';
-import type { Role } from '@/types/role';
+import { useState, useEffect, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, ShieldCheck, Save, Loader2, Check, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
+import axiosInstance from "@/lib/axios";
+import { API_ENDPOINTS } from "@/lib/api/endpoints";
+import type { Role } from "@/types/role";
 
 interface PermissionCatalog {
-  permission_keys: string[];
-  action_keys: string[];
+  permissionKeys: string[];
+  actionKeys: string[];
   permissions: string[];
 }
 
 interface RolePermissionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  role: (Role & { role_key?: string }) | null;
+  role: (Role & { roleKey?: string }) | null;
 }
 
 const ACTION_LABELS: Record<string, string> = {
-  read: 'อ่าน',
-  create: 'สร้าง',
-  update: 'แก้ไข',
-  delete: 'ลบ',
-  submit: 'ส่ง',
-  approve: 'อนุมัติ',
-  reject: 'ปฏิเสธ',
-  comment: 'แสดงความเห็น',
+  read: "อ่าน",
+  create: "สร้าง",
+  update: "แก้ไข",
+  delete: "ลบ",
+  submit: "ส่ง",
+  approve: "อนุมัติ",
+  reject: "ปฏิเสธ",
+  comment: "แสดงความเห็น",
 };
 
-export function RolePermissionModal({ isOpen, onClose, role }: RolePermissionModalProps) {
+export function RolePermissionModal({
+  isOpen,
+  onClose,
+  role,
+}: RolePermissionModalProps) {
   const [catalog, setCatalog] = useState<PermissionCatalog | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [loadingCatalog, setLoadingCatalog] = useState(false);
@@ -45,13 +49,15 @@ export function RolePermissionModal({ isOpen, onClose, role }: RolePermissionMod
       try {
         const [catalogResp, tokenResp] = await Promise.all([
           axiosInstance.get(API_ENDPOINTS.accessControl.permissionCatalog),
-          axiosInstance.get(API_ENDPOINTS.accessControl.rolePermissionTokens(role!._id)),
+          axiosInstance.get(
+            API_ENDPOINTS.accessControl.rolePermissionTokens(role!._id),
+          ),
         ]);
         setCatalog(catalogResp.data?.data ?? null);
         const currentPerms: string[] = tokenResp.data?.data?.permissions ?? [];
         setSelected(new Set(currentPerms));
       } catch {
-        toast.error('โหลดข้อมูลสิทธิ์ไม่สำเร็จ');
+        toast.error("โหลดข้อมูลสิทธิ์ไม่สำเร็จ");
       } finally {
         setLoadingCatalog(false);
       }
@@ -65,7 +71,7 @@ export function RolePermissionModal({ isOpen, onClose, role }: RolePermissionMod
     if (!catalog) return {};
     const map: Record<string, string[]> = {};
     for (const token of catalog.permissions) {
-      const idx = token.lastIndexOf('.');
+      const idx = token.lastIndexOf(".");
       if (idx <= 0) continue;
       const key = token.slice(0, idx);
       const action = token.slice(idx + 1);
@@ -102,14 +108,17 @@ export function RolePermissionModal({ isOpen, onClose, role }: RolePermissionMod
     if (!role) return;
     setSaving(true);
     try {
-      await axiosInstance.put(API_ENDPOINTS.accessControl.rolePermissionTokens(role._id), {
-        mode: 'replace',
-        permissions: Array.from(selected),
-      });
+      await axiosInstance.put(
+        API_ENDPOINTS.accessControl.rolePermissionTokens(role._id),
+        {
+          mode: "replace",
+          permissions: Array.from(selected),
+        },
+      );
       toast.success(`บันทึกสิทธิ์ของ "${role.name}" สำเร็จ`);
       onClose();
     } catch (err: any) {
-      const msg = err?.response?.data?.message ?? 'บันทึกสิทธิ์ไม่สำเร็จ';
+      const msg = err?.response?.data?.message ?? "บันทึกสิทธิ์ไม่สำเร็จ";
       toast.error(msg);
     } finally {
       setSaving(false);
@@ -143,9 +152,14 @@ export function RolePermissionModal({ isOpen, onClose, role }: RolePermissionMod
               <div>
                 <h2 className="text-base font-bold">กำหนดสิทธิ์การเข้าถึง</h2>
                 <p className="text-xs text-muted-foreground">
-                  บทบาท: <span className="font-semibold text-foreground">{role.name}</span>
-                  {(role as any).role_key && (
-                    <span className="ml-1 font-mono text-muted-foreground">({(role as any).role_key})</span>
+                  บทบาท:{" "}
+                  <span className="font-semibold text-foreground">
+                    {role.name}
+                  </span>
+                  {(role as any).roleKey && (
+                    <span className="ml-1 font-mono text-muted-foreground">
+                      ({(role as any).roleKey})
+                    </span>
                   )}
                 </p>
               </div>
@@ -154,7 +168,10 @@ export function RolePermissionModal({ isOpen, onClose, role }: RolePermissionMod
               <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
                 เลือกแล้ว {selected.size} สิทธิ์
               </span>
-              <button onClick={onClose} className="p-2 hover:bg-muted rounded-lg transition-colors">
+              <button
+                onClick={onClose}
+                className="p-2 hover:bg-muted rounded-lg transition-colors"
+              >
                 <X className="w-5 h-5 text-muted-foreground" />
               </button>
             </div>
@@ -175,12 +192,17 @@ export function RolePermissionModal({ isOpen, onClose, role }: RolePermissionMod
               <div className="space-y-3">
                 {Object.entries(grouped).map(([permKey, actions]) => {
                   const tokens = actions.map((a) => `${permKey}.${a}`);
-                  const selectedCount = tokens.filter((t) => selected.has(t)).length;
+                  const selectedCount = tokens.filter((t) =>
+                    selected.has(t),
+                  ).length;
                   const allSelected = selectedCount === tokens.length;
                   const someSelected = selectedCount > 0 && !allSelected;
 
                   return (
-                    <div key={permKey} className="border border-border rounded-lg overflow-hidden">
+                    <div
+                      key={permKey}
+                      className="border border-border rounded-lg overflow-hidden"
+                    >
                       {/* Group header */}
                       <button
                         type="button"
@@ -191,16 +213,20 @@ export function RolePermissionModal({ isOpen, onClose, role }: RolePermissionMod
                           <div
                             className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 ${
                               allSelected
-                                ? 'bg-primary border-primary text-primary-foreground'
+                                ? "bg-primary border-primary text-primary-foreground"
                                 : someSelected
-                                ? 'bg-primary/30 border-primary'
-                                : 'border-border'
+                                  ? "bg-primary/30 border-primary"
+                                  : "border-border"
                             }`}
                           >
                             {allSelected && <Check className="w-2.5 h-2.5" />}
-                            {someSelected && <div className="w-1.5 h-1.5 bg-primary rounded-sm" />}
+                            {someSelected && (
+                              <div className="w-1.5 h-1.5 bg-primary rounded-sm" />
+                            )}
                           </div>
-                          <span className="text-sm font-semibold font-mono">{permKey}</span>
+                          <span className="text-sm font-semibold font-mono">
+                            {permKey}
+                          </span>
                         </div>
                         <span className="text-xs text-muted-foreground">
                           {selectedCount}/{tokens.length}
@@ -219,8 +245,8 @@ export function RolePermissionModal({ isOpen, onClose, role }: RolePermissionMod
                               onClick={() => toggle(token)}
                               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
                                 isSelected
-                                  ? 'bg-primary text-primary-foreground border-primary'
-                                  : 'bg-background text-muted-foreground border-border hover:border-primary/50 hover:text-foreground'
+                                  ? "bg-primary text-primary-foreground border-primary"
+                                  : "bg-background text-muted-foreground border-border hover:border-primary/50 hover:text-foreground"
                               }`}
                             >
                               {isSelected && <Check className="w-3 h-3" />}
@@ -251,9 +277,15 @@ export function RolePermissionModal({ isOpen, onClose, role }: RolePermissionMod
               className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 flex items-center gap-2 disabled:opacity-50"
             >
               {saving ? (
-                <><Loader2 className="w-4 h-4 animate-spin" />กำลังบันทึก...</>
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  กำลังบันทึก...
+                </>
               ) : (
-                <><Save className="w-4 h-4" />บันทึกสิทธิ์</>
+                <>
+                  <Save className="w-4 h-4" />
+                  บันทึกสิทธิ์
+                </>
               )}
             </button>
           </div>

@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { authService } from "@/features/auth/services/auth.service";
+import { clearClientAuthState } from "@/features/auth/utils/clear-client-auth";
 import { useAuthStore } from "@/store/use-auth-store";
 
 export function useLogout() {
@@ -18,7 +19,7 @@ export function useLogout() {
       // Still clear local session even if revoke request fails.
     } finally {
       logout();
-      document.cookie = "session=; Path=/; Max-Age=0; SameSite=Lax";
+      clearClientAuthState();
       queryClient.clear();
       toast.success("ออกจากระบบเรียบร้อยแล้ว");
       router.push("/login");

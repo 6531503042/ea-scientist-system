@@ -5,16 +5,16 @@ export type { UserStatus, Role as RoleLite, Department as DepartmentLite };
 
 export interface UserItem {
   id: number;
-  role_id: number;
-  department_id: number;
-  first_name: string;
-  last_name: string;
+  roleId: number;
+  departmentId: number;
+  firstName: string;
+  lastName: string;
   email: string;
   username: string;
-  phone_number?: string | null;
+  phoneNumber?: string | null;
   status: UserStatus;
-  created_at?: string;
-  updated_at?: string;
+  createdAt?: string;
+  updatedAt?: string;
   role?: Role;
   department?: Department;
 }
@@ -25,24 +25,24 @@ export interface UsersListPayload {
 }
 
 export interface CreateUserRequest {
-  role_id: number;
-  department_id: number;
-  first_name: string;
-  last_name: string;
+  roleId: number;
+  departmentId: number;
+  firstName: string;
+  lastName: string;
   email: string;
   username: string;
   password?: string;
-  phone_number?: string | null;
+  phoneNumber?: string | null;
   status: UserStatus;
 }
 
 export interface UpdateUserRequest {
-  first_name?: string;
-  last_name?: string;
+  firstName?: string;
+  lastName?: string;
   email?: string;
   password?: string;
-  phone_number?: string | null;
+  phoneNumber?: string | null;
   status?: UserStatus;
-  role_id?: number;
-  department_id?: number;
+  roleId?: number;
+  departmentId?: number;
 }

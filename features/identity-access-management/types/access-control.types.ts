@@ -15,14 +15,14 @@ export interface Pagination {
 export interface RoleItem {
   id: number;
   name: string;
-  role_key: string;
+  roleKey: string;
   description: string | null;
   level: number;
-  is_active: boolean;
-  updated_at?: string;
+  isActive: boolean;
+  updatedAt?: string;
   _count?: {
     users?: number;
-    role_permissions?: number;
+    rolePermissions?: number;
   };
 }
 
@@ -33,34 +33,34 @@ export interface RolesListPayload {
 
 export interface CreateRoleRequest {
   name: string;
-  role_key: string;
+  roleKey: string;
   description?: string;
   level: number;
-  is_active?: boolean;
+  isActive?: boolean;
 }
 
 export interface UpdateRoleRequest {
   name?: string;
-  role_key?: string;
+  roleKey?: string;
   description?: string;
   level?: number;
-  is_active?: boolean;
+  isActive?: boolean;
 }
 
 export interface UpdateRoleStatusRequest {
-  is_active: boolean;
+  isActive: boolean;
 }
 
 export interface RolePermissionTokensPayload {
   role: {
     id: number;
     name: string;
-    role_key: string;
+    roleKey: string;
     level: number;
   };
   permissions: string[];
-  policy_version: string;
-  generated_at: string;
+  policyVersion: string;
+  generatedAt: string;
 }
 
 export interface ReplacePermissionTokensRequest {
@@ -69,10 +69,10 @@ export interface ReplacePermissionTokensRequest {
 }
 
 export interface ReplacePermissionTokensResult {
-  saved_count: number;
-  removed_count: number;
+  savedCount: number;
+  removedCount: number;
   permissions: string[];
-  invalid_permissions: string[];
+  invalidPermissions: string[];
 }
 
 export interface PreviewPermissionTokensRequest {
@@ -85,9 +85,9 @@ export interface PreviewPermissionTokensResult {
 }
 
 export interface PermissionCatalogPayload {
-  permission_keys: string[];
-  action_keys: string[];
+  permissionKeys: string[];
+  actionKeys: string[];
   permissions: string[];
-  policy_version: string;
-  generated_at: string;
+  policyVersion: string;
+  generatedAt: string;
 }

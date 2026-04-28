@@ -154,7 +154,7 @@ export function CreateArtefactModal({
         description: data.description
           ? { en: data.description, th: data.description }
           : undefined,
-        categoryId,
+        categoryId: categoryId,
         architectureLayerId: layerId,
         lifecycleStatus: STATUS_MAP[data.status] || "ACTIVE",
         responsibleById: data.ownerId ? Number(data.ownerId) : undefined,

@@ -1,4 +1,4 @@
-/* ── Types matching API Prisma schema (snake_case contract) ── */
+/* ── Types matching API Prisma schema (camelCase contract) ── */
 
 export type UserStatus = "active" | "suspended" | "inactive";
 
@@ -6,9 +6,9 @@ export interface Role {
   id: number;
   name: string;
   description: string | null;
-  role_key: string;
+  roleKey: string;
   level: number;
-  is_active: boolean;
+  isActive: boolean;
 }
 
 export interface Department {
@@ -18,18 +18,18 @@ export interface Department {
 
 export interface User {
   id: number;
-  role_id: number;
-  department_id: number;
-  first_name: string;
-  last_name: string;
+  roleId: number;
+  departmentId: number;
+  firstName: string;
+  lastName: string;
   email: string;
   username: string;
-  phone_number: string | null;
+  phoneNumber: string | null;
   status: UserStatus;
-  must_change_password: boolean;
-  last_login_at: string | null;
-  created_at: string;
-  updated_at: string;
+  mustChangePassword: boolean;
+  lastLoginAt: string | null;
+  createdAt: string;
+  updatedAt: string;
   role?: Role;
   department?: Department;
 }
@@ -48,29 +48,29 @@ export interface ApiSuccessResponse<T> {
 }
 
 export interface LoginResponse {
-  access_token: string;
-  refresh_token: string;
-  expires_in: number;
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
   user: User;
 }
 
 export interface LogoutResponse {
-  revoked_count: number;
+  revokedCount: number;
 }
 
 export type PermissionMap = Record<string, string[]>;
 
 export interface AccessControlMeData {
   subject: {
-    user_id: number;
-    role_id: number;
-    role_key: string;
+    userId: number;
+    roleId: number;
+    roleKey: string;
     username: string;
   };
-  effective_role_ids: number[];
+  effectiveRoleIds: number[];
   permissions: string[];
-  policy_version?: string;
-  generated_at?: string;
+  policyVersion?: string;
+  generatedAt?: string;
 }
 
 export type AccessControlMeResponse = ApiSuccessResponse<AccessControlMeData>;

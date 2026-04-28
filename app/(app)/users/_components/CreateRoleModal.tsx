@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, Shield, Save, Loader2 } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Shield, Save, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 export interface CreateRoleFormData {
   name: string;
-  role_key: string;
+  roleKey: string;
   description: string;
   level: number;
 }
@@ -23,18 +23,22 @@ interface CreateRoleModalProps {
 function toRoleKey(name: string): string {
   return name
     .toLowerCase()
-    .replace(/[^\w\s]/g, '')
+    .replace(/[^\w\s]/g, "")
     .trim()
-    .replace(/\s+/g, '_');
+    .replace(/\s+/g, "_");
 }
 
-export function CreateRoleModal({ isOpen, onClose, onSubmit }: CreateRoleModalProps) {
+export function CreateRoleModal({
+  isOpen,
+  onClose,
+  onSubmit,
+}: CreateRoleModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [keyManuallyEdited, setKeyManuallyEdited] = useState(false);
   const [formData, setFormData] = useState<CreateRoleFormData>({
-    name: '',
-    role_key: '',
-    description: '',
+    name: "",
+    roleKey: "",
+    description: "",
     level: 100,
   });
 
@@ -42,18 +46,21 @@ export function CreateRoleModal({ isOpen, onClose, onSubmit }: CreateRoleModalPr
     setFormData((prev) => ({
       ...prev,
       name: value,
-      role_key: keyManuallyEdited ? prev.role_key : toRoleKey(value),
+      roleKey: keyManuallyEdited ? prev.roleKey : toRoleKey(value),
     }));
   };
 
   const handleRoleKeyChange = (value: string) => {
     setKeyManuallyEdited(true);
-    setFormData((prev) => ({ ...prev, role_key: value.toLowerCase().replace(/[^\w_]/g, '') }));
+    setFormData((prev) => ({
+      ...prev,
+      roleKey: value.toLowerCase().replace(/[^\w_]/g, ""),
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.role_key) return;
+    if (!formData.name || !formData.roleKey) return;
     setIsSubmitting(true);
     try {
       await onSubmit(formData);
@@ -65,7 +72,7 @@ export function CreateRoleModal({ isOpen, onClose, onSubmit }: CreateRoleModalPr
 
   const handleClose = () => {
     onClose();
-    setFormData({ name: '', role_key: '', description: '', level: 100 });
+    setFormData({ name: "", roleKey: "", description: "", level: 100 });
     setKeyManuallyEdited(false);
   };
 
@@ -95,10 +102,15 @@ export function CreateRoleModal({ isOpen, onClose, onSubmit }: CreateRoleModalPr
               </div>
               <div>
                 <h2 className="text-base font-bold">เพิ่มบทบาทใหม่</h2>
-                <p className="text-xs text-muted-foreground">กำหนดชื่อ รหัส ระดับ และคำอธิบาย</p>
+                <p className="text-xs text-muted-foreground">
+                  กำหนดชื่อ รหัส ระดับ และคำอธิบาย
+                </p>
               </div>
             </div>
-            <button onClick={handleClose} className="p-2 hover:bg-muted rounded-lg transition-colors">
+            <button
+              onClick={handleClose}
+              className="p-2 hover:bg-muted rounded-lg transition-colors"
+            >
               <X className="w-5 h-5 text-muted-foreground" />
             </button>
           </div>
@@ -118,11 +130,13 @@ export function CreateRoleModal({ isOpen, onClose, onSubmit }: CreateRoleModalPr
               <div className="space-y-2">
                 <Label htmlFor="role-key">
                   Role Key *
-                  <span className="ml-1 text-[10px] text-muted-foreground">(snake_case)</span>
+                  <span className="ml-1 text-[10px] text-muted-foreground">
+                    (snake_case)
+                  </span>
                 </Label>
                 <Input
                   id="role-key"
-                  value={formData.role_key}
+                  value={formData.roleKey}
                   onChange={(e) => handleRoleKeyChange(e.target.value)}
                   placeholder="department_manager"
                   required
@@ -134,7 +148,9 @@ export function CreateRoleModal({ isOpen, onClose, onSubmit }: CreateRoleModalPr
             <div className="space-y-2">
               <Label htmlFor="role-level">
                 ระดับ (Level) *
-                <span className="ml-1 text-[10px] text-muted-foreground">น้อย = สิทธิ์สูงกว่า</span>
+                <span className="ml-1 text-[10px] text-muted-foreground">
+                  น้อย = สิทธิ์สูงกว่า
+                </span>
               </Label>
               <Input
                 id="role-level"
@@ -142,7 +158,12 @@ export function CreateRoleModal({ isOpen, onClose, onSubmit }: CreateRoleModalPr
                 min={1}
                 max={999}
                 value={formData.level}
-                onChange={(e) => setFormData((prev) => ({ ...prev, level: Number(e.target.value) }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    level: Number(e.target.value),
+                  }))
+                }
                 required
               />
             </div>
@@ -152,14 +173,20 @@ export function CreateRoleModal({ isOpen, onClose, onSubmit }: CreateRoleModalPr
               <Textarea
                 id="role-desc"
                 value={formData.description}
-                onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
                 placeholder="อธิบายหน้าที่ของบทบาทนี้..."
                 rows={3}
               />
             </div>
 
             <p className="text-xs text-muted-foreground bg-muted/50 px-3 py-2 rounded-lg">
-              หลังสร้างบทบาทแล้ว ให้กดปุ่ม <strong>กำหนดสิทธิ์</strong> ในตารางบทบาทเพื่อกำหนด permission
+              หลังสร้างบทบาทแล้ว ให้กดปุ่ม <strong>กำหนดสิทธิ์</strong>{" "}
+              ในตารางบทบาทเพื่อกำหนด permission
             </p>
 
             <div className="flex justify-end gap-3 pt-2">
@@ -172,13 +199,19 @@ export function CreateRoleModal({ isOpen, onClose, onSubmit }: CreateRoleModalPr
               </button>
               <button
                 type="submit"
-                disabled={isSubmitting || !formData.name || !formData.role_key}
+                disabled={isSubmitting || !formData.name || !formData.roleKey}
                 className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 flex items-center gap-2 disabled:opacity-50"
               >
                 {isSubmitting ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" />กำลังบันทึก...</>
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    กำลังบันทึก...
+                  </>
                 ) : (
-                  <><Save className="w-4 h-4" />บันทึก</>
+                  <>
+                    <Save className="w-4 h-4" />
+                    บันทึก
+                  </>
                 )}
               </button>
             </div>

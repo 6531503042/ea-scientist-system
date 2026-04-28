@@ -19,12 +19,12 @@ export function useLogin() {
   return useMutation({
     mutationFn: (dto: LoginRequest) => authService.login(dto),
     onSuccess: async (res) => {
-      const { access_token, user } = res.data;
-      setAuth(user, access_token);
+      const { accessToken, user } = res.data;
+      setAuth(user, accessToken);
       const accessControl = await authService.getAccessControl();
       setAccessControl(accessControl.data);
       document.cookie = "session=1; Path=/; SameSite=Lax";
-      toast.success(`ยินดีต้อนรับ ${user.first_name}`);
+      toast.success(`ยินดีต้อนรับ ${user.firstName}`);
       router.push("/");
     },
     onError: (error) => {

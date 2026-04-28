@@ -31,24 +31,54 @@ import { useAuthStore } from "@/store/use-auth-store";
 const testAccounts = {
   admin: [
     {
-      name: "Somchai (Admin)",
-      email: "somchai.admin",
+      name: "Somchai Administrator",
+      email: "admin",
+      password: "!P@ssw0rd",
+      role: "admin",
+    },
+    {
+      name: "Safe Security",
+      email: "safe.s",
       password: "password123",
       role: "admin",
     },
   ],
   architect: [
     {
-      name: "Wipa (Architect)",
-      email: "wipa.architect",
+      name: "Wipa Architect",
+      email: "wipa.a",
+      password: "password123",
+      role: "architect",
+    },
+    {
+      name: "Manat Data",
+      email: "manat.d",
+      password: "password123",
+      role: "architect",
+    },
+    {
+      name: "Thep Infra",
+      email: "thep.i",
+      password: "password123",
+      role: "architect",
+    },
+    {
+      name: "Apiwat Connect",
+      email: "apiwat.c",
       password: "password123",
       role: "architect",
     },
   ],
-  executive: [
+  manager: [
     {
-      name: "Prasit (Manager)",
-      email: "prasit.manager",
+      name: "Prasit Manager",
+      email: "prasit.m",
+      password: "password123",
+      role: "manager",
+    },
+    {
+      name: "Napa Service",
+      email: "napa.s",
       password: "password123",
       role: "manager",
     },
@@ -120,7 +150,7 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [selectedRole, setSelectedRole] = useState<
-    "admin" | "architect" | "executive"
+    "admin" | "architect" | "manager"
   >("architect");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -139,9 +169,9 @@ export default function Login() {
 
     try {
       const res = await authService.login({ username: email, password });
-      const { access_token, user } = res.data;
+      const { accessToken, user } = res.data;
 
-      setAuth(user, access_token);
+      setAuth(user, accessToken);
 
       const acRes = await authService.getAccessControl();
       setAccessControl(acRes.data);
@@ -150,7 +180,7 @@ export default function Login() {
 
       toast({
         title: "เข้าสู่ระบบสำเร็จ",
-        description: `ยินดีต้อนรับ ${user.first_name}`,
+        description: `ยินดีต้อนรับ ${user.firstName}`,
       });
 
       router.push("/");
@@ -232,7 +262,7 @@ export default function Login() {
                 <Input
                   id="email"
                   type="text"
-                  placeholder="somchai.admin"
+                  placeholder="admin"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -291,7 +321,7 @@ export default function Login() {
                 <DialogHeader>
                   <DialogTitle>บัญชีผู้ใช้งานทดสอบ</DialogTitle>
                   <DialogDescription>
-                    รายการบัญชีทั้งหมด{" "}
+                    รายการบัญชีจาก seed ฝั่ง API ที่ล็อกอินได้ทั้งหมด{" "}
                     {Object.values(testAccounts).flat().length} บัญชี -
                     คลิกเพื่อใช้งานหรือคัดลอกข้อมูล
                   </DialogDescription>
@@ -305,10 +335,10 @@ export default function Login() {
                         {testAccounts.architect.length}
                       </span>
                     </TabsTrigger>
-                    <TabsTrigger value="executive" className="text-xs">
-                      Executive{" "}
+                    <TabsTrigger value="manager" className="text-xs">
+                      Manager{" "}
                       <span className="ml-1 text-muted-foreground">
-                        {testAccounts.executive.length}
+                        {testAccounts.manager.length}
                       </span>
                     </TabsTrigger>
                     <TabsTrigger value="admin" className="text-xs">

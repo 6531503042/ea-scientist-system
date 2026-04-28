@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import axios from "axios";
 import { authService } from "@/features/auth/services/auth.service";
+import { clearClientAuthState } from "@/features/auth/utils/clear-client-auth";
 import { useAuthStore } from "@/store/use-auth-store";
 
 /**
@@ -36,10 +38,17 @@ export function useBootstrapAuth() {
 
         setAccessControl(accessControlRes.data);
         setUser(profileRes.data);
-      } catch {
+      } catch (error) {
         if (!mounted) return;
-        logout();
-        document.cookie = "session=; Path=/; Max-Age=0; SameSite=Lax";
+        // Let transient/non-auth failures recover without forcing a logout.
+        // Logout only when auth is truly invalid after interceptor retry.
+        const status = axios.isAxiosError(error)
+          ? error.response?.status
+          : undefined;
+        if (status === 401) {
+          clearClientAuthState();
+          logout();
+        }
       } finally {
         if (mounted) setIsBootstrapping(false);
       }

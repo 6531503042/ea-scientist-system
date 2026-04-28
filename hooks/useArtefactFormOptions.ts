@@ -13,6 +13,23 @@ type Cache = {
 let cache: Cache | null = null;
 let fetchPromise: Promise<Cache> | null = null;
 
+function normalizeLayers(rawLayers: any[]): ApiLayer[] {
+  return rawLayers.map((layer) => ({
+    id: Number(layer.id),
+    layerName: layer.layerName ?? layer.layer_name,
+    artefactCategories: Array.isArray(layer.artefactCategories)
+      ? layer.artefactCategories
+      : Array.isArray(layer.categories)
+        ? layer.categories.map((category: any) => ({
+            id: Number(category.id),
+            categoryName: category.categoryName ?? category.category_name,
+            architectureLayerId:
+              category.architectureLayerId ?? category.architectureLayerId,
+          }))
+        : [],
+  }));
+}
+
 function fetchOptions(): Promise<Cache> {
   if (cache) return Promise.resolve(cache);
   if (fetchPromise) return fetchPromise;
@@ -30,9 +47,11 @@ function fetchOptions(): Promise<Cache> {
       lRes.json(),
     ]);
     cache = {
-      users: uJson.success ? uJson.data : [],
-      departments: dJson.success ? dJson.data : [],
-      layers: lJson.success ? lJson.data : [],
+      users: uJson.success ? (uJson.data?.data ?? uJson.data) : [],
+      departments: dJson.success ? (dJson.data?.data ?? dJson.data) : [],
+      layers: lJson.success
+        ? normalizeLayers(lJson.data?.data ?? lJson.data ?? [])
+        : [],
     };
     return cache;
   })();

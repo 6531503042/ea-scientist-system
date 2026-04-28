@@ -9,17 +9,17 @@ import { API_ENDPOINTS } from "@/lib/api/endpoints";
 
 export interface CreateRolePayload {
   name: string;
-  role_key: string;
+  roleKey: string;
   description?: string;
   level: number;
 }
 
 export interface UpdateRolePayload {
   name?: string;
-  role_key?: string;
+  roleKey?: string;
   description?: string;
   level?: number;
-  is_active?: boolean;
+  isActive?: boolean;
 }
 
 export function useRoles() {
@@ -47,10 +47,10 @@ export function useRoles() {
     mutationFn: async (payload: CreateRolePayload) => {
       const resp = await axiosInstance.post(API_ENDPOINTS.accessControl.roles, {
         name: payload.name,
-        role_key: payload.role_key,
+        roleKey: payload.roleKey,
         description: payload.description || null,
         level: payload.level,
-        is_active: true,
+        isActive: true,
       });
       return mapApiRole(resp.data?.data);
     },
@@ -60,15 +60,25 @@ export function useRoles() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, roleData }: { id: string; roleData: UpdateRolePayload }) => {
+    mutationFn: async ({
+      id,
+      roleData,
+    }: {
+      id: string;
+      roleData: UpdateRolePayload;
+    }) => {
       const dto: Record<string, unknown> = {};
       if (roleData.name !== undefined) dto.name = roleData.name;
-      if (roleData.role_key !== undefined) dto.role_key = roleData.role_key;
-      if (roleData.description !== undefined) dto.description = roleData.description;
+      if (roleData.roleKey !== undefined) dto.roleKey = roleData.roleKey;
+      if (roleData.description !== undefined)
+        dto.description = roleData.description;
       if (roleData.level !== undefined) dto.level = roleData.level;
-      if (roleData.is_active !== undefined) dto.is_active = roleData.is_active;
+      if (roleData.isActive !== undefined) dto.isActive = roleData.isActive;
 
-      await axiosInstance.patch(API_ENDPOINTS.accessControl.roleById(Number(id)), dto);
+      await axiosInstance.patch(
+        API_ENDPOINTS.accessControl.roleById(Number(id)),
+        dto,
+      );
       return true;
     },
     onSuccess: () => {
@@ -78,7 +88,9 @@ export function useRoles() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await axiosInstance.delete(API_ENDPOINTS.accessControl.roleById(Number(id)));
+      await axiosInstance.delete(
+        API_ENDPOINTS.accessControl.roleById(Number(id)),
+      );
       return true;
     },
     onSuccess: () => {

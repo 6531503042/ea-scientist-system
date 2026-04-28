@@ -13,8 +13,8 @@ export interface GetUsersParams {
   limit?: number;
   q?: string;
   status?: string;
-  role_id?: number;
-  department_id?: number;
+  roleId?: number;
+  departmentId?: number;
 }
 
 export const userService = {

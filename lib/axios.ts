@@ -1,5 +1,6 @@
 import axios from "axios";
 import { API_ENDPOINTS } from "@/lib/api/endpoints";
+import { clearClientAuthState } from "@/features/auth/utils/clear-client-auth";
 
 /**
  * Same-origin base URL — Next.js rewrites /api/v1/:path* → NestJS backend.
@@ -93,7 +94,7 @@ axiosInstance.interceptors.response.use(
         },
       );
 
-      const newAccessToken: string = data.data.access_token;
+      const newAccessToken: string = data.data.accessToken;
 
       // Persist the refreshed token so future requests use it
       if (typeof window !== "undefined") {
@@ -117,8 +118,7 @@ axiosInstance.interceptors.response.use(
 
       // Clear persisted auth and send user to login
       if (typeof window !== "undefined") {
-        localStorage.removeItem("auth-storage");
-        document.cookie = "session=; Path=/; Max-Age=0; SameSite=Lax";
+        clearClientAuthState();
         window.location.href = "/login";
       }
       return Promise.reject(refreshError);

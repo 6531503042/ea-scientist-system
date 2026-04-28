@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, Shield, Save, Loader2 } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import type { Role } from '@/types/role';
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Shield, Save, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import type { Role } from "@/types/role";
 
 export interface EditRoleFormData {
   name: string;
-  role_key: string;
+  roleKey: string;
   description: string;
   level: number;
 }
@@ -18,25 +18,32 @@ export interface EditRoleFormData {
 interface EditRoleModalProps {
   isOpen: boolean;
   onClose: () => void;
-  role: (Role & { role_key?: string; level?: number; is_active?: boolean }) | null;
+  role:
+    | (Role & { roleKey?: string; level?: number; isActive?: boolean })
+    | null;
   onSubmit: (data: EditRoleFormData) => Promise<void>;
 }
 
-export function EditRoleModal({ isOpen, onClose, role, onSubmit }: EditRoleModalProps) {
+export function EditRoleModal({
+  isOpen,
+  onClose,
+  role,
+  onSubmit,
+}: EditRoleModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<EditRoleFormData>({
-    name: '',
-    role_key: '',
-    description: '',
+    name: "",
+    roleKey: "",
+    description: "",
     level: 100,
   });
 
   useEffect(() => {
     if (role && isOpen) {
       setFormData({
-        name: role.name ?? '',
-        role_key: (role as any).role_key ?? '',
-        description: role.description ?? '',
+        name: role.name ?? "",
+        roleKey: (role as any).roleKey ?? "",
+        description: role.description ?? "",
         level: (role as any).level ?? 100,
       });
     }
@@ -44,7 +51,7 @@ export function EditRoleModal({ isOpen, onClose, role, onSubmit }: EditRoleModal
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.role_key) return;
+    if (!formData.name || !formData.roleKey) return;
     setIsSubmitting(true);
     try {
       await onSubmit(formData);
@@ -80,10 +87,15 @@ export function EditRoleModal({ isOpen, onClose, role, onSubmit }: EditRoleModal
               </div>
               <div>
                 <h2 className="text-base font-bold">แก้ไขบทบาท</h2>
-                <p className="text-xs text-muted-foreground font-mono">{(role as any).role_key}</p>
+                <p className="text-xs text-muted-foreground font-mono">
+                  {(role as any).roleKey}
+                </p>
               </div>
             </div>
-            <button onClick={onClose} className="p-2 hover:bg-muted rounded-lg transition-colors">
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-muted rounded-lg transition-colors"
+            >
               <X className="w-5 h-5 text-muted-foreground" />
             </button>
           </div>
@@ -95,22 +107,28 @@ export function EditRoleModal({ isOpen, onClose, role, onSubmit }: EditRoleModal
                 <Input
                   id="edit-role-name"
                   value={formData.name}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, name: e.target.value }))
+                  }
                   required
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-role-key">
                   Role Key *
-                  <span className="ml-1 text-[10px] text-muted-foreground">(snake_case)</span>
+                  <span className="ml-1 text-[10px] text-muted-foreground">
+                    (snake_case)
+                  </span>
                 </Label>
                 <Input
                   id="edit-role-key"
-                  value={formData.role_key}
+                  value={formData.roleKey}
                   onChange={(e) =>
                     setFormData((prev) => ({
                       ...prev,
-                      role_key: e.target.value.toLowerCase().replace(/[^\w_]/g, ''),
+                      roleKey: e.target.value
+                        .toLowerCase()
+                        .replace(/[^\w_]/g, ""),
                     }))
                   }
                   required
@@ -122,7 +140,9 @@ export function EditRoleModal({ isOpen, onClose, role, onSubmit }: EditRoleModal
             <div className="space-y-2">
               <Label htmlFor="edit-role-level">
                 ระดับ (Level) *
-                <span className="ml-1 text-[10px] text-muted-foreground">น้อย = สิทธิ์สูงกว่า</span>
+                <span className="ml-1 text-[10px] text-muted-foreground">
+                  น้อย = สิทธิ์สูงกว่า
+                </span>
               </Label>
               <Input
                 id="edit-role-level"
@@ -131,7 +151,10 @@ export function EditRoleModal({ isOpen, onClose, role, onSubmit }: EditRoleModal
                 max={999}
                 value={formData.level}
                 onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, level: Number(e.target.value) }))
+                  setFormData((prev) => ({
+                    ...prev,
+                    level: Number(e.target.value),
+                  }))
                 }
                 required
               />
@@ -143,7 +166,10 @@ export function EditRoleModal({ isOpen, onClose, role, onSubmit }: EditRoleModal
                 id="edit-role-desc"
                 value={formData.description}
                 onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, description: e.target.value }))
+                  setFormData((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
                 }
                 rows={3}
               />
@@ -159,13 +185,19 @@ export function EditRoleModal({ isOpen, onClose, role, onSubmit }: EditRoleModal
               </button>
               <button
                 type="submit"
-                disabled={isSubmitting || !formData.name || !formData.role_key}
+                disabled={isSubmitting || !formData.name || !formData.roleKey}
                 className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 flex items-center gap-2 disabled:opacity-50"
               >
                 {isSubmitting ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" />กำลังบันทึก...</>
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    กำลังบันทึก...
+                  </>
                 ) : (
-                  <><Save className="w-4 h-4" />บันทึก</>
+                  <>
+                    <Save className="w-4 h-4" />
+                    บันทึก
+                  </>
                 )}
               </button>
             </div>

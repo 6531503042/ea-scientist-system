@@ -4,6 +4,7 @@
  * and standardizes headers.
  */
 import { API_ENDPOINTS } from "@/lib/api/endpoints";
+import { clearClientAuthState } from "@/features/auth/utils/clear-client-auth";
 
 const EXTERNAL_API_PREFIX = process.env.NEXT_PUBLIC_API_PREFIX || "/api/v1";
 const RETRY_HEADER = "x-auth-retried";
@@ -66,8 +67,7 @@ function persistAccessToken(token: string) {
 function clearAuthAndRedirectToLogin() {
   if (typeof window === "undefined") return;
 
-  localStorage.removeItem("auth-storage");
-  document.cookie = "session=; Path=/; Max-Age=0; SameSite=Lax";
+  clearClientAuthState();
   window.location.href = "/login";
 }
 
@@ -91,7 +91,7 @@ async function refreshAccessToken(): Promise<string> {
     }
 
     const payload = await res.json().catch(() => null);
-    const token = payload?.data?.access_token || payload?.access_token;
+    const token = payload?.data?.accessToken || payload?.accessToken;
 
     if (!token || typeof token !== "string") {
       throw new Error("Refresh response missing access token");

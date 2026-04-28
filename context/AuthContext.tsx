@@ -2,6 +2,7 @@
 
 import { createContext, useContext, type ReactNode } from "react";
 import { authService } from "@/features/auth/services/auth.service";
+import { clearClientAuthState } from "@/features/auth/utils/clear-client-auth";
 import { useAuthStore } from "@/store/use-auth-store";
 
 interface AuthContextType {
@@ -35,14 +36,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       /* still clear local session on failure */
     } finally {
       storeLogout();
-      document.cookie = "session=; Path=/; Max-Age=0; SameSite=Lax";
+      clearClientAuthState();
       if (typeof window !== "undefined") window.location.href = "/login";
     }
   };
 
-  // Derive role_key from user object returned by the new API
+  // Derive roleKey from user object returned by the new API
   const role: string =
-    (user as any)?.role?.role_key ?? (user as any)?.role_key ?? "viewer";
+    (user as any)?.role?.roleKey ?? (user as any)?.roleKey ?? "viewer";
 
   return (
     <AuthContext.Provider

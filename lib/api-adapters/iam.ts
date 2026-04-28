@@ -26,18 +26,21 @@ function mapActiveStatus(
 }
 
 export function mapApiUser(apiUser: any): User {
-  const firstName = apiUser?.first_name ?? apiUser?.firstName ?? "";
-  const lastName = apiUser?.last_name ?? apiUser?.lastName ?? "";
-  const isActive = apiUser?.is_active ?? apiUser?.isActive;
-  const lastLoginAt = apiUser?.last_login_at ?? apiUser?.lastLoginAt;
-  const createdAt = apiUser?.created_at ?? apiUser?.createdAt;
-  const updatedAt = apiUser?.updated_at ?? apiUser?.updatedAt;
+  const firstName = apiUser?.firstName ?? apiUser?.first_name ?? "";
+  const lastName = apiUser?.lastName ?? apiUser?.last_name ?? "";
+  const isActive = apiUser?.isActive ?? apiUser?.is_active;
+  const lastLoginAt = apiUser?.lastLoginAt ?? apiUser?.last_login_at;
+  const createdAt = apiUser?.createdAt ?? apiUser?.created_at;
+  const updatedAt = apiUser?.updatedAt ?? apiUser?.updated_at;
 
-  // Department: supports both mapIamUser snake_case (full_name/short_name)
-  // and the departments endpoint camelCase (fullName/shortName)
+  // Department: supports both camelCase (fullName) and snake_case (full_name)
   const dept = apiUser?.department;
   const deptName =
-    dept?.full_name ?? dept?.fullName ?? dept?.name ?? apiUser?.departmentName ?? undefined;
+    dept?.fullName ??
+    dept?.full_name ??
+    dept?.name ??
+    apiUser?.departmentName ??
+    undefined;
 
   return {
     _id: String(apiUser?.id ?? ""),
@@ -48,8 +51,8 @@ export function mapApiUser(apiUser: any): User {
       (apiUser?.email ? String(apiUser.email).split("@")[0] : ""),
     email: apiUser?.email ?? "",
     role:
-      apiUser?.role?.role_key ??
       apiUser?.role?.roleKey ??
+      apiUser?.role?.role_key ??
       apiUser?.role?.name ??
       apiUser?.roleName ??
       "viewer",
@@ -63,7 +66,7 @@ export function mapApiUser(apiUser: any): User {
 
 export function mapApiRole(apiRole: any): Role {
   const roleName = apiRole?.name ?? apiRole?.roleName ?? "";
-  const roleKey: string = apiRole?.role_key ?? apiRole?.roleKey ?? "";
+  const roleKey: string = apiRole?.roleKey ?? apiRole?.role_key ?? "";
 
   return {
     _id: String(apiRole?.id ?? ""),
@@ -73,16 +76,19 @@ export function mapApiRole(apiRole: any): Role {
     permissions: apiRole?.permissions || [],
     isDefault: Boolean(apiRole?.isDefault),
     // Treat level-0 or admin/administrator keys as system roles
-    isSystemRole: Boolean(apiRole?.isSystemRole) || apiRole?.level === 0 || ["admin", "administrator"].includes(roleKey),
+    isSystemRole:
+      Boolean(apiRole?.isSystemRole) ||
+      apiRole?.level === 0 ||
+      ["admin", "administrator"].includes(roleKey),
     userCount: apiRole?._count?.users ?? apiRole?.userCount ?? 0,
     color: apiRole?.color || "bg-gray-500/10 text-gray-700 border-gray-200",
-    createdAt: toIso(apiRole?.created_at ?? apiRole?.createdAt),
-    updatedAt: toIso(apiRole?.updated_at ?? apiRole?.updatedAt),
+    createdAt: toIso(apiRole?.createdAt ?? apiRole?.created_at),
+    updatedAt: toIso(apiRole?.updatedAt ?? apiRole?.updated_at),
     // Extra fields for API operations
-    ...(roleKey && { role_key: roleKey }),
+    ...(roleKey && { roleKey }),
     ...(apiRole?.level !== undefined && { level: apiRole.level }),
-    ...(apiRole?.is_active !== undefined && { is_active: apiRole.is_active }),
-  } as Role & { role_key?: string; level?: number; is_active?: boolean };
+    ...(apiRole?.isActive !== undefined && { isActive: apiRole.isActive }),
+  } as Role & { roleKey?: string; level?: number; isActive?: boolean };
 }
 
 export function mapApiDepartment(apiDept: any): Department {
@@ -97,9 +103,10 @@ export function mapApiDepartment(apiDept: any): Department {
     name: fullName,
     nameTh: fullName,
     description: apiDept?.description,
-    parent: apiDept?.parentId ?? apiDept?.parent_id
-      ? String(apiDept.parentId ?? apiDept.parent_id)
-      : undefined,
+    parent:
+      (apiDept?.parentId ?? apiDept?.parent_id)
+        ? String(apiDept.parentId ?? apiDept.parent_id)
+        : undefined,
     head: "-",
     memberCount: apiDept?.userCount ?? apiDept?.user_count ?? 0,
     userCount: apiDept?.userCount ?? apiDept?.user_count ?? 0,

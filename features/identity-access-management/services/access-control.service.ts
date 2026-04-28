@@ -17,7 +17,7 @@ import type {
 type RoleListParams = {
   page?: number;
   limit?: number;
-  is_active?: boolean;
+  isActive?: boolean;
 };
 
 export const accessControlService = {
